@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(~/.config/herd/bin/php84/php.exe artisan route:list:*)",
+      "Bash(~/.config/herd/bin/php84/php.exe artisan cache:clear:*)",
+      "Bash(~/.config/herd/bin/php84/php.exe:*)",
+      "Bash(curl:*)"
+    ]
+  }
+}
