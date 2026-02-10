@@ -23,26 +23,30 @@
                 <div class="mb-10">
                     <h3 class="text-gray-800 fw-bold mb-6">Dados da Empresa</h3>
 
-                    <!--begin::Input group - Company Name-->
-                    <div class="fv-row mb-8">
-                        <label class="form-label fw-semibold text-gray-900 fs-6">Nome da empresa</label>
-                        <input type="text" placeholder="Digite o nome da sua empresa" name="company_name" id="company_name" autocomplete="off" class="form-control bg-transparent @error('company_name') is-invalid @enderror" value="{{ old('company_name') }}" required />
-                        @error('company_name')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-                    <!--end::Input group-->
+                    <!--begin::Row-->
+                    <div class="row g-4 mb-8">
+                        <!--begin::Col - Company Name-->
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold text-gray-900 fs-6">Nome da empresa</label>
+                            <input type="text" placeholder="Digite o nome da sua empresa" name="company_name" id="company_name" autocomplete="off" class="form-control bg-transparent @error('company_name') is-invalid @enderror" value="{{ old('company_name') }}" required />
+                            @error('company_name')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <!--end::Col-->
 
-                    <!--begin::Input group - Slug-->
-                    <div class="fv-row mb-8">
-                        <label class="form-label fw-semibold text-gray-900 fs-6">Subdomínio (slug)</label>
-                        <input type="text" placeholder="seu-slug" name="slug" id="slug" autocomplete="off" class="form-control bg-transparent @error('slug') is-invalid @enderror" value="{{ old('slug') }}" required />
-                        <div class="form-text">Seu site será: <strong id="slug-preview">seu-slug.smartclick360.com</strong></div>
-                        @error('slug')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
+                        <!--begin::Col - Slug-->
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold text-gray-900 fs-6">Subdomínio (slug)</label>
+                            <input type="text" placeholder="seu-slug" name="slug" id="slug" autocomplete="off" class="form-control bg-transparent @error('slug') is-invalid @enderror" value="{{ old('slug') }}" required />
+                            <div class="form-text">Seu site será: <strong id="slug-preview">seu-slug.smartclick360.com</strong></div>
+                            @error('slug')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <!--end::Col-->
                     </div>
-                    <!--end::Input group-->
+                    <!--end::Row-->
                 </div>
                 <!--end::Section Dados da Empresa-->
 
@@ -102,42 +106,46 @@
                 <div class="mb-10">
                     <h3 class="text-gray-800 fw-bold mb-6">Dados de Acesso</h3>
 
-                    <!--begin::Input group - Email-->
-                    <div class="fv-row mb-8">
-                        <label class="form-label fw-semibold text-gray-900 fs-6">Email</label>
-                        <input type="email" placeholder="seu@email.com" name="email" autocomplete="off" class="form-control bg-transparent @error('email') is-invalid @enderror" value="{{ old('email') }}" required />
-                        @error('email')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-                    <!--end::Input group-->
-
-                    <!--begin::Input group - Password-->
-                    <div class="fv-row mb-8" data-kt-password-meter="true">
-                        <div class="mb-1">
-                            <label class="form-label fw-semibold text-gray-900 fs-6">Senha</label>
-                            <div class="position-relative mb-3">
-                                <input class="form-control bg-transparent @error('password') is-invalid @enderror" type="password" placeholder="Digite sua senha" name="password" id="password" autocomplete="off" required />
-                                <span class="btn btn-sm btn-icon position-absolute translate-middle top-50 end-0 me-n2" data-kt-password-meter-control="visibility">
-                                    <i class="ki-outline ki-eye-slash fs-2"></i>
-                                    <i class="ki-outline ki-eye fs-2 d-none"></i>
-                                </span>
-                            </div>
-                            <!--begin::Meter-->
-                            <div class="d-flex align-items-center mb-3" data-kt-password-meter-control="highlight">
-                                <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px me-2"></div>
-                                <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px me-2"></div>
-                                <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px me-2"></div>
-                                <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px"></div>
-                            </div>
-                            <!--end::Meter-->
+                    <!--begin::Row-->
+                    <div class="row g-4 mb-8">
+                        <!--begin::Col - Email-->
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold text-gray-900 fs-6">Email</label>
+                            <input type="email" placeholder="seu@email.com" name="email" autocomplete="off" class="form-control bg-transparent @error('email') is-invalid @enderror" value="{{ old('email') }}" required />
+                            @error('email')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
-                        <div class="text-muted">Use 8 ou mais caracteres com letras, números e símbolos.</div>
-                        @error('password')
-                            <div class="invalid-feedback d-block">{{ $message }}</div>
-                        @enderror
+                        <!--end::Col-->
+
+                        <!--begin::Col - Password-->
+                        <div class="col-12 col-md-6" data-kt-password-meter="true">
+                            <div class="mb-1">
+                                <label class="form-label fw-semibold text-gray-900 fs-6">Senha</label>
+                                <div class="position-relative mb-3">
+                                    <input class="form-control bg-transparent @error('password') is-invalid @enderror" type="password" placeholder="Digite sua senha" name="password" id="password" autocomplete="off" required />
+                                    <span class="btn btn-sm btn-icon position-absolute translate-middle top-50 end-0 me-n2" data-kt-password-meter-control="visibility">
+                                        <i class="ki-outline ki-eye-slash fs-2"></i>
+                                        <i class="ki-outline ki-eye fs-2 d-none"></i>
+                                    </span>
+                                </div>
+                                <!--begin::Meter-->
+                                <div class="d-flex align-items-center mb-3" data-kt-password-meter-control="highlight">
+                                    <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px me-2"></div>
+                                    <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px me-2"></div>
+                                    <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px me-2"></div>
+                                    <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px"></div>
+                                </div>
+                                <!--end::Meter-->
+                            </div>
+                            <div class="text-muted">Use 8 ou mais caracteres com letras, números e símbolos.</div>
+                            @error('password')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <!--end::Col-->
                     </div>
-                    <!--end::Input group-->
+                    <!--end::Row-->
                 </div>
                 <!--end::Section Dados de Acesso-->
 
