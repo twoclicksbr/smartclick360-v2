@@ -13,10 +13,12 @@ return new class extends Migration
     {
         Schema::connection('landlord')->create('contacts', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('person_id')->constrained('people')->onDelete('cascade');
-            $table->foreignId('type_contact_id')->constrained('type_contacts')->onDelete('restrict');
-            $table->string('value', 255);
-            $table->boolean('is_primary')->default(false);
+            $table->foreignId('type_contact_id')->constrained('type_contacts');
+            $table->foreignId('module_id')->constrained('modules');
+            $table->unsignedBigInteger('register_id');
+            $table->string('value');
+            $table->integer('order')->default(0);
+            $table->boolean('status')->default(true);
             $table->timestamps();
             $table->softDeletes();
         });

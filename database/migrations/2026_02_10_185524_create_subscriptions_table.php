@@ -13,12 +13,14 @@ return new class extends Migration
     {
         Schema::connection('landlord')->create('subscriptions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id')->constrained('tenants')->onDelete('cascade');
-            $table->foreignId('plan_id')->constrained('plans')->onDelete('restrict');
-            $table->enum('status', ['active', 'cancelled', 'expired'])->default('active');
-            $table->timestamp('starts_at');
+            $table->foreignId('tenant_id')->constrained('tenants');
+            $table->foreignId('plan_id')->constrained('plans');
+            $table->string('cycle');
+            $table->timestamp('trial_ends_at')->nullable();
+            $table->timestamp('starts_at')->nullable();
             $table->timestamp('ends_at')->nullable();
-            $table->timestamp('cancelled_at')->nullable();
+            $table->integer('order')->default(0);
+            $table->string('status')->default('trial');
             $table->timestamps();
             $table->softDeletes();
         });

@@ -13,19 +13,21 @@ class TypeContact extends Model
 
     protected $connection = 'landlord';
 
+    protected $table = 'type_contacts';
+
     protected $fillable = [
         'name',
-        'slug',
-        'icon',
-        'is_active',
+        'order',
+        'status',
     ];
 
     protected $casts = [
-        'is_active' => 'boolean',
+        'order' => 'integer',
+        'status' => 'boolean',
     ];
 
     public function contacts(): HasMany
     {
-        return $this->hasMany(Contact::class);
+        return $this->hasMany(Contact::class, 'type_contact_id');
     }
 }

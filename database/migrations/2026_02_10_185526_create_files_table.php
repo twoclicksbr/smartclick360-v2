@@ -13,12 +13,14 @@ return new class extends Migration
     {
         Schema::connection('landlord')->create('files', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('person_id')->constrained('people')->onDelete('cascade');
-            $table->string('filename', 255);
-            $table->string('original_filename', 255);
-            $table->string('path', 500);
-            $table->string('mime_type', 100);
-            $table->integer('size');
+            $table->foreignId('module_id')->constrained('modules');
+            $table->unsignedBigInteger('register_id');
+            $table->string('name');
+            $table->string('path');
+            $table->string('mime_type')->nullable();
+            $table->unsignedBigInteger('size')->nullable();
+            $table->integer('order')->default(0);
+            $table->boolean('status')->default(true);
             $table->timestamps();
             $table->softDeletes();
         });

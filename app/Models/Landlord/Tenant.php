@@ -14,17 +14,15 @@ class Tenant extends Model
     protected $connection = 'landlord';
 
     protected $fillable = [
-        'company_name',
+        'name',
         'slug',
         'database_name',
-        'domain',
-        'is_active',
-        'trial_ends_at',
+        'order',
+        'status',
     ];
 
     protected $casts = [
-        'is_active' => 'boolean',
-        'trial_ends_at' => 'datetime',
+        'order' => 'integer',
     ];
 
     public function people(): HasMany
@@ -32,13 +30,13 @@ class Tenant extends Model
         return $this->hasMany(Person::class);
     }
 
-    public function users(): HasMany
-    {
-        return $this->hasMany(User::class);
-    }
-
     public function subscriptions(): HasMany
     {
         return $this->hasMany(Subscription::class);
+    }
+
+    public function activeSubscription()
+    {
+        return $this->hasOne(Subscription::class)->latestOfMany();
     }
 }

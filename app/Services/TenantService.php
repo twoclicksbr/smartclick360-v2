@@ -4,16 +4,18 @@ namespace App\Services;
 
 use App\Models\Landlord\Contact;
 use App\Models\Landlord\Document;
+use App\Models\Landlord\Module;
 use App\Models\Landlord\Person;
 use App\Models\Landlord\Plan;
 use App\Models\Landlord\Subscription;
 use App\Models\Landlord\Tenant;
+use App\Models\Landlord\TypeAddress;
 use App\Models\Landlord\TypeContact;
 use App\Models\Landlord\TypeDocument;
 use App\Models\Landlord\User;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 class TenantService
 {
@@ -22,7 +24,8 @@ class TenantService
      */
     public function create(array $data): Tenant
     {
-        return DB::connection('landlord')->transaction(function () use ($data) {
+        // Step 1-6: Create records in central database (with transaction)
+        $tenant = DB::connection('landlord')->transaction(function () use ($data) {
             // 1. Create tenant
             $tenant = $this->createTenant($data);
 
@@ -41,14 +44,35 @@ class TenantService
             // 6. Create subscription
             $this->createSubscription($tenant, $data);
 
+            return $tenant;
+        });
+
+        // Step 7-11: Create tenant database, schemas, migrations and replicate data (OUTSIDE transaction)
+        try {
             // 7. Create tenant database
             $this->createTenantDatabase($tenant);
 
             // 8. Create schemas
             $this->createSchemas($tenant);
 
+            // 9. Run migrations in tenant database
+            $this->runTenantMigrations($tenant);
+
+            // 10. Seed types (modules, type_contacts, type_documents, type_addresses)
+            $this->seedTenantTypes($tenant);
+
+            // 11. Replicate registration data to tenant database
+            $person = Person::where('tenant_id', $tenant->id)->first();
+            if ($person) {
+                $this->replicatePersonToTenant($tenant, $person);
+            }
+
             return $tenant;
-        });
+        } catch (\Exception $e) {
+            // If database/schema creation fails, delete the tenant and related records
+            $tenant->forceDelete();
+            throw $e;
+        }
     }
 
     /**
@@ -59,12 +83,11 @@ class TenantService
         $databaseName = 'sc360_' . $data['slug'];
 
         return Tenant::create([
-            'company_name' => $data['company_name'],
+            'name' => $data['company_name'],
             'slug' => $data['slug'],
             'database_name' => $databaseName,
-            'domain' => null,
-            'is_active' => true,
-            'trial_ends_at' => now()->addDays(15),
+            'order' => 0,
+            'status' => 'active',
         ]);
     }
 
@@ -73,17 +96,12 @@ class TenantService
      */
     protected function createPerson(Tenant $tenant, array $data): Person
     {
-        // Determine if it's a person or company based on CPF/CNPJ
-        $cpfCnpj = preg_replace('/[^0-9]/', '', $data['cpf_cnpj']);
-        $type = strlen($cpfCnpj) === 11 ? 'person' : 'company';
-
         return Person::create([
             'tenant_id' => $tenant->id,
-            'type' => $type,
-            'name' => $data['first_name'] . ' ' . $data['surname'],
-            'trade_name' => $type === 'company' ? $data['company_name'] : null,
-            'email' => $data['email'],
-            'is_active' => true,
+            'first_name' => $data['first_name'],
+            'surname' => $data['surname'],
+            'order' => 0,
+            'status' => true,
         ]);
     }
 
@@ -93,12 +111,11 @@ class TenantService
     protected function createUser(Tenant $tenant, Person $person, array $data): User
     {
         return User::create([
-            'tenant_id' => $tenant->id,
             'person_id' => $person->id,
             'email' => $data['email'],
-            'email_verified_at' => null,
-            'password' => Hash::make($data['password']),
-            'is_active' => true,
+            'password' => $data['password'],
+            'order' => 0,
+            'status' => true,
         ]);
     }
 
@@ -107,25 +124,35 @@ class TenantService
      */
     protected function saveContacts(Person $person, array $data): void
     {
+        // Get the 'people' module
+        $peopleModule = Module::where('slug', 'people')->first();
+        if (!$peopleModule) {
+            return;
+        }
+
         // Save WhatsApp
-        $whatsappType = TypeContact::where('slug', 'whatsapp')->first();
+        $whatsappType = TypeContact::where('name', 'WhatsApp')->first();
         if ($whatsappType && !empty($data['whatsapp'])) {
             Contact::create([
-                'person_id' => $person->id,
                 'type_contact_id' => $whatsappType->id,
+                'module_id' => $peopleModule->id,
+                'register_id' => $person->id,
                 'value' => $data['whatsapp'],
-                'is_primary' => true,
+                'order' => 1,
+                'status' => true,
             ]);
         }
 
         // Save Email
-        $emailType = TypeContact::where('slug', 'email')->first();
+        $emailType = TypeContact::where('name', 'Email')->first();
         if ($emailType && !empty($data['email'])) {
             Contact::create([
-                'person_id' => $person->id,
                 'type_contact_id' => $emailType->id,
+                'module_id' => $peopleModule->id,
+                'register_id' => $person->id,
                 'value' => $data['email'],
-                'is_primary' => true,
+                'order' => 2,
+                'status' => true,
             ]);
         }
     }
@@ -135,16 +162,24 @@ class TenantService
      */
     protected function saveDocument(Person $person, array $data): void
     {
-        $cpfCnpj = preg_replace('/[^0-9]/', '', $data['cpf_cnpj']);
-        $documentSlug = strlen($cpfCnpj) === 11 ? 'cpf' : 'cnpj';
+        // Get the 'people' module
+        $peopleModule = Module::where('slug', 'people')->first();
+        if (!$peopleModule) {
+            return;
+        }
 
-        $documentType = TypeDocument::where('slug', $documentSlug)->first();
+        $cpfCnpj = preg_replace('/[^0-9]/', '', $data['cpf_cnpj']);
+        $documentName = strlen($cpfCnpj) === 11 ? 'CPF' : 'CNPJ';
+
+        $documentType = TypeDocument::where('name', $documentName)->first();
         if ($documentType) {
             Document::create([
-                'person_id' => $person->id,
                 'type_document_id' => $documentType->id,
+                'module_id' => $peopleModule->id,
+                'register_id' => $person->id,
                 'value' => $data['cpf_cnpj'],
-                'is_primary' => true,
+                'order' => 1,
+                'status' => true,
             ]);
         }
     }
@@ -160,10 +195,12 @@ class TenantService
             Subscription::create([
                 'tenant_id' => $tenant->id,
                 'plan_id' => $plan->id,
-                'status' => 'active',
+                'cycle' => $data['billing_cycle'] ?? 'monthly',
+                'trial_ends_at' => now()->addDays(7),
                 'starts_at' => now(),
-                'ends_at' => now()->addDays(15), // Trial period
-                'cancelled_at' => null,
+                'ends_at' => now()->addDays(7),
+                'order' => 0,
+                'status' => 'trial',
             ]);
         }
     }
@@ -193,7 +230,7 @@ class TenantService
             'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '5432'),
             'database' => $databaseName,
-            'username' => env('DB_USERNAME', 'root'),
+            'username' => env('DB_USERNAME', 'postgres'),
             'password' => env('DB_PASSWORD', ''),
             'charset' => 'utf8',
             'prefix' => '',
@@ -206,5 +243,175 @@ class TenantService
         DB::connection('temp_tenant')->statement('CREATE SCHEMA IF NOT EXISTS production');
         DB::connection('temp_tenant')->statement('CREATE SCHEMA IF NOT EXISTS sandbox');
         DB::connection('temp_tenant')->statement('CREATE SCHEMA IF NOT EXISTS log');
+
+        // Remove public schema
+        DB::connection('temp_tenant')->statement('DROP SCHEMA IF EXISTS public CASCADE');
+    }
+
+    /**
+     * Run migrations in tenant database
+     */
+    protected function runTenantMigrations(Tenant $tenant): void
+    {
+        $databaseName = $tenant->database_name;
+
+        // Configure tenant connection
+        config(['database.connections.tenant' => [
+            'driver' => 'pgsql',
+            'host' => env('DB_HOST', '127.0.0.1'),
+            'port' => env('DB_PORT', '5432'),
+            'database' => $databaseName,
+            'username' => env('DB_USERNAME', 'postgres'),
+            'password' => env('DB_PASSWORD', ''),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'production',
+            'sslmode' => 'prefer',
+        ]]);
+
+        // Run migrations from tenant folder
+        Artisan::call('migrate', [
+            '--database' => 'tenant',
+            '--path' => 'database/migrations/tenant',
+            '--force' => true,
+        ]);
+    }
+
+    /**
+     * Seed types from landlord to tenant database
+     */
+    protected function seedTenantTypes(Tenant $tenant): void
+    {
+        // Get all types from landlord
+        $modules = Module::all();
+        $typeContacts = TypeContact::all();
+        $typeDocuments = TypeDocument::all();
+        $typeAddresses = TypeAddress::all();
+
+        // Insert into tenant database
+        foreach ($modules as $module) {
+            DB::connection('tenant')->table('production.modules')->insert([
+                'id' => $module->id,
+                'name' => $module->name,
+                'slug' => $module->slug,
+                'order' => $module->order,
+                'status' => $module->status,
+                'created_at' => $module->created_at,
+                'updated_at' => $module->updated_at,
+            ]);
+        }
+
+        foreach ($typeContacts as $type) {
+            DB::connection('tenant')->table('production.type_contacts')->insert([
+                'id' => $type->id,
+                'name' => $type->name,
+                'slug' => $type->slug,
+                'order' => $type->order,
+                'status' => $type->status,
+                'created_at' => $type->created_at,
+                'updated_at' => $type->updated_at,
+            ]);
+        }
+
+        foreach ($typeDocuments as $type) {
+            DB::connection('tenant')->table('production.type_documents')->insert([
+                'id' => $type->id,
+                'name' => $type->name,
+                'slug' => $type->slug,
+                'order' => $type->order,
+                'status' => $type->status,
+                'created_at' => $type->created_at,
+                'updated_at' => $type->updated_at,
+            ]);
+        }
+
+        foreach ($typeAddresses as $type) {
+            DB::connection('tenant')->table('production.type_addresses')->insert([
+                'id' => $type->id,
+                'name' => $type->name,
+                'slug' => $type->slug,
+                'order' => $type->order,
+                'status' => $type->status,
+                'created_at' => $type->created_at,
+                'updated_at' => $type->updated_at,
+            ]);
+        }
+    }
+
+    /**
+     * Replicate person and related data to tenant database
+     */
+    protected function replicatePersonToTenant(Tenant $tenant, Person $person): void
+    {
+        // Insert person (without tenant_id)
+        DB::connection('tenant')->table('production.people')->insert([
+            'id' => $person->id,
+            'first_name' => $person->first_name,
+            'surname' => $person->surname,
+            'order' => $person->order,
+            'status' => $person->status,
+            'created_at' => $person->created_at,
+            'updated_at' => $person->updated_at,
+        ]);
+
+        // Insert user
+        $user = User::where('person_id', $person->id)->first();
+        if ($user) {
+            DB::connection('tenant')->table('production.users')->insert([
+                'id' => $user->id,
+                'person_id' => $user->person_id,
+                'email' => $user->email,
+                'password' => $user->password,
+                'order' => $user->order,
+                'status' => $user->status,
+                'created_at' => $user->created_at,
+                'updated_at' => $user->updated_at,
+            ]);
+        }
+
+        // Get the 'people' module
+        $peopleModule = Module::where('slug', 'people')->first();
+        if (!$peopleModule) {
+            return;
+        }
+
+        // Insert contacts
+        $contacts = Contact::where('module_id', $peopleModule->id)
+            ->where('register_id', $person->id)
+            ->get();
+
+        foreach ($contacts as $contact) {
+            DB::connection('tenant')->table('production.contacts')->insert([
+                'id' => $contact->id,
+                'type_contact_id' => $contact->type_contact_id,
+                'module_id' => $contact->module_id,
+                'register_id' => $contact->register_id,
+                'value' => $contact->value,
+                'order' => $contact->order,
+                'status' => $contact->status,
+                'created_at' => $contact->created_at,
+                'updated_at' => $contact->updated_at,
+            ]);
+        }
+
+        // Insert documents
+        $documents = Document::where('module_id', $peopleModule->id)
+            ->where('register_id', $person->id)
+            ->get();
+
+        foreach ($documents as $document) {
+            DB::connection('tenant')->table('production.documents')->insert([
+                'id' => $document->id,
+                'type_document_id' => $document->type_document_id,
+                'module_id' => $document->module_id,
+                'register_id' => $document->register_id,
+                'value' => $document->value,
+                'order' => $document->order,
+                'status' => $document->status,
+                'created_at' => $document->created_at,
+                'updated_at' => $document->updated_at,
+            ]);
+        }
     }
 }

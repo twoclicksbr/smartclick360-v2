@@ -14,20 +14,25 @@ class File extends Model
     protected $connection = 'landlord';
 
     protected $fillable = [
-        'person_id',
-        'filename',
-        'original_filename',
+        'module_id',
+        'register_id',
+        'name',
         'path',
         'mime_type',
         'size',
+        'order',
+        'status',
     ];
 
     protected $casts = [
+        'register_id' => 'integer',
         'size' => 'integer',
+        'order' => 'integer',
+        'status' => 'boolean',
     ];
 
-    public function person(): BelongsTo
+    public function module(): BelongsTo
     {
-        return $this->belongsTo(Person::class);
+        return $this->belongsTo(Module::class);
     }
 }

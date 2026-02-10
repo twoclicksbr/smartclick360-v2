@@ -16,15 +16,15 @@ class Person extends Model
 
     protected $fillable = [
         'tenant_id',
-        'type',
-        'name',
-        'trade_name',
-        'email',
-        'is_active',
+        'first_name',
+        'surname',
+        'order',
+        'status',
     ];
 
     protected $casts = [
-        'is_active' => 'boolean',
+        'order' => 'integer',
+        'status' => 'boolean',
     ];
 
     public function tenant(): BelongsTo

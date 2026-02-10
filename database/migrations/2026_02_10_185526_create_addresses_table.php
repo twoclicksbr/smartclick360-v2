@@ -13,17 +13,19 @@ return new class extends Migration
     {
         Schema::connection('landlord')->create('addresses', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('person_id')->constrained('people')->onDelete('cascade');
-            $table->foreignId('type_address_id')->constrained('type_addresses')->onDelete('restrict');
-            $table->string('zipcode', 10);
-            $table->string('street', 255);
-            $table->string('number', 20);
-            $table->string('complement', 100)->nullable();
-            $table->string('neighborhood', 100);
-            $table->string('city', 100);
-            $table->string('state', 2);
-            $table->string('country', 2)->default('BR');
-            $table->boolean('is_primary')->default(false);
+            $table->foreignId('type_address_id')->constrained('type_addresses');
+            $table->foreignId('module_id')->constrained('modules');
+            $table->unsignedBigInteger('register_id');
+            $table->string('zip_code')->nullable();
+            $table->string('street')->nullable();
+            $table->string('number')->nullable();
+            $table->string('complement')->nullable();
+            $table->string('neighborhood')->nullable();
+            $table->string('city')->nullable();
+            $table->string('state')->nullable();
+            $table->string('country')->default('BR');
+            $table->integer('order')->default(0);
+            $table->boolean('status')->default(true);
             $table->timestamps();
             $table->softDeletes();
         });

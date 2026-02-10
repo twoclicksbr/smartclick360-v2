@@ -14,23 +14,27 @@ class Document extends Model
     protected $connection = 'landlord';
 
     protected $fillable = [
-        'person_id',
         'type_document_id',
+        'module_id',
+        'register_id',
         'value',
-        'is_primary',
+        'order',
+        'status',
     ];
 
     protected $casts = [
-        'is_primary' => 'boolean',
+        'register_id' => 'integer',
+        'order' => 'integer',
+        'status' => 'boolean',
     ];
-
-    public function person(): BelongsTo
-    {
-        return $this->belongsTo(Person::class);
-    }
 
     public function typeDocument(): BelongsTo
     {
-        return $this->belongsTo(TypeDocument::class);
+        return $this->belongsTo(TypeDocument::class, 'type_document_id');
+    }
+
+    public function module(): BelongsTo
+    {
+        return $this->belongsTo(Module::class);
     }
 }

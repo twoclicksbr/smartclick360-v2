@@ -13,19 +13,21 @@ class TypeDocument extends Model
 
     protected $connection = 'landlord';
 
+    protected $table = 'type_documents';
+
     protected $fillable = [
         'name',
-        'slug',
-        'icon',
-        'is_active',
+        'order',
+        'status',
     ];
 
     protected $casts = [
-        'is_active' => 'boolean',
+        'order' => 'integer',
+        'status' => 'boolean',
     ];
 
     public function documents(): HasMany
     {
-        return $this->hasMany(Document::class);
+        return $this->hasMany(Document::class, 'type_document_id');
     }
 }

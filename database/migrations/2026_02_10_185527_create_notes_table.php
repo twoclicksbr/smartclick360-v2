@@ -13,10 +13,11 @@ return new class extends Migration
     {
         Schema::connection('landlord')->create('notes', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('person_id')->constrained('people')->onDelete('cascade');
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->string('title', 255)->nullable();
+            $table->foreignId('module_id')->constrained('modules');
+            $table->unsignedBigInteger('register_id');
             $table->text('content');
+            $table->integer('order')->default(0);
+            $table->boolean('status')->default(true);
             $table->timestamps();
             $table->softDeletes();
         });

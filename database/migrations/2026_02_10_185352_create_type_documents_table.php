@@ -13,10 +13,9 @@ return new class extends Migration
     {
         Schema::connection('landlord')->create('type_documents', function (Blueprint $table) {
             $table->id();
-            $table->string('name', 50);
-            $table->string('slug', 50)->unique();
-            $table->string('icon', 50)->nullable();
-            $table->boolean('is_active')->default(true);
+            $table->string('name');
+            $table->integer('order')->default(0);
+            $table->boolean('status')->default(true);
             $table->timestamps();
             $table->softDeletes();
         });

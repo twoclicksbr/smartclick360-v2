@@ -16,37 +16,25 @@ class User extends Authenticatable
     protected $connection = 'landlord';
 
     protected $fillable = [
-        'tenant_id',
         'person_id',
         'email',
-        'email_verified_at',
         'password',
-        'is_active',
+        'order',
+        'status',
     ];
 
     protected $hidden = [
         'password',
-        'remember_token',
     ];
 
     protected $casts = [
-        'email_verified_at' => 'datetime',
         'password' => 'hashed',
-        'is_active' => 'boolean',
+        'order' => 'integer',
+        'status' => 'boolean',
     ];
-
-    public function tenant(): BelongsTo
-    {
-        return $this->belongsTo(Tenant::class);
-    }
 
     public function person(): BelongsTo
     {
         return $this->belongsTo(Person::class);
-    }
-
-    public function notes(): HasMany
-    {
-        return $this->hasMany(Note::class);
     }
 }

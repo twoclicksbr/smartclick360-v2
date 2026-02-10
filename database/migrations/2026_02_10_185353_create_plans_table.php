@@ -13,15 +13,15 @@ return new class extends Migration
     {
         Schema::connection('landlord')->create('plans', function (Blueprint $table) {
             $table->id();
-            $table->string('name', 100);
-            $table->string('slug', 100)->unique();
+            $table->string('name');
+            $table->string('slug')->unique();
             $table->text('description')->nullable();
             $table->decimal('price_monthly', 10, 2);
             $table->decimal('price_yearly', 10, 2);
-            $table->integer('max_users');
-            $table->integer('max_storage_gb');
-            $table->jsonb('features')->nullable();
-            $table->boolean('is_active')->default(true);
+            $table->json('features')->nullable();
+            $table->integer('max_users')->default(1);
+            $table->integer('order')->default(0);
+            $table->boolean('status')->default(true);
             $table->timestamps();
             $table->softDeletes();
         });

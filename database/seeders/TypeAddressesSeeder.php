@@ -13,10 +13,10 @@ class TypeAddressesSeeder extends Seeder
     public function run(): void
     {
         $types = [
-            ['name' => 'Residencial', 'slug' => 'home', 'icon' => 'ki-home', 'is_active' => true],
-            ['name' => 'Comercial', 'slug' => 'work', 'icon' => 'ki-office-bag', 'is_active' => true],
-            ['name' => 'Cobrança', 'slug' => 'billing', 'icon' => 'ki-bill', 'is_active' => true],
-            ['name' => 'Entrega', 'slug' => 'delivery', 'icon' => 'ki-delivery', 'is_active' => true],
+            ['name' => 'Residencial', 'order' => 0, 'status' => true],
+            ['name' => 'Comercial', 'order' => 1, 'status' => true],
+            ['name' => 'Cobrança', 'order' => 2, 'status' => true],
+            ['name' => 'Entrega', 'order' => 3, 'status' => true],
         ];
 
         foreach ($types as $type) {

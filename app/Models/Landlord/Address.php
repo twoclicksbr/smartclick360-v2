@@ -14,9 +14,10 @@ class Address extends Model
     protected $connection = 'landlord';
 
     protected $fillable = [
-        'person_id',
         'type_address_id',
-        'zipcode',
+        'module_id',
+        'register_id',
+        'zip_code',
         'street',
         'number',
         'complement',
@@ -24,20 +25,23 @@ class Address extends Model
         'city',
         'state',
         'country',
-        'is_primary',
+        'order',
+        'status',
     ];
 
     protected $casts = [
-        'is_primary' => 'boolean',
+        'register_id' => 'integer',
+        'order' => 'integer',
+        'status' => 'boolean',
     ];
-
-    public function person(): BelongsTo
-    {
-        return $this->belongsTo(Person::class);
-    }
 
     public function typeAddress(): BelongsTo
     {
-        return $this->belongsTo(TypeAddress::class);
+        return $this->belongsTo(TypeAddress::class, 'type_address_id');
+    }
+
+    public function module(): BelongsTo
+    {
+        return $this->belongsTo(Module::class);
     }
 }

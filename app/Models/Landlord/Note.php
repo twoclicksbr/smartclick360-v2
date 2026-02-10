@@ -14,19 +14,21 @@ class Note extends Model
     protected $connection = 'landlord';
 
     protected $fillable = [
-        'person_id',
-        'user_id',
-        'title',
+        'module_id',
+        'register_id',
         'content',
+        'order',
+        'status',
     ];
 
-    public function person(): BelongsTo
-    {
-        return $this->belongsTo(Person::class);
-    }
+    protected $casts = [
+        'register_id' => 'integer',
+        'order' => 'integer',
+        'status' => 'boolean',
+    ];
 
-    public function user(): BelongsTo
+    public function module(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Module::class);
     }
 }

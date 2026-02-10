@@ -13,12 +13,11 @@ return new class extends Migration
     {
         Schema::connection('landlord')->create('tenants', function (Blueprint $table) {
             $table->id();
-            $table->string('company_name', 255);
-            $table->string('slug', 63)->unique()->index();
-            $table->string('database_name', 63)->unique();
-            $table->string('domain', 255)->nullable()->unique();
-            $table->boolean('is_active')->default(true);
-            $table->timestamp('trial_ends_at')->nullable();
+            $table->string('name');
+            $table->string('slug')->unique();
+            $table->string('database_name')->unique();
+            $table->integer('order')->default(0);
+            $table->string('status')->default('active');
             $table->timestamps();
             $table->softDeletes();
         });

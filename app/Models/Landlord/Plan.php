@@ -19,19 +19,19 @@ class Plan extends Model
         'description',
         'price_monthly',
         'price_yearly',
-        'max_users',
-        'max_storage_gb',
         'features',
-        'is_active',
+        'max_users',
+        'order',
+        'status',
     ];
 
     protected $casts = [
         'price_monthly' => 'decimal:2',
         'price_yearly' => 'decimal:2',
-        'max_users' => 'integer',
-        'max_storage_gb' => 'integer',
         'features' => 'array',
-        'is_active' => 'boolean',
+        'max_users' => 'integer',
+        'order' => 'integer',
+        'status' => 'boolean',
     ];
 
     public function subscriptions(): HasMany

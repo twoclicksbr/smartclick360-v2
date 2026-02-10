@@ -13,12 +13,11 @@ return new class extends Migration
     {
         Schema::connection('landlord')->create('people', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id')->constrained('tenants')->onDelete('cascade');
-            $table->enum('type', ['person', 'company']);
-            $table->string('name', 255);
-            $table->string('trade_name', 255)->nullable();
-            $table->string('email', 255)->nullable()->index();
-            $table->boolean('is_active')->default(true);
+            $table->foreignId('tenant_id')->constrained('tenants');
+            $table->string('first_name');
+            $table->string('surname');
+            $table->integer('order')->default(0);
+            $table->boolean('status')->default(true);
             $table->timestamps();
             $table->softDeletes();
         });

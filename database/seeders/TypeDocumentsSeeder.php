@@ -13,11 +13,11 @@ class TypeDocumentsSeeder extends Seeder
     public function run(): void
     {
         $types = [
-            ['name' => 'CPF', 'slug' => 'cpf', 'icon' => 'ki-profile-user', 'is_active' => true],
-            ['name' => 'CNPJ', 'slug' => 'cnpj', 'icon' => 'ki-bank', 'is_active' => true],
-            ['name' => 'RG', 'slug' => 'rg', 'icon' => 'ki-badge', 'is_active' => true],
-            ['name' => 'CNH', 'slug' => 'cnh', 'icon' => 'ki-car', 'is_active' => true],
-            ['name' => 'Passaporte', 'slug' => 'passport', 'icon' => 'ki-passport', 'is_active' => true],
+            ['name' => 'CPF', 'order' => 0, 'status' => true],
+            ['name' => 'CNPJ', 'order' => 1, 'status' => true],
+            ['name' => 'RG', 'order' => 2, 'status' => true],
+            ['name' => 'CNH', 'order' => 3, 'status' => true],
+            ['name' => 'Passaporte', 'order' => 4, 'status' => true],
         ];
 
         foreach ($types as $type) {

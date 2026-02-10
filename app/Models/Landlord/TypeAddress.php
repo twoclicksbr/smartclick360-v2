@@ -13,19 +13,21 @@ class TypeAddress extends Model
 
     protected $connection = 'landlord';
 
+    protected $table = 'type_addresses';
+
     protected $fillable = [
         'name',
-        'slug',
-        'icon',
-        'is_active',
+        'order',
+        'status',
     ];
 
     protected $casts = [
-        'is_active' => 'boolean',
+        'order' => 'integer',
+        'status' => 'boolean',
     ];
 
     public function addresses(): HasMany
     {
-        return $this->hasMany(Address::class);
+        return $this->hasMany(Address::class, 'type_address_id');
     }
 }
