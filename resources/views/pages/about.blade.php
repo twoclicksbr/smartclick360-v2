@@ -1,11 +1,10 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>About - SmartClick360</title>
-</head>
-<body>
-    <h1>About</h1>
-</body>
-</html>
+@extends('layouts.landing')
+
+@section('title', 'About')
+
+@section('content')
+<div class="text-center">
+    <h1 class="display-1 fw-bold">About</h1>
+    <p class="fs-3 text-muted">Learn more about SmartClick360</p>
+</div>
+@endsection

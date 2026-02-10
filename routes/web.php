@@ -10,3 +10,8 @@ Route::get('/about', [PageController::class, 'about'])->name('about');
 Route::get('/pricing', [PageController::class, 'pricing'])->name('pricing');
 Route::get('/register', [RegisterController::class, 'showForm'])->name('register');
 Route::get('/login', [LoginController::class, 'showForm'])->name('login');
+
+// Teste do Dashboard (temporário)
+Route::get('/dashboard-test', function () {
+    return view('pages.dashboard-test');
+})->name('dashboard.test');
