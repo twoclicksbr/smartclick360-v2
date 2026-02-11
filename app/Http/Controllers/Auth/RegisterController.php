@@ -87,6 +87,10 @@ class RegisterController extends Controller
 
         $validated = $validator->validated();
 
+        // Remover máscaras dos campos antes de enviar para o service
+        $validated['phone'] = preg_replace('/\D/', '', $validated['phone']);
+        $validated['document'] = preg_replace('/\D/', '', $validated['document']);
+
         try {
             $tenantService = new TenantService();
             $tenant = $tenantService->createTenant($validated);
