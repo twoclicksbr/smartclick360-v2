@@ -4,6 +4,7 @@
     <meta name="description" content="SmartClick360° — ERP web completo para gestão da sua empresa. Controle vendas, compras, financeiro, estoque e muito mais em uma única plataforma." />
     <meta name="keywords" content="ERP, SaaS, gestão empresarial, controle de vendas, financeiro, estoque, compras, sistema para empresas, SmartClick360" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="csrf-token" content="{{ csrf_token() }}" />
     <meta name="theme-color" content="#d8842a" />
     <meta name="author" content="SmartClick360" />
 
@@ -31,6 +32,10 @@
     <link href="{{ asset('assets/plugins/global/plugins.bundle.css') }}" rel="stylesheet" type="text/css" />
     <link href="{{ asset('assets/css/style.bundle.css') }}" rel="stylesheet" type="text/css" />
     <!--end::Global Stylesheets Bundle-->
+
+    <!--begin::Custom Stylesheets-->
+    <link href="{{ asset('assets/css/custom.css') }}" rel="stylesheet" type="text/css" />
+    <!--end::Custom Stylesheets-->
 
     @stack('styles')
 </head>

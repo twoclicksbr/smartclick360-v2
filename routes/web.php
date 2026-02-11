@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LandlordLoginController;
 use App\Http\Controllers\Tenant\TenantController;
+use App\Http\Controllers\Tenant\PeopleController;
 use App\Http\Controllers\Landlord\TenantManagementController;
 
 /*
@@ -96,6 +97,10 @@ Route::domain('{slug}.smartclick360-v2.test')->middleware('identify.tenant')->gr
 
         // Configurações do Tenant
         Route::get('/settings', [TenantController::class, 'settings'])->name('tenant.settings');
+
+        // Pessoas
+        Route::get('/people', [PeopleController::class, 'index'])->name('tenant.people.index');
+        Route::post('/people/reorder', [PeopleController::class, 'reorder'])->name('tenant.people.reorder');
     });
 
 });
