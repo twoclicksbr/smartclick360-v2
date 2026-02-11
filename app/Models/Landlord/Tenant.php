@@ -2,14 +2,12 @@
 
 namespace App\Models\Landlord;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Tenant extends Model
 {
-    use HasFactory, SoftDeletes;
+    use SoftDeletes;
 
     protected $connection = 'landlord';
 
@@ -21,16 +19,12 @@ class Tenant extends Model
         'status',
     ];
 
-    protected $casts = [
-        'order' => 'integer',
-    ];
-
-    public function people(): HasMany
+    public function people()
     {
         return $this->hasMany(Person::class);
     }
 
-    public function subscriptions(): HasMany
+    public function subscriptions()
     {
         return $this->hasMany(Subscription::class);
     }

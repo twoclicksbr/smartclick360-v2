@@ -2,25 +2,20 @@
 
 namespace App\Models\Landlord;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Module extends Model
 {
-    use HasFactory, SoftDeletes;
+    use SoftDeletes;
 
     protected $connection = 'landlord';
 
     protected $fillable = [
         'name',
         'slug',
+        'type',
         'order',
         'status',
-    ];
-
-    protected $casts = [
-        'order' => 'integer',
-        'status' => 'boolean',
     ];
 }

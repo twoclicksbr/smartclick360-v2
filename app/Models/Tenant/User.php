@@ -2,17 +2,14 @@
 
 namespace App\Models\Tenant;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 
-class User extends Model
+class User extends Authenticatable
 {
-    use HasFactory, SoftDeletes;
+    use SoftDeletes;
 
     protected $connection = 'tenant';
-    protected $table = 'production.users';
 
     protected $fillable = [
         'person_id',
@@ -22,18 +19,18 @@ class User extends Model
         'status',
     ];
 
-    protected $casts = [
-        'person_id' => 'integer',
-        'order' => 'integer',
-        'status' => 'boolean',
-        'password' => 'hashed',
-    ];
-
     protected $hidden = [
         'password',
     ];
 
-    public function person(): BelongsTo
+    protected function casts(): array
+    {
+        return [
+            'password' => 'hashed',
+        ];
+    }
+
+    public function person()
     {
         return $this->belongsTo(Person::class);
     }

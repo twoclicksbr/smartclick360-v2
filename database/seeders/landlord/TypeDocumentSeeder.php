@@ -10,11 +10,12 @@ class TypeDocumentSeeder extends Seeder
     public function run(): void
     {
         $types = [
-            ['name' => 'CPF', 'order' => 1, 'status' => true],
-            ['name' => 'CNPJ', 'order' => 2, 'status' => true],
-            ['name' => 'RG', 'order' => 3, 'status' => true],
-            ['name' => 'IE', 'order' => 4, 'status' => true],
-            ['name' => 'IM', 'order' => 5, 'status' => true],
+            ['name' => 'CPF',      'mask' => '000.000.000-00',                                   'order' => 1],
+            ['name' => 'CNPJ',     'mask' => '00.000.000/0000-00',                                'order' => 2],
+            ['name' => 'CPF/CNPJ', 'mask' => '000.000.000-00|00.000.000/0000-00',                 'order' => 3],
+            ['name' => 'RG',       'mask' => null,                                                 'order' => 4],
+            ['name' => 'IE',       'mask' => null,                                                 'order' => 5],
+            ['name' => 'IM',       'mask' => null,                                                 'order' => 6],
         ];
 
         foreach ($types as $type) {

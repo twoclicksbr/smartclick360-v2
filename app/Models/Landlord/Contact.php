@@ -2,14 +2,12 @@
 
 namespace App\Models\Landlord;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Contact extends Model
 {
-    use HasFactory, SoftDeletes;
+    use SoftDeletes;
 
     protected $connection = 'landlord';
 
@@ -22,18 +20,12 @@ class Contact extends Model
         'status',
     ];
 
-    protected $casts = [
-        'register_id' => 'integer',
-        'order' => 'integer',
-        'status' => 'boolean',
-    ];
-
-    public function typeContact(): BelongsTo
+    public function typeContact()
     {
         return $this->belongsTo(TypeContact::class, 'type_contact_id');
     }
 
-    public function module(): BelongsTo
+    public function module()
     {
         return $this->belongsTo(Module::class);
     }

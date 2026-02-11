@@ -10,10 +10,10 @@ class TypeContactSeeder extends Seeder
     public function run(): void
     {
         $types = [
-            ['name' => 'Email', 'order' => 1, 'status' => true],
-            ['name' => 'WhatsApp', 'order' => 2, 'status' => true],
-            ['name' => 'Telefone', 'order' => 3, 'status' => true],
-            ['name' => 'Celular', 'order' => 4, 'status' => true],
+            ['name' => 'Email',     'mask' => null,                                    'order' => 1],
+            ['name' => 'WhatsApp',  'mask' => '(00) 00000-0000',                       'order' => 2],
+            ['name' => 'Telefone',  'mask' => '(00) 0000-0000|(00) 00000-0000',        'order' => 3],
+            ['name' => 'Celular',   'mask' => '(00) 00000-0000',                       'order' => 4],
         ];
 
         foreach ($types as $type) {

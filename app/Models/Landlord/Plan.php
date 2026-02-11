@@ -2,14 +2,12 @@
 
 namespace App\Models\Landlord;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Plan extends Model
 {
-    use HasFactory, SoftDeletes;
+    use SoftDeletes;
 
     protected $connection = 'landlord';
 
@@ -26,15 +24,10 @@ class Plan extends Model
     ];
 
     protected $casts = [
-        'price_monthly' => 'decimal:2',
-        'price_yearly' => 'decimal:2',
         'features' => 'array',
-        'max_users' => 'integer',
-        'order' => 'integer',
-        'status' => 'boolean',
     ];
 
-    public function subscriptions(): HasMany
+    public function subscriptions()
     {
         return $this->hasMany(Subscription::class);
     }

@@ -2,14 +2,12 @@
 
 namespace App\Models\Landlord;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Subscription extends Model
 {
-    use HasFactory, SoftDeletes;
+    use SoftDeletes;
 
     protected $connection = 'landlord';
 
@@ -26,24 +24,23 @@ class Subscription extends Model
 
     protected $casts = [
         'trial_ends_at' => 'datetime',
-        'starts_at' => 'datetime',
-        'ends_at' => 'datetime',
-        'order' => 'integer',
+        'starts_at'     => 'datetime',
+        'ends_at'       => 'datetime',
     ];
 
-    public function tenant(): BelongsTo
+    public function tenant()
     {
         return $this->belongsTo(Tenant::class);
     }
 
-    public function plan(): BelongsTo
+    public function plan()
     {
         return $this->belongsTo(Plan::class);
     }
 
     public function isOnTrial(): bool
     {
-        return $this->status === 'trial' && $this->trial_ends_at && $this->trial_ends_at->isFuture();
+        return $this->status === 'trial' && $this->trial_ends_at?->isFuture();
     }
 
     public function isActive(): bool
@@ -53,6 +50,6 @@ class Subscription extends Model
 
     public function isExpired(): bool
     {
-        return $this->status === 'expired' || ($this->ends_at && $this->ends_at->isPast());
+        return $this->status === 'cancelled' || ($this->ends_at && $this->ends_at->isPast());
     }
 }

@@ -2,16 +2,12 @@
 
 namespace App\Models\Landlord;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, SoftDeletes;
+    use SoftDeletes;
 
     protected $connection = 'landlord';
 
@@ -27,13 +23,14 @@ class User extends Authenticatable
         'password',
     ];
 
-    protected $casts = [
-        'password' => 'hashed',
-        'order' => 'integer',
-        'status' => 'boolean',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'password' => 'hashed',
+        ];
+    }
 
-    public function person(): BelongsTo
+    public function person()
     {
         return $this->belongsTo(Person::class);
     }

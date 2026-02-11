@@ -2,14 +2,12 @@
 
 namespace App\Models\Landlord;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Document extends Model
 {
-    use HasFactory, SoftDeletes;
+    use SoftDeletes;
 
     protected $connection = 'landlord';
 
@@ -18,22 +16,21 @@ class Document extends Model
         'module_id',
         'register_id',
         'value',
+        'expiration_date',
         'order',
         'status',
     ];
 
     protected $casts = [
-        'register_id' => 'integer',
-        'order' => 'integer',
-        'status' => 'boolean',
+        'expiration_date' => 'date',
     ];
 
-    public function typeDocument(): BelongsTo
+    public function typeDocument()
     {
         return $this->belongsTo(TypeDocument::class, 'type_document_id');
     }
 
-    public function module(): BelongsTo
+    public function module()
     {
         return $this->belongsTo(Module::class);
     }

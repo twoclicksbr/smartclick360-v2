@@ -2,14 +2,12 @@
 
 namespace App\Models\Landlord;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Address extends Model
 {
-    use HasFactory, SoftDeletes;
+    use SoftDeletes;
 
     protected $connection = 'landlord';
 
@@ -17,6 +15,7 @@ class Address extends Model
         'type_address_id',
         'module_id',
         'register_id',
+        'is_main',
         'zip_code',
         'street',
         'number',
@@ -30,17 +29,15 @@ class Address extends Model
     ];
 
     protected $casts = [
-        'register_id' => 'integer',
-        'order' => 'integer',
-        'status' => 'boolean',
+        'is_main' => 'boolean',
     ];
 
-    public function typeAddress(): BelongsTo
+    public function typeAddress()
     {
         return $this->belongsTo(TypeAddress::class, 'type_address_id');
     }
 
-    public function module(): BelongsTo
+    public function module()
     {
         return $this->belongsTo(Module::class);
     }

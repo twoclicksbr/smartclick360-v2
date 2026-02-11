@@ -2,17 +2,14 @@
 
 namespace App\Models\Tenant;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Contact extends Model
 {
-    use HasFactory, SoftDeletes;
+    use SoftDeletes;
 
     protected $connection = 'tenant';
-    protected $table = 'production.contacts';
 
     protected $fillable = [
         'type_contact_id',
@@ -23,20 +20,12 @@ class Contact extends Model
         'status',
     ];
 
-    protected $casts = [
-        'type_contact_id' => 'integer',
-        'module_id' => 'integer',
-        'register_id' => 'integer',
-        'order' => 'integer',
-        'status' => 'boolean',
-    ];
-
-    public function typeContact(): BelongsTo
+    public function typeContact()
     {
-        return $this->belongsTo(TypeContact::class);
+        return $this->belongsTo(TypeContact::class, 'type_contact_id');
     }
 
-    public function module(): BelongsTo
+    public function module()
     {
         return $this->belongsTo(Module::class);
     }
