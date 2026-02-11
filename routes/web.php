@@ -10,6 +10,9 @@ Route::get('/about', [PageController::class, 'about'])->name('about');
 Route::get('/pricing', [PageController::class, 'pricing'])->name('pricing');
 Route::get('/register', [RegisterController::class, 'showForm'])->name('register');
 Route::post('/register', [RegisterController::class, 'store'])->name('register.store');
+Route::post('/check-slug', [RegisterController::class, 'checkSlug'])->name('register.checkSlug');
+Route::post('/check-email', [RegisterController::class, 'checkEmail'])->name('register.checkEmail');
+Route::post('/check-document', [RegisterController::class, 'checkDocument'])->name('register.checkDocument');
 Route::get('/login', [LoginController::class, 'showForm'])->name('login');
 
 // Teste do Dashboard (temporário)

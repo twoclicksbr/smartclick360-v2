@@ -5,68 +5,99 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Services\TenantService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class RegisterController extends Controller
 {
-    protected $tenantService;
-
-    public function __construct(TenantService $tenantService)
-    {
-        $this->tenantService = $tenantService;
-    }
-
     public function showForm()
     {
         return view('auth.register');
     }
 
+    public function checkSlug(Request $request)
+    {
+        $request->validate(['slug' => 'required|string|max:63']);
+
+        $exists = \App\Models\Landlord\Tenant::where('slug', $request->slug)->exists();
+
+        return response()->json([
+            'available' => !$exists,
+            'message' => $exists ? 'Este subdomínio já está em uso.' : 'Subdomínio disponível!',
+        ]);
+    }
+
+    public function checkEmail(Request $request)
+    {
+        $request->validate(['email' => 'required|email|max:255']);
+
+        $exists = \App\Models\Landlord\User::where('email', $request->email)->exists();
+
+        return response()->json([
+            'available' => !$exists,
+            'message' => $exists ? 'Este email já está em uso.' : 'Email disponível!',
+        ]);
+    }
+
+    public function checkDocument(Request $request)
+    {
+        $request->validate(['document' => 'required|string|max:18']);
+
+        $documentClean = preg_replace('/\D/', '', $request->document);
+
+        $exists = \App\Models\Landlord\Document::where('value', $documentClean)->exists();
+
+        return response()->json([
+            'available' => !$exists,
+            'message' => $exists ? 'Este CPF/CNPJ já está cadastrado.' : 'CPF/CNPJ disponível!',
+        ]);
+    }
+
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'company_name' => 'required|string|max:255',
-            'slug'         => 'required|string|max:63|regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/|unique:tenants,slug',
-            'email'        => 'required|email|max:255|unique:users,email',
-            'password'     => 'required|string|min:8',
-            'first_name'   => 'required|string|max:255',
-            'surname'      => 'required|string|max:255',
-            'whatsapp'     => 'required|string|max:20',
-            'cpf_cnpj'     => 'required|string|max:18',
-            'plan'         => 'required|in:starter,professional,enterprise',
-            'billing_cycle'=> 'required|in:monthly,yearly',
-        ], [
-            'company_name.required' => 'O nome da empresa é obrigatório.',
-            'slug.required'         => 'O slug é obrigatório.',
-            'slug.regex'            => 'O slug contém caracteres inválidos.',
-            'slug.unique'           => 'Este slug já está em uso.',
-            'email.required'        => 'O email é obrigatório.',
-            'email.email'           => 'O email deve ser válido.',
-            'email.unique'          => 'Este email já está cadastrado.',
-            'password.required'     => 'A senha é obrigatória.',
-            'password.min'          => 'A senha deve ter no mínimo 8 caracteres.',
-            'first_name.required'   => 'O nome é obrigatório.',
-            'surname.required'      => 'O sobrenome é obrigatório.',
-            'whatsapp.required'     => 'O WhatsApp é obrigatório.',
-            'cpf_cnpj.required'     => 'O CPF/CNPJ é obrigatório.',
-            'plan.required'         => 'Selecione um plano.',
-            'billing_cycle.required'=> 'Selecione o ciclo de cobrança.',
+        // Criar validador manual
+        $validator = Validator::make($request->all(), [
+            'first_name'    => 'required|string|max:255',
+            'surname'       => 'required|string|max:255',
+            'email'         => 'required|email|max:255|unique:users,email',
+            'phone'         => 'required|string|max:20',
+            'document'      => 'required|string|max:18',
+            'company_name'  => 'required|string|max:255',
+            'slug'          => 'required|string|max:63|regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/|unique:tenants,slug',
+            'password'      => 'required|string|min:8|confirmed',
+            'plan'          => 'required|in:starter,professional,enterprise',
+            'billing_cycle' => 'required|in:monthly,yearly',
         ]);
 
+        // Adicionar validação customizada do documento (CPF/CNPJ)
+        $validator->after(function ($validator) use ($request) {
+            $documentClean = preg_replace('/\D/', '', $request->document);
+            $documentExists = \App\Models\Landlord\Document::where('value', $documentClean)->exists();
+
+            if ($documentExists) {
+                $validator->errors()->add('document', 'Este CPF/CNPJ já está cadastrado.');
+            }
+        });
+
+        // Se houver erros, retorna com os erros
+        if ($validator->fails()) {
+            return back()
+                ->withInput($request->except('password', 'password_confirmation'))
+                ->withErrors($validator);
+        }
+
+        $validated = $validator->validated();
+
         try {
-            // Create tenant and all related data
-            $tenant = $this->tenantService->create($validated);
+            $tenantService = new TenantService();
+            $tenant = $tenantService->createTenant($validated);
 
-            // Redirect to login with success message
-            return redirect()->route('login')->with('success',
-                'Conta criada com sucesso! Você tem 15 dias de trial gratuito. Faça login para começar.'
-            );
+            return redirect("http://{$tenant->slug}.smartclick360-v2.test/login")
+                ->with('success', 'Conta criada com sucesso! Faça login para continuar.');
+
         } catch (\Exception $e) {
-            // Log the error
-            \Log::error('Tenant creation failed: ' . $e->getMessage());
-
-            // Redirect back with error
-            return back()->withInput()->withErrors([
-                'error' => 'Ocorreu um erro ao criar sua conta. Por favor, tente novamente.'
-            ]);
+            return back()
+                ->withInput($request->except('password', 'password_confirmation'))
+                ->with('error', 'Erro ao criar conta: ' . $e->getMessage());
         }
     }
 }

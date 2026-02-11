@@ -40,6 +40,16 @@
                             <label class="form-label fw-semibold text-gray-900 fs-6">Subdomínio (slug)</label>
                             <input type="text" placeholder="seu-slug" name="slug" id="slug" autocomplete="off" class="form-control bg-transparent @error('slug') is-invalid @enderror" value="{{ old('slug') }}" required />
                             <div class="form-text">Seu site será: <strong id="slug-preview">seu-slug.smartclick360.com</strong></div>
+                            <!--begin::Slug Availability Indicator-->
+                            <div class="d-none mt-2" id="slug_availability_indicator">
+                                <div class="d-flex align-items-center">
+                                    <i class="ki-outline ki-check-circle fs-3 text-success me-2 d-none" id="slug_available_icon"></i>
+                                    <i class="ki-outline ki-cross-circle fs-3 text-danger me-2 d-none" id="slug_unavailable_icon"></i>
+                                    <span class="spinner-border spinner-border-sm text-primary me-2 d-none" id="slug_checking_icon"></span>
+                                    <span class="fs-7" id="slug_availability_text"></span>
+                                </div>
+                            </div>
+                            <!--end::Slug Availability Indicator-->
                             @error('slug')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -79,20 +89,30 @@
 
                     <!--begin::Row-->
                     <div class="row g-4 mb-8">
-                        <!--begin::Col - WhatsApp-->
+                        <!--begin::Col - Phone-->
                         <div class="col-md-6">
                             <label class="form-label fw-semibold text-gray-900 fs-6">WhatsApp</label>
-                            <input type="text" placeholder="(00) 00000-0000" name="whatsapp" id="whatsapp" autocomplete="off" class="form-control bg-transparent @error('whatsapp') is-invalid @enderror" value="{{ old('whatsapp') }}" required />
-                            @error('whatsapp')
+                            <input type="text" placeholder="(00) 00000-0000" name="phone" id="phone" autocomplete="off" class="form-control bg-transparent @error('phone') is-invalid @enderror" value="{{ old('phone') }}" required />
+                            @error('phone')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
                         <!--end::Col-->
-                        <!--begin::Col - CPF/CNPJ-->
+                        <!--begin::Col - Document-->
                         <div class="col-md-6">
                             <label class="form-label fw-semibold text-gray-900 fs-6">CPF/CNPJ</label>
-                            <input type="text" placeholder="000.000.000-00 ou 00.000.000/0000-00" name="cpf_cnpj" id="cpf_cnpj" autocomplete="off" class="form-control bg-transparent @error('cpf_cnpj') is-invalid @enderror" value="{{ old('cpf_cnpj') }}" required />
-                            @error('cpf_cnpj')
+                            <input type="text" placeholder="000.000.000-00 ou 00.000.000/0000-00" name="document" id="document" autocomplete="off" class="form-control bg-transparent @error('document') is-invalid @enderror" value="{{ old('document') }}" required />
+                            <!--begin::Document Availability Indicator-->
+                            <div class="d-none mt-2" id="document_availability_indicator">
+                                <div class="d-flex align-items-center">
+                                    <i class="ki-outline ki-check-circle fs-3 text-success me-2 d-none" id="document_available_icon"></i>
+                                    <i class="ki-outline ki-cross-circle fs-3 text-danger me-2 d-none" id="document_unavailable_icon"></i>
+                                    <span class="spinner-border spinner-border-sm text-primary me-2 d-none" id="document_checking_icon"></span>
+                                    <span class="fs-7" id="document_availability_text"></span>
+                                </div>
+                            </div>
+                            <!--end::Document Availability Indicator-->
+                            @error('document')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
@@ -106,24 +126,38 @@
                 <div class="mb-10">
                     <h3 class="text-gray-800 fw-bold mb-6">Dados de Acesso</h3>
 
-                    <!--begin::Row-->
+                    <!--begin::Row - Email-->
                     <div class="row g-4 mb-8">
                         <!--begin::Col - Email-->
-                        <div class="col-12 col-md-6">
+                        <div class="col-12">
                             <label class="form-label fw-semibold text-gray-900 fs-6">Email</label>
-                            <input type="email" placeholder="seu@email.com" name="email" autocomplete="off" class="form-control bg-transparent @error('email') is-invalid @enderror" value="{{ old('email') }}" required />
+                            <input type="email" placeholder="seu@email.com" name="email" id="email" autocomplete="off" class="form-control bg-transparent @error('email') is-invalid @enderror" value="{{ old('email') }}" required />
+                            <!--begin::Email Availability Indicator-->
+                            <div class="d-none mt-2" id="email_availability_indicator">
+                                <div class="d-flex align-items-center">
+                                    <i class="ki-outline ki-check-circle fs-3 text-success me-2 d-none" id="email_available_icon"></i>
+                                    <i class="ki-outline ki-cross-circle fs-3 text-danger me-2 d-none" id="email_unavailable_icon"></i>
+                                    <span class="spinner-border spinner-border-sm text-primary me-2 d-none" id="email_checking_icon"></span>
+                                    <span class="fs-7" id="email_availability_text"></span>
+                                </div>
+                            </div>
+                            <!--end::Email Availability Indicator-->
                             @error('email')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
                         <!--end::Col-->
+                    </div>
+                    <!--end::Row-->
 
+                    <!--begin::Row - Senhas-->
+                    <div class="row g-4 mb-8">
                         <!--begin::Col - Password-->
                         <div class="col-12 col-md-6" data-kt-password-meter="true">
                             <div class="mb-1">
                                 <label class="form-label fw-semibold text-gray-900 fs-6">Senha</label>
                                 <div class="position-relative mb-3">
-                                    <input class="form-control bg-transparent @error('password') is-invalid @enderror" type="password" placeholder="Digite sua senha" name="password" id="password" autocomplete="off" required />
+                                    <input class="form-control bg-transparent" type="password" placeholder="Digite sua senha" name="password" id="password" autocomplete="off" required />
                                     <span class="btn btn-sm btn-icon position-absolute translate-middle top-50 end-0 me-n2" data-kt-password-meter-control="visibility">
                                         <i class="ki-outline ki-eye-slash fs-2"></i>
                                         <i class="ki-outline ki-eye fs-2 d-none"></i>
@@ -139,8 +173,30 @@
                                 <!--end::Meter-->
                             </div>
                             <div class="text-muted">Use 8 ou mais caracteres com letras, números e símbolos.</div>
+                        </div>
+                        <!--end::Col-->
+
+                        <!--begin::Col - Password Confirmation-->
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold text-gray-900 fs-6">Confirmar Senha</label>
+                            <div class="position-relative mb-3">
+                                <input class="form-control bg-transparent" type="password" placeholder="Confirme sua senha" name="password_confirmation" id="password_confirmation" autocomplete="off" required />
+                                <span class="btn btn-sm btn-icon position-absolute translate-middle top-50 end-0 me-n2" id="toggle_password_confirmation">
+                                    <i class="ki-outline ki-eye-slash fs-2" id="icon_hide_confirmation"></i>
+                                    <i class="ki-outline ki-eye fs-2 d-none" id="icon_show_confirmation"></i>
+                                </span>
+                            </div>
+                            <!--begin::Match Indicator-->
+                            <div class="d-none" id="password_match_indicator">
+                                <div class="d-flex align-items-center">
+                                    <i class="ki-outline ki-check-circle fs-2 text-success me-2" id="match_icon"></i>
+                                    <i class="ki-outline ki-cross-circle fs-2 text-danger me-2 d-none" id="mismatch_icon"></i>
+                                    <span class="text-muted fs-7" id="match_text"></span>
+                                </div>
+                            </div>
+                            <!--end::Match Indicator-->
                             @error('password')
-                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                                <div class="text-danger fs-7 mt-2">{{ $message }}</div>
                             @enderror
                         </div>
                         <!--end::Col-->
@@ -282,27 +338,80 @@
 <script>
 "use strict";
 
+console.log('Register form script loaded');
+
+// ========================================
+// Limpar erros de validação do servidor quando o usuário começar a digitar
+// ========================================
+function clearServerValidationErrors() {
+    const form = document.getElementById('kt_sign_up_form');
+    if (!form) return;
+
+    // Seleciona todos os inputs, selects e textareas do formulário
+    const fields = form.querySelectorAll('input, select, textarea');
+
+    fields.forEach(field => {
+        field.addEventListener('input', function() {
+            // Remove a classe is-invalid do campo
+            this.classList.remove('is-invalid');
+
+            // Encontra o container mais próximo - qualquer elemento com classe que contenha "col-"
+            let container = this.closest('[class*="col-"]');
+
+            if (container) {
+                // Procura e esconde todas as mensagens de erro dentro do container
+                // .invalid-feedback são sempre mensagens de erro do Laravel
+                const invalidFeedbacks = container.querySelectorAll('.invalid-feedback');
+                invalidFeedbacks.forEach(msg => {
+                    msg.style.display = 'none';
+                });
+
+                // .text-danger também são mensagens de erro (usado no campo de senha)
+                // Procura por qualquer div com classe text-danger que tenha fs-7 e mt-2
+                const dangerMessages = container.querySelectorAll('div.text-danger.fs-7.mt-2');
+                dangerMessages.forEach(msg => {
+                    msg.style.display = 'none';
+                });
+            }
+        });
+    });
+}
+
+// Inicializa a limpeza de erros quando o DOM estiver pronto
+clearServerValidationErrors();
+
 // Geração automática do slug
 let slugManuallyEdited = false;
 
-document.getElementById('company_name').addEventListener('input', function(e) {
-    if (!slugManuallyEdited) {
-        const slug = generateSlug(e.target.value);
-        document.getElementById('slug').value = slug;
-        updateSlugPreview(slug);
-    }
-});
+const companyNameEl = document.getElementById('company_name');
+const slugEl = document.getElementById('slug');
 
-document.getElementById('slug').addEventListener('input', function(e) {
-    slugManuallyEdited = e.target.value !== '';
-    if (!slugManuallyEdited) {
-        // Se limpar o slug, volta a gerar automaticamente
-        const companyName = document.getElementById('company_name').value;
-        const slug = generateSlug(companyName);
-        e.target.value = slug;
-    }
-    updateSlugPreview(e.target.value);
-});
+if (companyNameEl && slugEl) {
+    console.log('Company name and slug elements found');
+
+    companyNameEl.addEventListener('input', function(e) {
+        if (!slugManuallyEdited) {
+            const slug = generateSlug(e.target.value);
+            slugEl.value = slug;
+            updateSlugPreview(slug);
+            checkSlugAvailability(slug);
+        }
+    });
+
+    slugEl.addEventListener('input', function(e) {
+        slugManuallyEdited = e.target.value !== '';
+        if (!slugManuallyEdited) {
+            // Se limpar o slug, volta a gerar automaticamente
+            const companyName = companyNameEl.value;
+            const slug = generateSlug(companyName);
+            e.target.value = slug;
+        }
+        updateSlugPreview(e.target.value);
+        checkSlugAvailability(e.target.value);
+    });
+} else {
+    console.error('Company name or slug element not found');
+}
 
 function generateSlug(text) {
     return text
@@ -320,18 +429,298 @@ function updateSlugPreview(slug) {
         (slug || 'seu-slug') + '.smartclick360.com';
 }
 
+// Validação de disponibilidade do slug em tempo real
+const slugAvailabilityIndicator = document.getElementById('slug_availability_indicator');
+const slugAvailableIcon = document.getElementById('slug_available_icon');
+const slugUnavailableIcon = document.getElementById('slug_unavailable_icon');
+const slugCheckingIcon = document.getElementById('slug_checking_icon');
+const slugAvailabilityText = document.getElementById('slug_availability_text');
+let slugCheckTimeout;
+
+function checkSlugAvailability(slug) {
+    // Limpa timeout anterior
+    clearTimeout(slugCheckTimeout);
+
+    // Se o slug estiver vazio ou inválido, esconde o indicador
+    const slugRegex = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+    if (!slug || slug.length < 3 || !slugRegex.test(slug)) {
+        slugAvailabilityIndicator.classList.add('d-none');
+        return;
+    }
+
+    // Mostra "Verificando..." imediatamente
+    slugAvailabilityIndicator.classList.remove('d-none');
+    slugAvailableIcon.classList.add('d-none');
+    slugUnavailableIcon.classList.add('d-none');
+    slugCheckingIcon.classList.remove('d-none');
+    slugAvailabilityText.textContent = 'Verificando...';
+    slugAvailabilityText.className = 'fs-7 text-muted';
+
+    // Debounce de 500ms
+    slugCheckTimeout = setTimeout(() => {
+        fetch('{{ route('register.checkSlug') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({ slug: slug })
+        })
+        .then(response => response.json())
+        .then(data => {
+            slugCheckingIcon.classList.add('d-none');
+
+            if (data.available) {
+                // Slug disponível
+                slugAvailableIcon.classList.remove('d-none');
+                slugUnavailableIcon.classList.add('d-none');
+                slugAvailabilityText.textContent = data.message;
+                slugAvailabilityText.className = 'fs-7 text-success fw-semibold';
+
+                // Remove erro do servidor se existir
+                const slugInput = document.getElementById('slug');
+                if (slugInput) {
+                    slugInput.classList.remove('is-invalid');
+                    const errorDiv = slugInput.parentElement.querySelector('.invalid-feedback');
+                    if (errorDiv) errorDiv.style.display = 'none';
+                }
+            } else {
+                // Slug indisponível
+                slugAvailableIcon.classList.add('d-none');
+                slugUnavailableIcon.classList.remove('d-none');
+                slugAvailabilityText.textContent = data.message;
+                slugAvailabilityText.className = 'fs-7 text-danger fw-semibold';
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao verificar slug:', error);
+            slugCheckingIcon.classList.add('d-none');
+            slugAvailabilityIndicator.classList.add('d-none');
+        });
+    }, 500);
+}
+
+// Validação de disponibilidade do email em tempo real
+const emailAvailabilityIndicator = document.getElementById('email_availability_indicator');
+const emailAvailableIcon = document.getElementById('email_available_icon');
+const emailUnavailableIcon = document.getElementById('email_unavailable_icon');
+const emailCheckingIcon = document.getElementById('email_checking_icon');
+const emailAvailabilityText = document.getElementById('email_availability_text');
+let emailCheckTimeout;
+
+function checkEmailAvailability(email) {
+    // Limpa timeout anterior
+    clearTimeout(emailCheckTimeout);
+
+    // Validação básica de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+        emailAvailabilityIndicator.classList.add('d-none');
+        return;
+    }
+
+    // Mostra "Verificando..." imediatamente
+    emailAvailabilityIndicator.classList.remove('d-none');
+    emailAvailableIcon.classList.add('d-none');
+    emailUnavailableIcon.classList.add('d-none');
+    emailCheckingIcon.classList.remove('d-none');
+    emailAvailabilityText.textContent = 'Verificando...';
+    emailAvailabilityText.className = 'fs-7 text-muted';
+
+    // Debounce de 500ms
+    emailCheckTimeout = setTimeout(() => {
+        fetch('{{ route('register.checkEmail') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({ email: email })
+        })
+        .then(response => response.json())
+        .then(data => {
+            emailCheckingIcon.classList.add('d-none');
+
+            if (data.available) {
+                // Email disponível
+                emailAvailableIcon.classList.remove('d-none');
+                emailUnavailableIcon.classList.add('d-none');
+                emailAvailabilityText.textContent = data.message;
+                emailAvailabilityText.className = 'fs-7 text-success fw-semibold';
+
+                // Remove erro do servidor se existir
+                const emailInput = document.getElementById('email');
+                if (emailInput) {
+                    emailInput.classList.remove('is-invalid');
+                    const errorDiv = emailInput.parentElement.querySelector('.invalid-feedback');
+                    if (errorDiv) errorDiv.style.display = 'none';
+                }
+            } else {
+                // Email já cadastrado
+                emailAvailableIcon.classList.add('d-none');
+                emailUnavailableIcon.classList.remove('d-none');
+                emailAvailabilityText.textContent = data.message;
+                emailAvailabilityText.className = 'fs-7 text-danger fw-semibold';
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao verificar email:', error);
+            emailCheckingIcon.classList.add('d-none');
+            emailAvailabilityIndicator.classList.add('d-none');
+        });
+    }, 500);
+}
+
+// Validação de disponibilidade do CPF/CNPJ em tempo real
+const documentAvailabilityIndicator = document.getElementById('document_availability_indicator');
+const documentAvailableIcon = document.getElementById('document_available_icon');
+const documentUnavailableIcon = document.getElementById('document_unavailable_icon');
+const documentCheckingIcon = document.getElementById('document_checking_icon');
+const documentAvailabilityText = document.getElementById('document_availability_text');
+let documentCheckTimeout;
+
+function checkDocumentAvailability(document) {
+    // Limpa timeout anterior
+    clearTimeout(documentCheckTimeout);
+
+    // Remove caracteres não numéricos para validar o tamanho
+    const documentClean = document.replace(/\D/g, '');
+
+    // Se o documento estiver vazio ou com tamanho inválido, esconde o indicador
+    if (!documentClean || (documentClean.length !== 11 && documentClean.length !== 14)) {
+        documentAvailabilityIndicator.classList.add('d-none');
+        return;
+    }
+
+    // Mostra "Verificando..." imediatamente
+    documentAvailabilityIndicator.classList.remove('d-none');
+    documentAvailableIcon.classList.add('d-none');
+    documentUnavailableIcon.classList.add('d-none');
+    documentCheckingIcon.classList.remove('d-none');
+    documentAvailabilityText.textContent = 'Verificando...';
+    documentAvailabilityText.className = 'fs-7 text-muted';
+
+    // Debounce de 500ms
+    documentCheckTimeout = setTimeout(() => {
+        fetch('{{ route('register.checkDocument') }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+            },
+            body: JSON.stringify({ document: documentClean })
+        })
+        .then(response => response.json())
+        .then(data => {
+            documentCheckingIcon.classList.add('d-none');
+
+            if (data.available) {
+                // Documento disponível
+                documentAvailableIcon.classList.remove('d-none');
+                documentUnavailableIcon.classList.add('d-none');
+                documentAvailabilityText.textContent = data.message;
+                documentAvailabilityText.className = 'fs-7 text-success fw-semibold';
+
+                // Remove erro do servidor se existir
+                const documentInput = document.getElementById('document');
+                if (documentInput) {
+                    documentInput.classList.remove('is-invalid');
+                    const errorDiv = documentInput.parentElement.querySelector('.invalid-feedback');
+                    if (errorDiv) errorDiv.style.display = 'none';
+                }
+            } else {
+                // Documento já cadastrado
+                documentAvailableIcon.classList.add('d-none');
+                documentUnavailableIcon.classList.remove('d-none');
+                documentAvailabilityText.textContent = data.message;
+                documentAvailabilityText.className = 'fs-7 text-danger fw-semibold';
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao verificar CPF/CNPJ:', error);
+            documentCheckingIcon.classList.add('d-none');
+            documentAvailabilityIndicator.classList.add('d-none');
+        });
+    }, 500);
+}
+
 // Máscaras de input usando Inputmask (já incluído no plugins.bundle.js)
 if (typeof Inputmask !== 'undefined') {
-    // Máscara de WhatsApp
-    Inputmask({
-        "mask": "(99) 99999-9999"
-    }).mask("#whatsapp");
+    console.log('Inputmask library found, applying masks...');
 
-    // Máscara de CPF/CNPJ (auto-detecta)
-    Inputmask({
-        "mask": ["999.999.999-99", "99.999.999/9999-99"],
-        "keepStatic": true
-    }).mask("#cpf_cnpj");
+    const phoneEl = document.getElementById('phone');
+    const documentEl = document.getElementById('document');
+
+    if (phoneEl) {
+        // Máscara de WhatsApp/Phone
+        Inputmask({
+            "mask": "(99) 99999-9999"
+        }).mask(phoneEl);
+        console.log('Phone mask applied');
+    } else {
+        console.error('Phone element not found');
+    }
+
+    if (documentEl) {
+        // Máscara de CPF/CNPJ (auto-detecta)
+        Inputmask({
+            "mask": ["999.999.999-99", "99.999.999/9999-99"],
+            "keepStatic": true
+        }).mask(documentEl);
+        console.log('Document mask applied');
+    } else {
+        console.error('Document element not found');
+    }
+} else {
+    console.error('Inputmask library not found');
+}
+
+// Event listeners para validação do email
+const emailInputEl = document.getElementById('email');
+
+if (emailInputEl) {
+    console.log('Adding email validation listeners');
+
+    // Valida quando o campo perde o foco (blur)
+    emailInputEl.addEventListener('blur', function(e) {
+        checkEmailAvailability(e.target.value);
+    });
+
+    // Valida em tempo real quando digita
+    emailInputEl.addEventListener('input', function(e) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (emailRegex.test(e.target.value)) {
+            checkEmailAvailability(e.target.value);
+        }
+    });
+} else {
+    console.error('Email input element not found for validation listeners');
+}
+
+// Event listeners para validação do documento (CPF/CNPJ)
+const documentInputEl = document.getElementById('document');
+
+if (documentInputEl) {
+    console.log('Adding document validation listeners');
+
+    // Valida quando o campo perde o foco (blur)
+    documentInputEl.addEventListener('blur', function(e) {
+        checkDocumentAvailability(e.target.value);
+    });
+
+    // Valida quando a máscara estiver completa (input event)
+    documentInputEl.addEventListener('input', function(e) {
+        const documentClean = e.target.value.replace(/\D/g, '');
+        // CPF tem 11 dígitos, CNPJ tem 14 dígitos
+        if (documentClean.length === 11 || documentClean.length === 14) {
+            checkDocumentAvailability(e.target.value);
+        }
+    });
+} else {
+    console.error('Document input element not found for validation listeners');
 }
 
 // Seleção de plano
@@ -377,6 +766,18 @@ const form = document.getElementById('kt_sign_up_form');
 const submitButton = document.getElementById('kt_sign_up_submit');
 
 form.addEventListener('submit', function(e) {
+    // Remove máscaras antes de enviar (gravar apenas números no banco)
+    const phoneInput = document.getElementById('phone');
+    const documentInput = document.getElementById('document');
+
+    if (phoneInput) {
+        phoneInput.value = phoneInput.value.replace(/\D/g, ''); // Remove tudo exceto números
+    }
+
+    if (documentInput) {
+        documentInput.value = documentInput.value.replace(/\D/g, ''); // Remove tudo exceto números
+    }
+
     let isValid = true;
     const errors = [];
 
@@ -388,8 +789,8 @@ form.addEventListener('submit', function(e) {
         { id: 'password', name: 'Senha' },
         { id: 'first_name', name: 'Nome' },
         { id: 'surname', name: 'Sobrenome' },
-        { id: 'whatsapp', name: 'WhatsApp' },
-        { id: 'cpf_cnpj', name: 'CPF/CNPJ' }
+        { id: 'phone', name: 'WhatsApp' },
+        { id: 'document', name: 'CPF/CNPJ' }
     ];
 
     requiredFields.forEach(field => {
@@ -421,12 +822,14 @@ form.addEventListener('submit', function(e) {
     }
 
     // Validar CPF/CNPJ (tamanho)
-    const cpfCnpjInput = document.getElementById('cpf_cnpj');
-    const cpfCnpjClean = cpfCnpjInput.value.replace(/\D/g, '');
-    if (cpfCnpjClean && cpfCnpjClean.length !== 11 && cpfCnpjClean.length !== 14) {
-        isValid = false;
-        errors.push('CPF/CNPJ inválido');
-        cpfCnpjInput.classList.add('is-invalid');
+    const documentInputValidation = document.getElementById('document');
+    if (documentInputValidation) {
+        const documentClean = documentInputValidation.value.replace(/\D/g, '');
+        if (documentClean && documentClean.length !== 11 && documentClean.length !== 14) {
+            isValid = false;
+            errors.push('CPF/CNPJ inválido');
+            documentInputValidation.classList.add('is-invalid');
+        }
     }
 
     // Validar slug
@@ -451,7 +854,87 @@ form.addEventListener('submit', function(e) {
 
 // Password strength meter (já incluído no Metronic)
 if (typeof KTPasswordMeter !== 'undefined') {
+    console.log('KTPasswordMeter found, initializing...');
     KTPasswordMeter.createInstances();
+    console.log('KTPasswordMeter initialized');
+} else {
+    console.error('KTPasswordMeter not found');
+}
+
+console.log('Register form script initialization complete');
+
+// Toggle password visibility para o campo de confirmação
+const togglePasswordConfirmationEl = document.getElementById('toggle_password_confirmation');
+const passwordConfirmationEl = document.getElementById('password_confirmation');
+const iconHideConfirmationEl = document.getElementById('icon_hide_confirmation');
+const iconShowConfirmationEl = document.getElementById('icon_show_confirmation');
+
+if (togglePasswordConfirmationEl && passwordConfirmationEl && iconHideConfirmationEl && iconShowConfirmationEl) {
+    console.log('Adding password confirmation toggle listener');
+
+    togglePasswordConfirmationEl.addEventListener('click', function() {
+        if (passwordConfirmationEl.type === 'password') {
+            passwordConfirmationEl.type = 'text';
+            iconHideConfirmationEl.classList.add('d-none');
+            iconShowConfirmationEl.classList.remove('d-none');
+        } else {
+            passwordConfirmationEl.type = 'password';
+            iconHideConfirmationEl.classList.remove('d-none');
+            iconShowConfirmationEl.classList.add('d-none');
+        }
+    });
+} else {
+    console.error('Password confirmation toggle elements not found');
+}
+
+// Validação em tempo real de confirmação de senha
+const passwordInput = document.getElementById('password');
+const passwordConfirmationInput = document.getElementById('password_confirmation');
+const matchIndicator = document.getElementById('password_match_indicator');
+const matchIcon = document.getElementById('match_icon');
+const mismatchIcon = document.getElementById('mismatch_icon');
+const matchText = document.getElementById('match_text');
+
+function validatePasswordMatch() {
+    if (!passwordInput || !passwordConfirmationInput || !matchIndicator || !matchIcon || !mismatchIcon || !matchText) {
+        return;
+    }
+
+    const password = passwordInput.value;
+    const confirmation = passwordConfirmationInput.value;
+
+    // Só mostra o indicador se o campo de confirmação tiver conteúdo
+    if (confirmation.length === 0) {
+        matchIndicator.classList.add('d-none');
+        return;
+    }
+
+    matchIndicator.classList.remove('d-none');
+
+    if (password === confirmation && confirmation.length >= 8) {
+        // Senhas coincidem
+        matchIcon.classList.remove('d-none');
+        mismatchIcon.classList.add('d-none');
+        matchText.textContent = 'As senhas coincidem';
+        matchText.classList.remove('text-danger');
+        matchText.classList.add('text-success');
+    } else {
+        // Senhas não coincidem
+        matchIcon.classList.add('d-none');
+        mismatchIcon.classList.remove('d-none');
+        matchText.textContent = 'As senhas não coincidem';
+        matchText.classList.remove('text-success');
+        matchText.classList.add('text-danger');
+    }
+}
+
+// Adiciona listeners para validação em tempo real
+if (passwordInput && passwordConfirmationInput) {
+    console.log('Adding password match validation listeners');
+    passwordInput.addEventListener('input', validatePasswordMatch);
+    passwordConfirmationInput.addEventListener('input', validatePasswordMatch);
+} else {
+    console.error('Password or password confirmation input not found for validation');
 }
 </script>
 @endpush
