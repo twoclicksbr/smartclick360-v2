@@ -38,20 +38,6 @@ class RegisterController extends Controller
         ]);
     }
 
-    public function checkDocument(Request $request)
-    {
-        $request->validate(['document' => 'required|string|max:18']);
-
-        $documentClean = preg_replace('/\D/', '', $request->document);
-
-        $exists = \App\Models\Landlord\Document::where('value', $documentClean)->exists();
-
-        return response()->json([
-            'available' => !$exists,
-            'message' => $exists ? 'Este CPF/CNPJ já está cadastrado.' : 'CPF/CNPJ disponível!',
-        ]);
-    }
-
     public function store(Request $request)
     {
         // Criar validador manual
@@ -67,16 +53,6 @@ class RegisterController extends Controller
             'plan'          => 'required|in:starter,professional,enterprise',
             'billing_cycle' => 'required|in:monthly,yearly',
         ]);
-
-        // Adicionar validação customizada do documento (CPF/CNPJ)
-        $validator->after(function ($validator) use ($request) {
-            $documentClean = preg_replace('/\D/', '', $request->document);
-            $documentExists = \App\Models\Landlord\Document::where('value', $documentClean)->exists();
-
-            if ($documentExists) {
-                $validator->errors()->add('document', 'Este CPF/CNPJ já está cadastrado.');
-            }
-        });
 
         // Se houver erros, retorna com os erros
         if ($validator->fails()) {

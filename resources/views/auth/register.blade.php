@@ -102,16 +102,6 @@
                         <div class="col-md-6">
                             <label class="form-label fw-semibold text-gray-900 fs-6">CPF/CNPJ</label>
                             <input type="text" placeholder="000.000.000-00 ou 00.000.000/0000-00" name="document" id="document" autocomplete="off" class="form-control bg-transparent @error('document') is-invalid @enderror" value="{{ old('document') }}" required />
-                            <!--begin::Document Availability Indicator-->
-                            <div class="d-none mt-2" id="document_availability_indicator">
-                                <div class="d-flex align-items-center">
-                                    <i class="ki-outline ki-check-circle fs-3 text-success me-2 d-none" id="document_available_icon"></i>
-                                    <i class="ki-outline ki-cross-circle fs-3 text-danger me-2 d-none" id="document_unavailable_icon"></i>
-                                    <span class="spinner-border spinner-border-sm text-primary me-2 d-none" id="document_checking_icon"></span>
-                                    <span class="fs-7" id="document_availability_text"></span>
-                                </div>
-                            </div>
-                            <!--end::Document Availability Indicator-->
                             @error('document')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -573,80 +563,6 @@ function checkEmailAvailability(email) {
     }, 500);
 }
 
-// Validação de disponibilidade do CPF/CNPJ em tempo real
-const documentAvailabilityIndicator = document.getElementById('document_availability_indicator');
-const documentAvailableIcon = document.getElementById('document_available_icon');
-const documentUnavailableIcon = document.getElementById('document_unavailable_icon');
-const documentCheckingIcon = document.getElementById('document_checking_icon');
-const documentAvailabilityText = document.getElementById('document_availability_text');
-let documentCheckTimeout;
-
-function checkDocumentAvailability(document) {
-    // Limpa timeout anterior
-    clearTimeout(documentCheckTimeout);
-
-    // Remove caracteres não numéricos para validar o tamanho
-    const documentClean = document.replace(/\D/g, '');
-
-    // Se o documento estiver vazio ou com tamanho inválido, esconde o indicador
-    if (!documentClean || (documentClean.length !== 11 && documentClean.length !== 14)) {
-        documentAvailabilityIndicator.classList.add('d-none');
-        return;
-    }
-
-    // Mostra "Verificando..." imediatamente
-    documentAvailabilityIndicator.classList.remove('d-none');
-    documentAvailableIcon.classList.add('d-none');
-    documentUnavailableIcon.classList.add('d-none');
-    documentCheckingIcon.classList.remove('d-none');
-    documentAvailabilityText.textContent = 'Verificando...';
-    documentAvailabilityText.className = 'fs-7 text-muted';
-
-    // Debounce de 500ms
-    documentCheckTimeout = setTimeout(() => {
-        fetch('{{ route('register.checkDocument') }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Accept': 'application/json',
-            },
-            body: JSON.stringify({ document: documentClean })
-        })
-        .then(response => response.json())
-        .then(data => {
-            documentCheckingIcon.classList.add('d-none');
-
-            if (data.available) {
-                // Documento disponível
-                documentAvailableIcon.classList.remove('d-none');
-                documentUnavailableIcon.classList.add('d-none');
-                documentAvailabilityText.textContent = data.message;
-                documentAvailabilityText.className = 'fs-7 text-success fw-semibold';
-
-                // Remove erro do servidor se existir
-                const documentInput = document.getElementById('document');
-                if (documentInput) {
-                    documentInput.classList.remove('is-invalid');
-                    const errorDiv = documentInput.parentElement.querySelector('.invalid-feedback');
-                    if (errorDiv) errorDiv.style.display = 'none';
-                }
-            } else {
-                // Documento já cadastrado
-                documentAvailableIcon.classList.add('d-none');
-                documentUnavailableIcon.classList.remove('d-none');
-                documentAvailabilityText.textContent = data.message;
-                documentAvailabilityText.className = 'fs-7 text-danger fw-semibold';
-            }
-        })
-        .catch(error => {
-            console.error('Erro ao verificar CPF/CNPJ:', error);
-            documentCheckingIcon.classList.add('d-none');
-            documentAvailabilityIndicator.classList.add('d-none');
-        });
-    }, 500);
-}
-
 // Máscaras de input usando Inputmask (já incluído no plugins.bundle.js)
 if (typeof Inputmask !== 'undefined') {
     console.log('Inputmask library found, applying masks...');
@@ -698,29 +614,6 @@ if (emailInputEl) {
     });
 } else {
     console.error('Email input element not found for validation listeners');
-}
-
-// Event listeners para validação do documento (CPF/CNPJ)
-const documentInputEl = document.getElementById('document');
-
-if (documentInputEl) {
-    console.log('Adding document validation listeners');
-
-    // Valida quando o campo perde o foco (blur)
-    documentInputEl.addEventListener('blur', function(e) {
-        checkDocumentAvailability(e.target.value);
-    });
-
-    // Valida quando a máscara estiver completa (input event)
-    documentInputEl.addEventListener('input', function(e) {
-        const documentClean = e.target.value.replace(/\D/g, '');
-        // CPF tem 11 dígitos, CNPJ tem 14 dígitos
-        if (documentClean.length === 11 || documentClean.length === 14) {
-            checkDocumentAvailability(e.target.value);
-        }
-    });
-} else {
-    console.error('Document input element not found for validation listeners');
 }
 
 // Seleção de plano
