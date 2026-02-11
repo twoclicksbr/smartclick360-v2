@@ -11,7 +11,30 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            'identify.tenant' => \App\Http\Middleware\IdentifyTenant::class,
+        ]);
+
+        // Garante que IdentifyTenant rode antes do Authenticate
+        $middleware->priority([
+            \Illuminate\Foundation\Http\Middleware\HandlePrecognitiveRequests::class,
+            \Illuminate\Cookie\Middleware\EncryptCookies::class,
+            \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+            \Illuminate\Session\Middleware\StartSession::class,
+            \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+            \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            \App\Http\Middleware\IdentifyTenant::class, // ANTES do Authenticate
+            \Illuminate\Auth\Middleware\Authenticate::class,
+            \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
+            \Illuminate\Auth\Middleware\Authorize::class,
+            \Illuminate\Routing\Middleware\ThrottleRequests::class,
+            \Illuminate\Routing\Middleware\ThrottleRequestsWithRedis::class,
+            \Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests::class,
+        ]);
+
+        // Redireciona usuários não autenticados para /login
+        $middleware->redirectGuestsTo(fn () => url('/login'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

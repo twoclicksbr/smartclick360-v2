@@ -6,24 +6,20 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class LoginController extends Controller
+class LandlordLoginController extends Controller
 {
     /**
-     * Exibe o formulário de login do tenant.
-     * O tenant já foi identificado pelo middleware IdentifyTenant.
+     * Exibe o formulário de login do admin (landlord).
+     * Autentica contra o banco sc360_main.
      */
-    public function showForm(Request $request)
+    public function showForm()
     {
-        $tenant = $request->attributes->get('tenant');
-
-        return view('auth.login', [
-            'tenant' => $tenant,
-        ]);
+        return view('auth.landlord-login');
     }
 
     /**
-     * Processa a autenticação do usuário no tenant.
-     * Usa o guard 'tenant' para autenticar contra production.users.
+     * Processa a autenticação do admin.
+     * Usa o guard 'web' para autenticar contra sc360_main.users.
      */
     public function authenticate(Request $request)
     {
@@ -34,10 +30,10 @@ class LoginController extends Controller
 
         $remember = $request->boolean('remember');
 
-        if (Auth::guard('tenant')->attempt($credentials, $remember)) {
+        if (Auth::guard('web')->attempt($credentials, $remember)) {
             $request->session()->regenerate();
 
-            return redirect()->intended(url('/dashboard/main'));
+            return redirect()->intended(route('landlord.dashboard'));
         }
 
         return back()->withErrors([
@@ -46,16 +42,15 @@ class LoginController extends Controller
     }
 
     /**
-     * Faz logout do usuário no tenant.
-     * Limpa session e redireciona para login.
+     * Faz logout do admin.
      */
     public function logout(Request $request)
     {
-        Auth::guard('tenant')->logout();
+        Auth::guard('web')->logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->to(url('/login'));
+        return redirect()->route('landlord.login');
     }
 }

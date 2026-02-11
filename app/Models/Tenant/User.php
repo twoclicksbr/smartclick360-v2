@@ -2,14 +2,16 @@
 
 namespace App\Models\Tenant;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
 class User extends Authenticatable
 {
-    use SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     protected $connection = 'tenant';
+    protected $table = 'users';
 
     protected $fillable = [
         'person_id',
@@ -21,12 +23,14 @@ class User extends Authenticatable
 
     protected $hidden = [
         'password',
+        'remember_token',
     ];
 
     protected function casts(): array
     {
         return [
             'password' => 'hashed',
+            'status' => 'boolean',
         ];
     }
 

@@ -75,7 +75,7 @@
                             <!--end::Menu wrapper-->
                             <!--begin::Toolbar-->
                             <div class="flex-equal text-end ms-1">
-                                <a href="{{ route('login') }}" class="btn btn-success me-2">Login</a>
+                                <a href="{{ url('/login') }}" class="btn btn-success me-2">Login</a>
                                 <a href="{{ route('register') }}" class="btn btn-primary">Register</a>
                             </div>
                             <!--end::Toolbar-->
@@ -135,7 +135,7 @@
                                 <a href="{{ route('pricing') }}" class="menu-link px-2">Pricing</a>
                             </li>
                             <li class="menu-item">
-                                <a href="{{ route('login') }}" class="menu-link px-2">Login</a>
+                                <a href="{{ url('/login') }}" class="menu-link px-2">Login</a>
                             </li>
                         </ul>
                         <!--end::Menu-->

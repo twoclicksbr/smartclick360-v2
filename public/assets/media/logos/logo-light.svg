@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Camada_1" data-name="Camada 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 187 64">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #ccc;
+        font-size: 36.47px;
+        font-style: italic;
+      }
+
+      .cls-2 {
+        font-family: Exo-BoldItalic, Exo;
+        font-weight: 700;
+      }
+
+      .cls-3 {
+        font-family: Exo-Italic, Exo;
+      }
+
+      .cls-4 {
+        letter-spacing: .01em;
+      }
+    </style>
+  </defs>
+  <text class="cls-1" transform="translate(12.51 28.27)"><tspan class="cls-3"><tspan x="0" y="0">Sma</tspan><tspan class="cls-4" x="75.45" y="0">r</tspan><tspan x="90.21" y="0">t</tspan></tspan><tspan class="cls-2"><tspan x="0" y="32.58">Click360°</tspan></tspan></text>
+</svg>

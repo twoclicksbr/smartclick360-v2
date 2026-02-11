@@ -20,7 +20,12 @@
       "Bash(PGPASSWORD=\"Millena2012@\" \"/c/Program Files/PostgreSQL/17/bin/psql.exe\":*)",
       "Bash(php artisan migrate:fresh:*)",
       "Bash(/c/Program Files/Herd/bin/php artisan migrate:fresh:*)",
-      "Bash(PGPASSWORD='Millena2012@' psql:*)"
+      "Bash(PGPASSWORD='Millena2012@' psql:*)",
+      "Bash(\"C:\\\\Users\\\\alexa\\\\.config\\\\herd\\\\bin\\\\php.bat\" c:/Herd/smartclick360-v2/validate_type_documents.php)",
+      "Bash(\"C:\\\\Users\\\\alexa\\\\.config\\\\herd\\\\bin\\\\php.bat\" c:/Herd/smartclick360-v2/validate_type_addresses.php)",
+      "Bash(\"C:\\\\Users\\\\alexa\\\\.config\\\\herd\\\\bin\\\\php.bat\" c:/Herd/smartclick360-v2/validate_plans.php)",
+      "Bash(\"C:\\\\Users\\\\alexa\\\\.config\\\\herd\\\\bin\\\\php.bat\" c:/Herd/smartclick360-v2/validate_alex.php)",
+      "Bash(test:*)"
     ]
   }
 }

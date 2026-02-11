@@ -9,7 +9,7 @@
         <!--begin::Wrapper-->
         <div class="d-flex flex-center flex-column flex-column-fluid px-lg-10 pb-15 pb-lg-20">
             <!--begin::Form-->
-            <form class="form w-100" novalidate="novalidate" id="kt_sign_up_form" method="POST" action="{{ route('register.store') }}">
+            <form class="form w-100" novalidate="novalidate" id="kt_sign_up_form" method="POST" action="{{ url('/register') }}">
                 @csrf
 
                 <!--begin::Heading-->
@@ -312,7 +312,7 @@
                 <!--begin::Sign in link-->
                 <div class="text-gray-500 text-center fw-semibold fs-6">
                     Já tem uma conta?
-                    <a href="{{ route('login') }}" class="link-primary fw-semibold">Faça login</a>
+                    <a href="{{ url('/login') }}" class="link-primary fw-semibold">Faça login</a>
                 </div>
                 <!--end::Sign in link-->
             </form>
@@ -448,7 +448,7 @@ function checkSlugAvailability(slug) {
 
     // Debounce de 500ms
     slugCheckTimeout = setTimeout(() => {
-        fetch('{{ route('register.checkSlug') }}', {
+        fetch('{{ url('/check-slug') }}', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -520,7 +520,7 @@ function checkEmailAvailability(email) {
 
     // Debounce de 500ms
     emailCheckTimeout = setTimeout(() => {
-        fetch('{{ route('register.checkEmail') }}', {
+        fetch('{{ url('/check-email') }}', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

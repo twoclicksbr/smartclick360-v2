@@ -2,9 +2,9 @@
 <html lang="pt-BR">
 <!--begin::Head-->
 <head>
-    <title>Login - {{ $tenant->name }} | {{ config('app.name') }}</title>
+    <title>Login - Painel Administrativo | {{ config('app.name') }}</title>
     <meta charset="utf-8" />
-    <meta name="description" content="Login - {{ $tenant->name }}" />
+    <meta name="description" content="Login - Painel Administrativo" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="shortcut icon" href="{{ asset('assets/media/logos/favicon.ico') }}" />
     <!--begin::Fonts-->
@@ -30,7 +30,7 @@
                 <!--begin::Wrapper-->
                 <div class="w-lg-500px p-10">
                     <!--begin::Form-->
-                    <form class="form w-100" novalidate="novalidate" method="POST" action="{{ url('/login') }}">
+                    <form class="form w-100" novalidate="novalidate" method="POST" action="{{ route('landlord.authenticate') }}">
                         @csrf
 
                         <!--begin::Heading-->
@@ -41,10 +41,10 @@
                             </a>
                             <!--end::Logo-->
                             <!--begin::Title-->
-                            <h1 class="text-gray-900 fw-bolder mb-3">{{ $tenant->name }}</h1>
+                            <h1 class="text-gray-900 fw-bolder mb-3">SmartClick360</h1>
                             <!--end::Title-->
                             <!--begin::Subtitle-->
-                            <div class="text-gray-500 fw-semibold fs-6">Faça login para acessar sua conta</div>
+                            <div class="text-gray-500 fw-semibold fs-6">Painel Administrativo</div>
                             <!--end::Subtitle-->
                         </div>
                         <!--end::Heading-->
@@ -113,15 +113,6 @@
                             </button>
                         </div>
                         <!--end::Submit button-->
-
-                        <!--begin::Sign up-->
-                        <div class="text-gray-500 text-center fw-semibold fs-6">
-                            Não tem uma conta?
-                            <a href="https://smartclick360-v2.test/register" class="link-primary">
-                                Criar conta grátis
-                            </a>
-                        </div>
-                        <!--end::Sign up-->
                     </form>
                     <!--end::Form-->
                 </div>
