@@ -14,7 +14,7 @@ class LandlordDatabaseSeeder extends Seeder
             TypeDocumentSeeder::class,
             TypeAddressSeeder::class,
             PlanSeeder::class,
-            AlexSeeder::class,
+            // AlexSeeder::class,
         ]);
     }
 }

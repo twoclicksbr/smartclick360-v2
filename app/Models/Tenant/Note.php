@@ -19,6 +19,10 @@ class Note extends Model
         'status',
     ];
 
+    protected $casts = [
+        'status' => 'boolean',
+    ];
+
     public function module()
     {
         return $this->belongsTo(Module::class);

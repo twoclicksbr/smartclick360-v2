@@ -22,6 +22,6 @@ class TableCheckbox extends Component
 
     public function render()
     {
-        return view('components.tenant.table-checkbox');
+        return view('tenant.components.table-checkbox');
     }
 }

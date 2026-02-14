@@ -37,6 +37,6 @@ class ActionButton extends Component
 
     public function render()
     {
-        return view('components.tenant.action-button');
+        return view('tenant.components.action-button');
     }
 }

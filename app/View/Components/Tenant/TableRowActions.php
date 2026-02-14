@@ -24,6 +24,6 @@ class TableRowActions extends Component
 
     public function render()
     {
-        return view('components.tenant.table-row-actions');
+        return view('tenant.components.table-row-actions');
     }
 }

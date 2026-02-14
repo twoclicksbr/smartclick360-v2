@@ -25,6 +25,6 @@ class QuickSearch extends Component
 
     public function render()
     {
-        return view('components.tenant.quick-search');
+        return view('tenant.components.quick-search');
     }
 }

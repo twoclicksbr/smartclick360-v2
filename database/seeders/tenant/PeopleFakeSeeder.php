@@ -71,6 +71,7 @@ class PeopleFakeSeeder extends Seeder
             $firstName = $firstNames[array_rand($firstNames)];
             $surname = $surnames[array_rand($surnames)];
             $status = $faker->boolean(80); // 80% ativo
+            $birthDate = $faker->dateTimeBetween('-70 years', '-18 years')->format('Y-m-d'); // Entre 18 e 70 anos
 
             // Insere pessoa
             $personId = DB::connection($connection)
@@ -78,6 +79,7 @@ class PeopleFakeSeeder extends Seeder
                 ->insertGetId([
                     'first_name' => $firstName,
                     'surname' => $surname,
+                    'birth_date' => $birthDate,
                     'order' => $maxOrder + 1,
                     'status' => $status,
                     'created_at' => now(),

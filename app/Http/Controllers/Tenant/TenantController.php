@@ -33,7 +33,7 @@ class TenantController extends Controller
             ->latest()
             ->get();
 
-        return view('tenant.settings', [
+        return view('tenant.pages.settings', [
             'tenant' => $tenant,
             'user' => $user,
             'subscription' => $subscription,

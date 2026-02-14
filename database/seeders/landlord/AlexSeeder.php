@@ -28,6 +28,7 @@ class AlexSeeder extends Seeder
             'tenant_id'  => $tenant->id,
             'first_name' => 'Alex',
             'surname'    => 'Alves de Almeida',
+            'birth_date' => '1990-05-15',
             'order'      => 1,
         ]);
 

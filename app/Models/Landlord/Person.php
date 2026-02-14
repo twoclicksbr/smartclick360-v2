@@ -16,8 +16,14 @@ class Person extends Model
         'tenant_id',
         'first_name',
         'surname',
+        'birth_date',
         'order',
         'status',
+    ];
+
+    protected $casts = [
+        'birth_date' => 'date',
+        'status' => 'boolean',
     ];
 
     public function tenant()

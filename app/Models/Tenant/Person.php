@@ -15,8 +15,14 @@ class Person extends Model
     protected $fillable = [
         'first_name',
         'surname',
+        'birth_date',
         'order',
         'status',
+    ];
+
+    protected $casts = [
+        'birth_date' => 'date',
+        'status' => 'boolean',
     ];
 
     public function user()

@@ -55,9 +55,27 @@
                     </td>
                     <td>
                         <div class="d-flex align-items-center">
+                            @php
+                                $avatar = $person->files->where('name', 'avatar')->first();
+                            @endphp
+
+                            @if ($avatar)
+                                <div class="symbol symbol-35px symbol-circle me-3">
+                                    <img src="{{ asset('storage/' . $avatar->path) }}" alt="{{ $person->first_name }} {{ $person->surname }}" />
+                                </div>
+                            @else
+                                <div class="symbol symbol-35px symbol-circle me-3">
+                                    <div class="symbol-label fs-6 fw-semibold text-success bg-light-success">
+                                        {{ strtoupper(substr($person->first_name, 0, 1)) }}{{ strtoupper(substr($person->surname, 0, 1)) }}
+                                    </div>
+                                </div>
+                            @endif
+
                             <div class="d-flex justify-content-start flex-column">
-                                <span class="text-gray-800 fw-bold mb-1">{{ $person->first_name }}
-                                    {{ $person->surname }}</span>
+                                <a href="{{ url('/people/' . $person->id) }}"
+                                   class="text-gray-800 text-hover-primary fw-bold mb-1">
+                                    {{ $person->first_name }} {{ $person->surname }}
+                                </a>
                             </div>
                         </div>
                     </td>
@@ -69,7 +87,7 @@
                             <a href="https://wa.me/55{{ $whatsapp->value }}" target="_blank"
                                 class="text-gray-800 text-hover-success fw-bold">
                                 <i class="ki-solid ki-whatsapp fs-4 me-1 text-success"></i>
-                                {{ function_exists('format_phone') ? format_phone($whatsapp->value) : format_phone_temp($whatsapp->value) }}
+                                {{ function_exists('format_phone') ? format_phone($whatsapp->value) : format_phone($whatsapp->value) }}
                             </a>
                         @else
                             <span class="text-gray-400 text-muted">-</span>
@@ -99,10 +117,7 @@
 <!--end::Table-->
 
 <!--begin::Pagination-->
-<div class="d-flex justify-content-between align-items-center flex-wrap pt-5">
+<div class="pt-5">
     <x-tenant.pagination-info :paginator="$people" />
-    <div>
-        {{ $people->links() }}
-    </div>
 </div>
 <!--end::Pagination-->

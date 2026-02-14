@@ -33,6 +33,6 @@ class BulkActions extends Component
 
     public function render()
     {
-        return view('components.tenant.bulk-actions');
+        return view('tenant.components.bulk-actions');
     }
 }

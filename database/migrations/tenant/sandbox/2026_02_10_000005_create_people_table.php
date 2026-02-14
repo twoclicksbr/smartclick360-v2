@@ -12,6 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('first_name');
             $table->string('surname');
+            $table->date('birth_date')->nullable();
             $table->integer('order')->default(0);
             $table->boolean('status')->default(true);
             $table->timestamps();

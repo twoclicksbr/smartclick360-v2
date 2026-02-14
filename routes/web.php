@@ -7,7 +7,6 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LandlordLoginController;
 use App\Http\Controllers\Tenant\TenantController;
-use App\Http\Controllers\Tenant\PeopleController;
 use App\Http\Controllers\Landlord\TenantManagementController;
 
 /*
@@ -56,7 +55,6 @@ Route::domain('smartclick360-v2.test')->group(function () {
             Route::get('/{id}', [TenantManagementController::class, 'show'])->name('show');
         });
     });
-
 });
 
 /*
@@ -89,7 +87,7 @@ Route::domain('{slug}.smartclick360-v2.test')->middleware('identify.tenant')->gr
         Route::get('/dashboard/main', function () {
             $tenant = request()->attributes->get('tenant');
             $user = Auth::guard('tenant')->user();
-            return view('tenant.dashboard.main', [
+            return view('tenant.pages.dashboard.main', [
                 'tenant' => $tenant,
                 'user'   => $user,
             ]);
@@ -98,9 +96,31 @@ Route::domain('{slug}.smartclick360-v2.test')->middleware('identify.tenant')->gr
         // Configurações do Tenant
         Route::get('/settings', [TenantController::class, 'settings'])->name('tenant.settings');
 
-        // Pessoas
-        Route::get('/people', [PeopleController::class, 'index'])->name('tenant.people.index');
-        Route::post('/people/reorder', [PeopleController::class, 'reorder'])->name('tenant.people.reorder');
-    });
+        // Rotas específicas do módulo People
+        Route::get('people/{id}/files', [\App\Http\Controllers\Tenant\PeopleController::class, 'showFiles'])->name('people.files');
 
+        // Submódulos - rotas genéricas (DEVEM VIR ANTES das rotas de módulos)
+        Route::post('{module}/{m_id}/{submodule}/reorder', [\App\Http\Controllers\Tenant\SubmoduleController::class, 'reorder'])->name('submodule.reorder');
+        Route::get('{module}/{m_id}/{submodule}', [\App\Http\Controllers\Tenant\SubmoduleController::class, 'index'])->name('submodule.index');
+        Route::get('{module}/{m_id}/{submodule}/create', [\App\Http\Controllers\Tenant\SubmoduleController::class, 'create'])->name('submodule.create');
+        Route::post('{module}/{m_id}/{submodule}', [\App\Http\Controllers\Tenant\SubmoduleController::class, 'store'])->name('submodule.store');
+        Route::get('{module}/{m_id}/{submodule}/{s_id}', [\App\Http\Controllers\Tenant\SubmoduleController::class, 'show'])->name('submodule.show');
+        Route::get('{module}/{m_id}/{submodule}/{s_id}/edit', [\App\Http\Controllers\Tenant\SubmoduleController::class, 'edit'])->name('submodule.edit');
+        Route::put('{module}/{m_id}/{submodule}/{s_id}', [\App\Http\Controllers\Tenant\SubmoduleController::class, 'update'])->name('submodule.update');
+        Route::patch('{module}/{m_id}/{submodule}/{s_id}', [\App\Http\Controllers\Tenant\SubmoduleController::class, 'update'])->name('submodule.patch');
+        Route::delete('{module}/{m_id}/{submodule}/{s_id}', [\App\Http\Controllers\Tenant\SubmoduleController::class, 'destroy'])->name('submodule.destroy');
+        Route::patch('{module}/{m_id}/{submodule}/{s_id}/restore', [\App\Http\Controllers\Tenant\SubmoduleController::class, 'restore'])->name('submodule.restore');
+
+        // Módulos - rotas genéricas (DEVEM VIR DEPOIS das rotas de submódulos)
+        Route::get('{module}', [\App\Http\Controllers\Tenant\ModuleController::class, 'index'])->name('module.index');
+        Route::get('{module}/create', [\App\Http\Controllers\Tenant\ModuleController::class, 'create'])->name('module.create');
+        Route::post('{module}', [\App\Http\Controllers\Tenant\ModuleController::class, 'store'])->name('module.store');
+        Route::get('{module}/{id}', [\App\Http\Controllers\Tenant\ModuleController::class, 'show'])->name('module.show');
+        Route::get('{module}/{id}/edit', [\App\Http\Controllers\Tenant\ModuleController::class, 'edit'])->name('module.edit');
+        Route::put('{module}/{id}', [\App\Http\Controllers\Tenant\ModuleController::class, 'update'])->name('module.update');
+        Route::patch('{module}/{id}', [\App\Http\Controllers\Tenant\ModuleController::class, 'update'])->name('module.patch');
+        Route::delete('{module}/{id}', [\App\Http\Controllers\Tenant\ModuleController::class, 'destroy'])->name('module.destroy');
+        Route::post('{module}/reorder', [\App\Http\Controllers\Tenant\ModuleController::class, 'reorder'])->name('module.reorder');
+        Route::patch('{module}/{id}/restore', [\App\Http\Controllers\Tenant\ModuleController::class, 'restore'])->name('module.restore');
+    });
 });

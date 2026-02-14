@@ -30,6 +30,7 @@ class Address extends Model
 
     protected $casts = [
         'is_main' => 'boolean',
+        'status' => 'boolean',
     ];
 
     public function typeAddress()

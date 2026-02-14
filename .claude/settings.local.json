@@ -25,7 +25,10 @@
       "Bash(\"C:\\\\Users\\\\alexa\\\\.config\\\\herd\\\\bin\\\\php.bat\" c:/Herd/smartclick360-v2/validate_type_addresses.php)",
       "Bash(\"C:\\\\Users\\\\alexa\\\\.config\\\\herd\\\\bin\\\\php.bat\" c:/Herd/smartclick360-v2/validate_plans.php)",
       "Bash(\"C:\\\\Users\\\\alexa\\\\.config\\\\herd\\\\bin\\\\php.bat\" c:/Herd/smartclick360-v2/validate_alex.php)",
-      "Bash(test:*)"
+      "Bash(test:*)",
+      "Bash(php artisan:*)",
+      "Bash(/c/Users/alexa/.config/herd/bin/php artisan storage:link)",
+      "Bash(php.bat artisan storage:link:*)"
     ]
   }
 }

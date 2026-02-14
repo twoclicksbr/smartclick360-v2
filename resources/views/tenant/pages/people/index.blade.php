@@ -10,8 +10,8 @@
 
 @php
     // Função temporária para formatar telefone (até rodar composer dump-autoload)
-    if (!function_exists('format_phone_temp')) {
-        function format_phone_temp($phone)
+    if (!function_exists('format_phone')) {
+        function format_phone($phone)
         {
             if (empty($phone)) {
                 return '';
@@ -53,20 +53,33 @@
 
         <!--begin::Card body-->
         <div class="card-body py-4" id="people_table_container">
-            @include('tenant.people._table', ['people' => $people])
+            <x-tenant.people-table :people="$people" />
         </div>
         <!--end::Card body-->
     </div>
     <!--end::Card-->
 
     {{-- Modal de Pesquisa Avançada --}}
-    @include('tenant.search.modal')
+    <x-tenant.search-modal />
+
+    {{-- Modal - Adicionar/Editar Pessoa --}}
+    @include('tenant.layouts.modals.modal-module', ['module' => 'people', 'modalSize' => 'mw-800px'])
 @endsection
 
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // ==============================================
+            // Flash Messages - Notificações de sucesso/erro
+            // ==============================================
+            @if(session('success'))
+                toastr.success("{{ session('success') }}");
+            @endif
+
+            @if(session('error'))
+                toastr.error("{{ session('error') }}");
+            @endif
             // ==============================================
             // Live Search via AJAX - Busca sem reload
             // ==============================================
@@ -254,6 +267,74 @@
             // Inicializa na primeira carga
             initSortable();
             initBulkActions();
+
+            // ==============================================
+            // Modal - Adicionar/Editar Pessoa
+            // ==============================================
+            var personModal = document.getElementById('kt_modal_add_person');
+            var personForm = document.getElementById('kt_modal_add_person_form');
+            var modalTitle = document.getElementById('modal_person_title');
+
+            // Função para resetar o formulário
+            function resetPersonForm() {
+                personForm.reset();
+                personForm.action = "{{ url('/people') }}";
+                document.getElementById('person_form_method').value = 'POST';
+                document.getElementById('person_id').value = '';
+                document.getElementById('person_first_name').value = '';
+                document.getElementById('person_surname').value = '';
+                document.getElementById('person_status_switch').checked = true;
+                document.getElementById('person_status_hidden').value = '1';
+                modalTitle.textContent = 'Adicionar Pessoa';
+            }
+
+            // Botão "Novo" - Modo Adicionar
+            var btnNew = document.getElementById('btn-new');
+            if (btnNew) {
+                btnNew.addEventListener('click', function() {
+                    resetPersonForm();
+                    var modal = new bootstrap.Modal(personModal);
+                    modal.show();
+                });
+            }
+
+            // Função global para editar pessoa (chamada de outras páginas)
+            window.editPerson = function(id, firstName, surname, birthDate, avatarUrl) {
+                resetPersonForm();
+
+                // Configura modo edição
+                modalTitle.textContent = 'Editar Pessoa';
+                document.getElementById('person_form_method').value = 'PUT';
+                document.getElementById('person_id').value = id;
+                personForm.action = "{{ url('/people') }}/" + id;
+
+                // Preenche os campos
+                document.getElementById('person_first_name').value = firstName;
+                document.getElementById('person_surname').value = surname;
+                document.getElementById('person_birth_date').value = birthDate || '';
+
+                // Atualiza o preview do avatar se houver
+                if (avatarUrl) {
+                    var imageInputWrapper = personForm.querySelector('.image-input-wrapper');
+                    if (imageInputWrapper) {
+                        imageInputWrapper.style.backgroundImage = `url('${avatarUrl}')`;
+                    }
+                } else {
+                    // Se não houver avatar, usa a imagem padrão
+                    var imageInputWrapper = personForm.querySelector('.image-input-wrapper');
+                    if (imageInputWrapper) {
+                        imageInputWrapper.style.backgroundImage = "url('/assets/media/avatars/blank.png')";
+                    }
+                }
+
+                // Marca como ativo (sempre ativo ao editar uma pessoa existente)
+                document.getElementById('person_status_switch').checked = true;
+                document.getElementById('person_status_hidden').value = '1';
+
+                // Abre o modal
+                var modal = new bootstrap.Modal(personModal);
+                modal.show();
+            };
         });
     </script>
 @endpush

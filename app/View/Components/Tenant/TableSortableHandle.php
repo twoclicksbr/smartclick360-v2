@@ -8,6 +8,6 @@ class TableSortableHandle extends Component
 {
     public function render()
     {
-        return view('components.tenant.table-sortable-handle');
+        return view('tenant.components.table-sortable-handle');
     }
 }

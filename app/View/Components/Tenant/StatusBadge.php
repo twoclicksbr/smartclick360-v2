@@ -22,6 +22,6 @@ class StatusBadge extends Component
 
     public function render()
     {
-        return view('components.tenant.status-badge');
+        return view('tenant.components.status-badge');
     }
 }

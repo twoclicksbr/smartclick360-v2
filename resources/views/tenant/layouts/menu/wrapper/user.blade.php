@@ -6,6 +6,10 @@
     $fullName = trim($person->first_name);
     $initials = strtoupper(substr($person->first_name, 0, 1) . substr($person->surname ?? '', 0, 1));
 
+    // Busca o avatar do usuário
+    $avatar = $person->files()->where('name', 'avatar')->first();
+    $avatarUrl = $avatar ? asset('storage/' . $avatar->path) : null;
+
     // Pega o tenant do Landlord database usando o slug da rota
     $tenantSlug = request()->route('slug');
     $tenant = Tenant::where('slug', $tenantSlug)->first();
@@ -25,7 +29,11 @@
     <!--begin::Menu wrapper-->
     <div class="cursor-pointer symbol symbol-35px symbol-md-40px" data-kt-menu-trigger="{default: 'click', lg: 'hover'}"
         data-kt-menu-attach="parent" data-kt-menu-placement="bottom-end">
-        <div class="symbol-label fs-6 fw-bold bg-primary text-inverse-primary">{{ $initials }}</div>
+        @if ($avatarUrl)
+            <img src="{{ $avatarUrl }}" alt="{{ $fullName }}" />
+        @else
+            <div class="symbol-label fs-6 fw-bold bg-primary text-inverse-primary">{{ $initials }}</div>
+        @endif
     </div>
 
 
@@ -37,7 +45,11 @@
             <div class="menu-content d-flex align-items-center px-3">
                 <!--begin::Avatar-->
                 <div class="symbol symbol-50px me-5">
-                    <div class="symbol-label fs-4 fw-bold bg-primary text-inverse-primary">{{ $initials }}</div>
+                    @if ($avatarUrl)
+                        <img src="{{ $avatarUrl }}" alt="{{ $fullName }}" />
+                    @else
+                        <div class="symbol-label fs-4 fw-bold bg-primary text-inverse-primary">{{ $initials }}</div>
+                    @endif
                 </div>
                 <!--end::Avatar-->
                 <!--begin::Username-->
@@ -56,7 +68,7 @@
         <!--end::Menu separator-->
         <!--begin::Menu item-->
         <div class="menu-item px-5">
-            <a href="{{ url('/settings') }}" class="menu-link px-5">Meu Perfil</a>
+            <a href="{{ url('/people/' . $person->id) }}" class="menu-link px-5">Meu Perfil</a>
         </div>
         <!--end::Menu item-->
         <!--begin::Menu separator-->

@@ -3,26 +3,37 @@
 namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
+use App\Models\Tenant\File;
+use App\Models\Tenant\Module;
 use App\Models\Tenant\Person;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class PeopleController extends Controller
 {
     /**
-     * Display a listing of people
+     * Display a listing of the resource.
+     * Lógica específica para people com first_name + surname
      */
-    public function index(Request $request)
+    public function index(Request $request, string $slug, string $module)
     {
+        // dd('index específico de PeopleController');
+
         $user = Auth::guard('tenant')->user();
         $tenant = request()->attributes->get('tenant');
 
-        // Inicia a query com eager loading de WhatsApp
-        $query = Person::with(['contacts' => function($query) {
-            $query->whereHas('typeContact', function($q) {
-                $q->where('name', 'WhatsApp');
-            })->with('typeContact');
-        }]);
+        // Inicia a query com eager loading de WhatsApp e Avatar
+        $query = Person::with([
+            'contacts' => function ($query) {
+                $query->whereHas('typeContact', function ($q) {
+                    $q->where('name', 'WhatsApp');
+                })->with('typeContact');
+            },
+            'files' => function ($query) {
+                $query->where('name', 'avatar');
+            }
+        ]);
 
         // ==============================================
         // FILTROS DE PESQUISA AVANÇADA
@@ -31,11 +42,11 @@ class PeopleController extends Controller
         // Filtro: Busca Rápida (campo do header)
         if ($request->filled('quick_search')) {
             $quickSearch = $request->quick_search;
-            $query->where(function($q) use ($quickSearch) {
+            $query->where(function ($q) use ($quickSearch) {
                 // Busca no nome completo (first_name + surname)
                 $q->whereRaw("first_name || ' ' || surname ILIKE ?", ['%' . $quickSearch . '%'])
-                  // Ou busca no ID
-                  ->orWhere('id', 'LIKE', '%' . $quickSearch . '%');
+                    // Ou busca no ID
+                    ->orWhere('id', 'LIKE', '%' . $quickSearch . '%');
             });
         }
 
@@ -49,7 +60,7 @@ class PeopleController extends Controller
             $searchName = $request->search_name;
             $operator = $request->search_operator ?? 'contains';
 
-            $query->where(function($q) use ($searchName, $operator) {
+            $query->where(function ($q) use ($searchName, $operator) {
                 if ($operator === 'contains') {
                     // Busca na concatenação de first_name + surname (case-insensitive)
                     $q->whereRaw("first_name || ' ' || surname ILIKE ?", ['%' . $searchName . '%']);
@@ -116,44 +127,188 @@ class PeopleController extends Controller
 
         // Se for requisição AJAX, retorna apenas a tabela (HTML parcial)
         if ($request->ajax()) {
-            return view('tenant.people._table', [
+            return view('tenant.components.people-table', [
                 'people' => $people,
             ])->render();
         }
 
         // Se for requisição normal, retorna a view completa
-        return view('tenant.people.index', [
+        return view('tenant.pages.people.index', [
             'people' => $people,
             'tenant' => $tenant,
         ]);
     }
 
     /**
-     * Reorder people via drag-and-drop
+     * Store a newly created resource in storage.
      */
-    public function reorder(Request $request)
+    public function store(Request $request, string $slug, string $module)
     {
-        $request->validate([
-            'order' => 'required|array',
-            'order.*.id' => 'required|integer|exists:people,id',
-            'order.*.order' => 'required|integer|min:1',
+        $user = Auth::guard('tenant')->user();
+        $tenant = request()->attributes->get('tenant');
+
+        // Validação
+        $validated = $request->validate([
+            'first_name' => 'required|string|max:255',
+            'surname' => 'required|string|max:255',
+            'birth_date' => 'nullable|date',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // max 2MB
+        ], [
+            'first_name.required' => 'O nome é obrigatório',
+            'surname.required' => 'O sobrenome é obrigatório',
+            'birth_date.date' => 'A data de nascimento deve ser uma data válida',
+            'avatar.image' => 'O arquivo deve ser uma imagem',
+            'avatar.mimes' => 'A imagem deve ser do tipo: jpeg, png, jpg',
+            'avatar.max' => 'A imagem não pode ser maior que 2MB',
         ]);
 
-        try {
-            // Atualiza a ordem de cada pessoa
-            foreach ($request->order as $item) {
-                Person::where('id', $item['id'])->update(['order' => $item['order']]);
+        // Cria a pessoa
+        $person = Person::create([
+            'first_name' => $validated['first_name'],
+            'surname' => $validated['surname'],
+            'birth_date' => $validated['birth_date'] ?? null,
+            'order' => Person::max('order') + 1, // próximo na ordem
+            'status' => $request->input('status', 1) == 1, // pega do formulário, padrão ativo
+        ]);
+
+        // Processa o upload do avatar (se houver)
+        if ($request->hasFile('avatar')) {
+            $file = $request->file('avatar');
+
+            // Define o caminho de armazenamento: storage/app/public/tenants/{slug}/avatars/
+            $path = $file->store('tenants/' . $tenant->slug . '/avatars', 'public');
+
+            // Busca o module_id de 'people'
+            $moduleId = Module::where('slug', 'people')->value('id');
+
+            // Cria o registro na tabela files (polimórfico)
+            File::create([
+                'module_id' => $moduleId,
+                'register_id' => $person->id,
+                'name' => 'avatar',
+                'path' => $path,
+                'mime_type' => $file->getClientMimeType(),
+                'size' => $file->getSize(),
+                'order' => 0,
+                'status' => true,
+            ]);
+        }
+
+        return redirect('/people/' . $person->id)
+            ->with('success', 'Pessoa adicionada com sucesso!');
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, string $slug, string $module, string $id)
+    {
+        $user = Auth::guard('tenant')->user();
+        $tenant = request()->attributes->get('tenant');
+
+        // Busca a pessoa
+        $person = Person::findOrFail($id);
+
+        // Validação
+        $validated = $request->validate([
+            'first_name' => 'required|string|max:255',
+            'surname' => 'required|string|max:255',
+            'birth_date' => 'nullable|date',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+        ], [
+            'first_name.required' => 'O nome é obrigatório',
+            'surname.required' => 'O sobrenome é obrigatório',
+            'birth_date.date' => 'A data de nascimento deve ser uma data válida',
+            'avatar.image' => 'O arquivo deve ser uma imagem',
+            'avatar.mimes' => 'A imagem deve ser do tipo: jpeg, png, jpg',
+            'avatar.max' => 'A imagem não pode ser maior que 2MB',
+        ]);
+
+        // Atualiza a pessoa
+        $person->update([
+            'first_name' => $validated['first_name'],
+            'surname' => $validated['surname'],
+            'birth_date' => $validated['birth_date'] ?? null,
+            'status' => $request->input('status', 1) == 1, // pega do formulário, padrão ativo
+        ]);
+
+        // Processa o upload do avatar (se houver)
+        if ($request->hasFile('avatar')) {
+            $file = $request->file('avatar');
+
+            // Define o caminho de armazenamento
+            $path = $file->store('tenants/' . $tenant->slug . '/avatars', 'public');
+
+            // Busca o module_id de 'people'
+            $moduleId = Module::where('slug', 'people')->value('id');
+
+            // Remove avatar antigo se existir
+            $oldAvatar = File::where('module_id', $moduleId)
+                ->where('register_id', $person->id)
+                ->where('name', 'avatar')
+                ->first();
+
+            if ($oldAvatar) {
+                // Remove arquivo físico
+                Storage::disk('public')->delete($oldAvatar->path);
+                // Remove registro do banco
+                $oldAvatar->delete();
             }
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Ordem atualizada com sucesso'
+            // Cria novo registro
+            File::create([
+                'module_id' => $moduleId,
+                'register_id' => $person->id,
+                'name' => 'avatar',
+                'path' => $path,
+                'mime_type' => $file->getClientMimeType(),
+                'size' => $file->getSize(),
+                'order' => 0,
+                'status' => true,
             ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Erro ao atualizar ordem: ' . $e->getMessage()
-            ], 500);
         }
+
+        return redirect('/people/' . $person->id)
+            ->with('success', 'Pessoa atualizada com sucesso!');
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(string $slug, string $module, string $id)
+    {
+        $user = Auth::guard('tenant')->user();
+        $tenant = request()->attributes->get('tenant');
+
+        // Busca a pessoa com relacionamentos necessários (files foi movido para página separada)
+        $person = Person::with([
+            'contacts.typeContact',
+            'documents.typeDocument',
+            'addresses.typeAddress',
+            'notes'
+        ])->findOrFail($id);
+
+        return view('tenant.pages.people.show', [
+            'person' => $person,
+            'tenant' => $tenant,
+            'module' => $module,
+        ]);
+    }
+
+    /**
+     * Exibe a página de arquivos da pessoa
+     */
+    public function showFiles(string $slug, string $id)
+    {
+        $tenant = request()->attributes->get('tenant');
+
+        // Busca a pessoa com arquivos e contatos (para exibir no header)
+        $person = Person::with(['files', 'contacts.typeContact'])->findOrFail($id);
+
+        return view('tenant.pages.people.show-files', [
+            'person' => $person,
+            'tenant' => $tenant,
+            'module' => 'people',
+        ]);
     }
 }

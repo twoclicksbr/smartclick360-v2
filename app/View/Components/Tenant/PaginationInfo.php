@@ -16,6 +16,6 @@ class PaginationInfo extends Component
 
     public function render()
     {
-        return view('components.tenant.pagination-info');
+        return view('tenant.components.pagination-info');
     }
 }

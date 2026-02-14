@@ -14,6 +14,7 @@ return new class extends Migration
             $table->foreignId('module_id')->constrained('modules');
             $table->unsignedBigInteger('register_id');
             $table->string('value');
+            $table->date('expiration_date')->nullable();
             $table->integer('order')->default(0);
             $table->boolean('status')->default(true);
             $table->timestamps();

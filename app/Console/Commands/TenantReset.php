@@ -50,29 +50,41 @@ class TenantReset extends Command
             ->where('database_name', '!=', 'sc360_main')
             ->pluck('database_name');
 
+        $droppedCount = 0;
+        $errorCount = 0;
+
         if ($tenants->isEmpty()) {
             $this->info('   ℹ️  Nenhum banco de tenant encontrado.');
         } else {
-            $droppedCount = 0;
-            $errorCount = 0;
-
             foreach ($tenants as $databaseName) {
                 try {
                     DB::connection('landlord')->statement("DROP DATABASE IF EXISTS \"{$databaseName}\"");
-                    $this->error("   ❌ Banco dropado: {$databaseName}");
+                    $this->line("   ✅ Banco dropado: {$databaseName}");
                     $droppedCount++;
                 } catch (\Exception $e) {
-                    $this->error("   ⚠️  Erro ao dropar {$databaseName}: " . $e->getMessage());
+                    $this->error("   ❌ Erro ao dropar {$databaseName}: " . $e->getMessage());
                     Log::error("Erro ao dropar banco {$databaseName}: " . $e->getMessage());
                     $errorCount++;
                 }
             }
 
             $this->newLine();
-            $this->error("   Total dropados: {$droppedCount}");
+
+            // SE HOUVER ERRO, PARA A EXECUÇÃO IMEDIATAMENTE
             if ($errorCount > 0) {
-                $this->warn("   Total com erro: {$errorCount}");
+                $this->error("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+                $this->error("❌ ERRO: Não foi possível dropar {$errorCount} banco(s)");
+                $this->error("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+                $this->newLine();
+                $this->warn('⚠️  ROLLBACK: Operação cancelada. Nenhuma migration foi executada.');
+                $this->newLine();
+                $this->info('💡 Dica: Feche todas as conexões com os bancos de tenant e tente novamente.');
+                $this->info('   Isso inclui: navegador, DBeaver, pgAdmin, etc.');
+                $this->newLine();
+                return 1; // Código de erro
             }
+
+            $this->line("   ✅ Total dropados: {$droppedCount}");
         }
 
         $this->newLine();
