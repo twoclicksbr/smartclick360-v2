@@ -28,7 +28,8 @@
       "Bash(test:*)",
       "Bash(php artisan:*)",
       "Bash(/c/Users/alexa/.config/herd/bin/php artisan storage:link)",
-      "Bash(php.bat artisan storage:link:*)"
+      "Bash(php.bat artisan storage:link:*)",
+      "Bash(/c/Users/alexa/AppData/Local/Herd/bin/php artisan config:clear:*)"
     ]
   }
 }
