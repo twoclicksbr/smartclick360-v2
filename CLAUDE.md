@@ -1,6 +1,6 @@
 # SmartClick360 v2 — Contexto do Projeto
 
-**Última atualização:** 14/02/2026
+**Última atualização:** 14/02/2026 (após implementação da API REST)
 
 ---
 
@@ -52,7 +52,8 @@
 | 8 | Sistema de encoding de IDs (URL-safe) | ✅ Concluída |
 | 9 | Backoffice landlord (gestão de tenants) | ✅ Concluída |
 | 10 | Componentes reutilizáveis e sistema modular | ✅ Concluída |
-| 11+ | Demais módulos do ERP | 🔲 Pendente |
+| 11 | API REST completa (51 endpoints com Sanctum) | ✅ Concluída |
+| 12+ | Demais módulos do ERP | 🔲 Pendente |
 
 ---
 
@@ -69,6 +70,7 @@ O SmartClick360 é um **ERP web multi-tenant** SaaS. Cada empresa (tenant) tem s
 | Frontend | Blade Templates |
 | Tema | Metronic 8 Demo 34 |
 | Banco de Dados | PostgreSQL 16 |
+| API | Laravel Sanctum 4.3 (Bearer Token) |
 | CSS | Bootstrap 5 |
 | Ícones | KTIcons |
 | Máscaras | Inputmask.js |
@@ -215,7 +217,366 @@ $user = Auth::guard('tenant')->user();
 
 ---
 
-## 5. Estrutura de Banco de Dados
+## 5. API REST
+
+### 5.1 Visão Geral
+
+A API REST foi implementada usando **Laravel Sanctum 4.3** com autenticação via **Bearer Token**. Todas as rotas da API são prefixadas com `/api/v1` e retornam respostas JSON padronizadas.
+
+**Características:**
+- 51 endpoints funcionais
+- Autenticação stateless (Bearer Token)
+- Versionamento (v1)
+- Respostas JSON padronizadas
+- Tratamento centralizado de exceções
+- Suporte multi-tenancy completo
+- Separação entre Landlord e Tenant
+
+### 5.2 Arquitetura da API
+
+**Estrutura de Diretórios:**
+```
+app/Http/Controllers/Api/V1/
+├── Auth/
+│   ├── TenantAuthController.php      (login, logout, me)
+│   └── LandlordAuthController.php    (login, logout, me)
+├── Landlord/
+│   ├── DashboardController.php       (estatísticas landlord)
+│   └── TenantController.php          (gestão de tenants)
+├── Modules/
+│   └── PeopleController.php          (CRUD completo de pessoas)
+├── DashboardController.php           (dashboard do tenant)
+├── ModuleController.php              (delegação para módulos)
+└── SubmoduleController.php           (CRUD de submódulos)
+```
+
+**Trait ApiResponse:**
+Todos os controllers usam o trait `ApiResponse` que padroniza as respostas:
+
+```php
+// Métodos disponíveis
+success($data, $message, $code = 200)
+error($message, $code, $errors = null)
+created($data, $message)
+deleted($message)
+restored($message)
+notFound($message)
+unauthorized($message)
+forbidden($message)
+validationError($errors, $message)
+```
+
+**Formato de Resposta:**
+```json
+{
+  "success": true|false,
+  "message": "Mensagem opcional",
+  "data": {
+    // dados da resposta
+  },
+  "errors": {
+    // erros de validação (quando aplicável)
+  }
+}
+```
+
+### 5.3 Autenticação Multi-Tenancy com Sanctum
+
+**Problema Resolvido:**
+
+Sanctum valida tokens **antes** do middleware IdentifyTenant executar, fazendo com que ele busque o token no banco errado (landlord ao invés de tenant). Para resolver isso, foi criado um **PersonalAccessToken customizado**.
+
+**Solução Implementada:**
+
+Arquivo: `app/Models/PersonalAccessToken.php`
+
+O model customizado sobrescreve o método `findToken()`:
+
+1. Primeiro tenta buscar o token no banco landlord (para admins)
+2. Se não encontrar, extrai o slug do subdomínio da request
+3. Valida se o tenant existe e está ativo
+4. Configura a conexão tenant dinamicamente
+5. Busca o token no banco do tenant
+6. Retorna o model autenticado com a conexão correta
+
+**Registro no AppServiceProvider:**
+```php
+use Laravel\Sanctum\Sanctum;
+use App\Models\PersonalAccessToken;
+
+public function boot(): void
+{
+    Sanctum::usePersonalAccessTokenModel(PersonalAccessToken::class);
+}
+```
+
+### 5.4 Endpoints da API
+
+#### Autenticação Landlord (Admin)
+
+| Método | Endpoint | Autenticação | Descrição |
+|--------|----------|--------------|-----------|
+| POST | /api/v1/auth/landlord/login | Não | Login do admin (retorna token) |
+| POST | /api/v1/landlord/auth/logout | Bearer | Logout (deleta token atual) |
+| GET | /api/v1/landlord/auth/me | Bearer | Dados do usuário autenticado |
+
+**Exemplo de Login:**
+```bash
+curl -X POST http://smartclick360-v2.test/api/v1/auth/landlord/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "alex@smartclick360.com",
+    "password": "12345678",
+    "device_name": "web"
+  }'
+```
+
+**Resposta:**
+```json
+{
+  "success": true,
+  "message": "Login realizado com sucesso",
+  "data": {
+    "token": "1|abc123...",
+    "token_type": "Bearer",
+    "user": {
+      "id": 1,
+      "email": "alex@smartclick360.com",
+      "person": {
+        "id": 1,
+        "first_name": "Alex",
+        "surname": "Bethel"
+      }
+    }
+  }
+}
+```
+
+#### Gestão de Tenants (Landlord)
+
+| Método | Endpoint | Autenticação | Descrição |
+|--------|----------|--------------|-----------|
+| GET | /api/v1/landlord/dashboard | Bearer | Estatísticas do landlord |
+| GET | /api/v1/landlord/tenants | Bearer | Lista todos os tenants |
+| GET | /api/v1/landlord/tenants/{code} | Bearer | Detalhes de um tenant |
+
+**Dashboard retorna:**
+```json
+{
+  "stats": {
+    "total_tenants": 5,
+    "active_tenants": 4,
+    "trial_subscriptions": 2,
+    "active_subscriptions": 3
+  },
+  "recent_tenants": [...]
+}
+```
+
+#### Autenticação Tenant
+
+| Método | Endpoint | Middleware | Descrição |
+|--------|----------|------------|-----------|
+| POST | /api/v1/auth/tenant/login | identify.tenant | Login do tenant |
+| POST | /api/v1/auth/tenant/logout | identify.tenant + auth:sanctum | Logout |
+| GET | /api/v1/auth/tenant/me | identify.tenant + auth:sanctum | Dados do usuário |
+
+**Importante:** Todas as rotas de tenant usam o middleware `identify.tenant` que identifica o tenant pelo subdomínio e configura a conexão do banco dinamicamente.
+
+**Exemplo de Login:**
+```bash
+curl -X POST http://twoclicks.smartclick360-v2.test/api/v1/auth/tenant/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "usuario@twoclicks.com",
+    "password": "senha123",
+    "device_name": "mobile"
+  }'
+```
+
+#### Dashboard Tenant
+
+| Método | Endpoint | Middleware | Descrição |
+|--------|----------|------------|-----------|
+| GET | /api/v1/dashboard | identify.tenant + auth:sanctum | Dashboard do tenant (TODO) |
+
+#### Módulo de Pessoas (CRUD Completo)
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | /api/v1/people | Lista pessoas (com filtros e paginação) |
+| POST | /api/v1/people | Cria nova pessoa (com upload de avatar) |
+| GET | /api/v1/people/{code} | Detalhes de uma pessoa |
+| PUT | /api/v1/people/{code} | Atualiza pessoa |
+| DELETE | /api/v1/people/{code} | Soft delete de pessoa |
+| PATCH | /api/v1/people/{code}/restore | Restaura pessoa deletada |
+| POST | /api/v1/people/reorder | Reordena pessoas (drag and drop) |
+
+**Filtros Disponíveis no Index:**
+- `quick_search` — busca rápida por nome ou ID
+- `search_id` — filtro por ID exato
+- `search_name` — filtro por nome (com operadores: contains, starts_with, exact)
+- `search_operator` — operador de busca para nome
+- `search_status` — filtro por status (ativo/inativo)
+- `search_deleted` — incluir deletados (1 = sim)
+- `search_date_range` — filtro por range de datas (formato: DD/MM/YYYY - DD/MM/YYYY)
+- `search_date_field` — campo de data para filtrar (created_at, updated_at)
+- `search_per_page` — itens por página (25, 50, 100)
+- `sort_by` — coluna para ordenação (id, first_name, status, order, created_at, updated_at)
+- `sort_direction` — direção da ordenação (asc, desc)
+
+**Exemplo de Listagem com Filtros:**
+```bash
+curl -X GET "http://twoclicks.smartclick360-v2.test/api/v1/people?quick_search=alex&search_status=1&search_per_page=50&sort_by=first_name&sort_direction=asc" \
+  -H "Authorization: Bearer 2|abc123..."
+```
+
+**Exemplo de Criação:**
+```bash
+curl -X POST http://twoclicks.smartclick360-v2.test/api/v1/people \
+  -H "Authorization: Bearer 2|abc123..." \
+  -H "Content-Type: multipart/form-data" \
+  -F "first_name=João" \
+  -F "surname=Silva" \
+  -F "birth_date=1990-05-15" \
+  -F "status=1" \
+  -F "avatar=@/path/to/photo.jpg"
+```
+
+#### Submódulos (Contacts, Documents, Addresses, Files, Notes)
+
+Todos os 5 submódulos seguem o mesmo padrão de rotas:
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | /api/v1/{module}/{code}/{submodule} | Lista submódulos |
+| POST | /api/v1/{module}/{code}/{submodule} | Cria novo submódulo |
+| GET | /api/v1/{module}/{code}/{submodule}/{s_code} | Detalhes de um submódulo |
+| PUT | /api/v1/{module}/{code}/{submodule}/{s_code} | Atualiza submódulo |
+| DELETE | /api/v1/{module}/{code}/{submodule}/{s_code} | Deleta submódulo |
+| PATCH | /api/v1/{module}/{code}/{submodule}/{s_code}/restore | Restaura submódulo |
+| POST | /api/v1/{module}/{code}/{submodule}/reorder | Reordena submódulos |
+
+**Exemplo - Adicionar Contato:**
+```bash
+curl -X POST http://twoclicks.smartclick360-v2.test/api/v1/people/Mg/contacts \
+  -H "Authorization: Bearer 2|abc123..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type_contact_id": 2,
+    "value": "(12) 99769-8040"
+  }'
+```
+
+**Remoção Automática de Máscaras:**
+- Telefones: remove tudo exceto números
+- CPF/CNPJ: remove tudo exceto números e letras
+- CEP: remove tudo exceto números
+- Email: mantém @ . - _
+
+**Validações Especiais:**
+- Email: valida formato e unicidade por pessoa
+- Files: upload de arquivo (max 10MB), deleta arquivo físico ao remover
+
+### 5.5 Tratamento de Erros
+
+**ApiExceptionHandler** (`app/Exceptions/ApiExceptionHandler.php`)
+
+Trata automaticamente exceções comuns e retorna JSON padronizado:
+
+| Exceção | Status | Mensagem |
+|---------|--------|----------|
+| ValidationException | 422 | Dados inválidos (com detalhes) |
+| AuthenticationException | 401 | Não autenticado |
+| ModelNotFoundException | 404 | Registro não encontrado |
+| NotFoundHttpException | 404 | Rota não encontrada |
+| MethodNotAllowedHttpException | 405 | Método HTTP não permitido |
+| Throwable (genérico) | 500 | Erro interno (detalhes apenas em local) |
+
+**Registro no bootstrap/app.php:**
+```php
+->withExceptions(function (Exceptions $exceptions): void {
+    $exceptions->render(function (\Throwable $e, $request) {
+        $response = \App\Exceptions\ApiExceptionHandler::handle($e, $request);
+        if ($response) {
+            return $response;
+        }
+    });
+})
+```
+
+### 5.6 Migrations de Tokens
+
+A tabela `personal_access_tokens` foi criada em 3 locais:
+
+1. **Landlord:** `database/migrations/landlord/2026_02_14_000001_create_personal_access_tokens_table.php`
+2. **Tenant Production:** `database/migrations/tenant/production/2026_02_14_000001_create_personal_access_tokens_table.php`
+3. **Tenant Sandbox:** `database/migrations/tenant/sandbox/2026_02_14_000001_create_personal_access_tokens_table.php`
+
+**Estrutura da Tabela:**
+```php
+$table->id();
+$table->string('tokenable_type');
+$table->unsignedBigInteger('tokenable_id');
+$table->string('name');
+$table->string('token', 64)->unique();
+$table->text('abilities')->nullable();
+$table->timestamp('last_used_at')->nullable();
+$table->timestamp('expires_at')->nullable();
+$table->timestamps();
+$table->index(['tokenable_type', 'tokenable_id']);
+```
+
+### 5.7 Testando a API
+
+**Ferramentas Recomendadas:**
+- Postman / Insomnia
+- HTTPie
+- cURL
+- REST Client (VS Code extension)
+
+**Fluxo de Teste Completo:**
+
+1. **Login Tenant:**
+```bash
+curl -X POST http://twoclicks.smartclick360-v2.test/api/v1/auth/tenant/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"usuario@tenant.com","password":"senha123"}'
+```
+
+2. **Guardar Token:**
+```
+TOKEN="2|abc123..."
+```
+
+3. **Listar Pessoas:**
+```bash
+curl -X GET http://twoclicks.smartclick360-v2.test/api/v1/people \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+4. **Criar Pessoa:**
+```bash
+curl -X POST http://twoclicks.smartclick360-v2.test/api/v1/people \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "first_name": "Maria",
+    "surname": "Santos",
+    "birth_date": "1995-03-20",
+    "status": 1
+  }'
+```
+
+5. **Logout:**
+```bash
+curl -X POST http://twoclicks.smartclick360-v2.test/api/v1/auth/tenant/logout \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+---
+
+## 6. Estrutura de Banco de Dados
 
 ### 5.1 Tabelas do Landlord (sc360_main)
 
@@ -456,7 +817,7 @@ Foram criados 10 componentes reutilizáveis para evitar duplicação de código:
 
 ### 7.1 Arquivos Existentes
 
-**Controllers** (10 arquivos):
+**Controllers Web** (10 arquivos):
 - `app/Http/Controllers/PageController.php` — landing pages (home, about, pricing)
 - `app/Http/Controllers/Auth/RegisterController.php` — registro + validações AJAX (checkSlug, checkEmail, checkDocument)
 - `app/Http/Controllers/Auth/LoginController.php` — login do tenant (autenticação no guard 'tenant')
@@ -468,8 +829,24 @@ Foram criados 10 componentes reutilizáveis para evitar duplicação de código:
 - `app/Http/Controllers/Tenant/SubmoduleController.php` — CRUD genérico para submódulos (contacts, documents, addresses, files, notes)
 - `app/Http/Controllers/Controller.php` — base controller do Laravel
 
+**Controllers API** (8 arquivos em `app/Http/Controllers/Api/V1/`):
+- `Auth/TenantAuthController.php` — autenticação do tenant (login, logout, me)
+- `Auth/LandlordAuthController.php` — autenticação do landlord (login, logout, me)
+- `Landlord/DashboardController.php` — estatísticas do landlord
+- `Landlord/TenantController.php` — gestão de tenants via API (index, show)
+- `Modules/PeopleController.php` — CRUD completo de pessoas com filtros avançados (332 linhas)
+- `DashboardController.php` — dashboard do tenant (stub)
+- `ModuleController.php` — delegação para controllers específicos de módulos (74 linhas)
+- `SubmoduleController.php` — CRUD genérico para 5 submódulos (contacts, documents, addresses, files, notes) (468 linhas)
+
 **Middleware** (1 arquivo):
 - `app/Http/Middleware/IdentifyTenant.php` — identifica tenant pelo subdomínio, configura conexão dinâmica, valida status
+
+**Traits** (1 arquivo):
+- `app/Http/Traits/ApiResponse.php` — padronização de respostas JSON da API (9 métodos: success, error, created, deleted, restored, notFound, unauthorized, forbidden, validationError)
+
+**Exception Handlers** (1 arquivo):
+- `app/Exceptions/ApiExceptionHandler.php` — tratamento centralizado de exceções da API (ValidationException, AuthenticationException, ModelNotFoundException, NotFoundHttpException, MethodNotAllowedHttpException)
 
 **Services** (1 arquivo):
 - `app/Services/TenantService.php` — provisionamento completo de tenant (create database, schemas, migrations, seeds, audit)
@@ -483,17 +860,20 @@ Foram criados 10 componentes reutilizáveis para evitar duplicação de código:
   - `decodeId()` — decodifica ID de URL-safe
 
 **Models Landlord** (14 arquivos em `app/Models/Landlord/`):
-- Tenant, Person, User, Contact, Document, Address, File, Note, Subscription, Plan, Module, TypeContact, TypeDocument, TypeAddress
+- Tenant, Person, User (com HasApiTokens), Contact, Document, Address, File, Note, Subscription, Plan, Module, TypeContact, TypeDocument, TypeAddress
 
 **Models Tenant** (11 arquivos em `app/Models/Tenant/`):
-- Person (sem tenant_id), User, Contact, Document, Address, File, Note, Module, TypeContact, TypeDocument, TypeAddress
+- Person (sem tenant_id), User (com HasApiTokens), Contact, Document, Address, File, Note, Module, TypeContact, TypeDocument, TypeAddress
 
-**Migrations Landlord** (15 arquivos em `database/migrations/landlord/`):
-- 14 tabelas + 1 migration de índices de performance
+**Model Customizado para Sanctum** (1 arquivo):
+- `app/Models/PersonalAccessToken.php` — model customizado que estende Laravel Sanctum para suportar multi-tenancy. Sobrescreve `findToken()` para buscar tokens primeiro no landlord e, se não encontrar, busca no banco do tenant identificado pelo subdomínio. Crucial para autenticação funcionar corretamente.
+
+**Migrations Landlord** (16 arquivos em `database/migrations/landlord/`):
+- 14 tabelas + 1 personal_access_tokens (Sanctum) + 1 migration de índices de performance
 
 **Migrations Tenant:**
-- `database/migrations/tenant/production/` — 14 arquivos (11 tabelas + cache + jobs + índices)
-- `database/migrations/tenant/sandbox/` — 14 arquivos (idênticos aos de production)
+- `database/migrations/tenant/production/` — 15 arquivos (11 tabelas + cache + jobs + personal_access_tokens + índices)
+- `database/migrations/tenant/sandbox/` — 15 arquivos (idênticos aos de production)
 - `database/migrations/tenant/log/` — 1 arquivo (audit_logs)
 
 **Seeders** (14 arquivos):
@@ -562,7 +942,7 @@ Foram criados 10 componentes reutilizáveis para evitar duplicação de código:
     - Forms: `contact.blade.php`, `document.blade.php`, `address.blade.php`, `note.blade.php`, `file.blade.php`
   - Menu: `wrapper/user.blade.php`
 
-**Rotas** (`routes/web.php`):
+**Rotas Web** (`routes/web.php`):
 
 Domínio principal (`smartclick360-v2.test`):
 ```
@@ -618,6 +998,52 @@ PATCH  {module}/{code}/restore → restore
 Rotas específicas:
 GET  people/{code}/files → showFiles
 ```
+
+**Rotas API** (`routes/api.php`):
+
+Todas as rotas prefixadas com `/api/v1`:
+
+**Landlord (domínio principal):**
+```
+POST   /api/v1/auth/landlord/login        → login (público)
+POST   /api/v1/landlord/auth/logout       → logout (auth:sanctum)
+GET    /api/v1/landlord/auth/me           → dados do usuário (auth:sanctum)
+GET    /api/v1/landlord/dashboard         → estatísticas (auth:sanctum)
+GET    /api/v1/landlord/tenants           → lista tenants (auth:sanctum)
+GET    /api/v1/landlord/tenants/{code}    → detalhes tenant (auth:sanctum)
+```
+
+**Tenant (subdomínio):**
+
+Middleware `identify.tenant` em todas as rotas:
+
+```
+POST   /api/v1/auth/tenant/login          → login (público)
+POST   /api/v1/auth/tenant/logout         → logout (auth:sanctum)
+GET    /api/v1/auth/tenant/me             → dados do usuário (auth:sanctum)
+
+GET    /api/v1/dashboard                  → dashboard tenant (auth:sanctum)
+
+Módulos (auth:sanctum):
+GET    /api/v1/{module}                   → index
+POST   /api/v1/{module}                   → store
+POST   /api/v1/{module}/reorder           → reorder
+GET    /api/v1/{module}/{code}            → show
+PUT    /api/v1/{module}/{code}            → update
+DELETE /api/v1/{module}/{code}            → destroy
+PATCH  /api/v1/{module}/{code}/restore    → restore
+
+Submódulos (auth:sanctum):
+GET    /api/v1/{module}/{code}/{submodule}                → index
+POST   /api/v1/{module}/{code}/{submodule}                → store
+POST   /api/v1/{module}/{code}/{submodule}/reorder        → reorder
+GET    /api/v1/{module}/{code}/{submodule}/{s_code}       → show
+PUT    /api/v1/{module}/{code}/{submodule}/{s_code}       → update
+DELETE /api/v1/{module}/{code}/{submodule}/{s_code}       → destroy
+PATCH  /api/v1/{module}/{code}/{submodule}/{s_code}/restore → restore
+```
+
+**Total:** 51 endpoints funcionais
 
 ### 7.2 Fluxo de Registro (Funcionando)
 
@@ -697,6 +1123,14 @@ Popula o banco do tenant com 50 pessoas fake (nomes brasileiros + WhatsApp). Út
 5. **Submódulos globais via module_id + register_id** — em vez de morphMany/polimorfismo Laravel, usa module_id para saber a qual módulo pertence e register_id para o ID do registro
 6. **Gravação sem máscara** — facilita buscas e comparações
 7. **Metronic 8 Demo 34** — tema profissional, só leitura na pasta fonte
+8. **Laravel Sanctum para API** — autenticação stateless via Bearer Token, leve e simples, sem overhead do Passport
+9. **PersonalAccessToken customizado** — solução elegante para resolver o problema de Sanctum buscar tokens antes do middleware IdentifyTenant executar. Em vez de alterar o core do Sanctum ou criar middleware complexo, o model customizado detecta o tenant pelo subdomínio e configura a conexão correta antes de validar o token
+10. **Trait ApiResponse** — padronização de todas as respostas JSON da API, facilita manutenção e garante consistência
+11. **ApiExceptionHandler centralizado** — tratamento uniforme de exceções na API, evita duplicação de código e garante que erros sejam sempre formatados corretamente
+12. **Versionamento da API (v1)** — permite evolução da API sem quebrar clientes existentes, possibilita manter múltiplas versões simultâneas
+13. **Delegação de controllers** — ModuleController delega para controllers específicos (ex: PeopleController), facilita adicionar novos módulos sem duplicar rotas
+14. **SubmoduleController genérico** — implementa CRUD para 5 submódulos com lógica compartilhada, evita duplicação de 5 controllers quase idênticos
+15. **Remoção automática de máscaras na API** — mantém consistência com controllers web, garante que dados sejam sempre salvos sem formatação
 
 ---
 
@@ -739,6 +1173,8 @@ Popula o banco do tenant com 50 pessoas fake (nomes brasileiros + WhatsApp). Út
 ## 12. Commits (Últimos 20)
 
 ```
+50ff85f - feat: implement complete REST API with Laravel Sanctum (51 endpoints, multi-tenancy support, custom token resolution)
+1a90d03 - docs: update CLAUDE.md with complete project status
 a77306d - feat: implement URL-safe ID encoding system
 9c76d40 - feat: add person detail page with charts, file management and reusable components
 fffd6d2 - feat: add tenant components, people CRUD and fake data seeder
@@ -877,31 +1313,32 @@ PROJETO.md
 
 ## 15. Próximos Passos
 
-### Fase 11 — Módulo de Produtos
+### Fase 12 — Módulo de Produtos
 - [ ] Tabelas: products, product_categories, product_brands
-- [ ] CRUD completo de produtos
+- [ ] CRUD completo de produtos (web + API)
 - [ ] Gestão de estoque básica
 - [ ] Upload de imagens de produtos
 
-### Fase 12 — Módulo de Vendas
+### Fase 13 — Módulo de Vendas
 - [ ] Tabelas: sales, sale_items
 - [ ] Criação de orçamentos
 - [ ] Conversão de orçamento em venda
 - [ ] Relatório de vendas
 
-### Fase 13 — Módulo Financeiro
+### Fase 14 — Módulo Financeiro
 - [ ] Tabelas: financial_accounts, transactions
 - [ ] Contas a pagar
 - [ ] Contas a receber
 - [ ] Fluxo de caixa
 
-### Fase 14 — Integração Asaas
+### Fase 15 — Integração Asaas
 - [ ] Webhook para atualização de status de pagamento
 - [ ] Criação de assinaturas no Asaas
 - [ ] Gestão de cartão de crédito
 - [ ] Boleto e PIX
 
 ### Melhorias e Features Futuras
+- [x] API REST para integrações — ✅ **Concluída (Fase 11)**
 - [ ] Recuperação de senha (tenant e landlord)
 - [ ] Autenticação em dois fatores (2FA)
 - [ ] Sistema de permissões granulares
@@ -909,8 +1346,10 @@ PROJETO.md
 - [ ] Exportação de dados (CSV, Excel, PDF)
 - [ ] Auditoria completa (logs de todas as ações)
 - [ ] Notificações em tempo real (websockets)
-- [ ] API REST para integrações
-- [ ] Rate limiting
+- [ ] Rate limiting para API
+- [ ] Throttling de autenticação
+- [ ] Versionamento de API (v2, v3...)
+- [ ] Documentação Swagger/OpenAPI
 - [ ] Backup automático diário
 - [ ] Impersonate (admin se passar por tenant)
 - [ ] Modo sandbox completo no landlord
