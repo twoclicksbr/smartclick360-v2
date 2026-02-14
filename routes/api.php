@@ -38,6 +38,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/auth/tenant/me', [\App\Http\Controllers\Api\V1\Auth\TenantAuthController::class, 'me']);
 
             Route::get('/dashboard', [\App\Http\Controllers\Api\V1\DashboardController::class, 'index']);
+            Route::get('/settings', [\App\Http\Controllers\Api\V1\SettingsController::class, 'index']);
 
             // Módulos genéricos
             Route::prefix('{module}')->group(function () {

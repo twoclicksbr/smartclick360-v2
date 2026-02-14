@@ -54,12 +54,12 @@
                                     <div class="d-flex align-items-center">
                                         <div class="symbol symbol-circle symbol-40px me-3">
                                             <div class="symbol-label bg-light-primary">
-                                                <span class="text-primary fw-bold fs-4">{{ strtoupper(substr($user->person->first_name ?? $user->email, 0, 1)) }}</span>
+                                                <span class="text-primary fw-bold fs-4" id="user-avatar-header">...</span>
                                             </div>
                                         </div>
                                         <div class="d-none d-md-flex flex-column">
-                                            <div class="fw-bold text-gray-900 fs-6">{{ $user->person->first_name ?? 'Usuário' }} {{ $user->person->surname ?? '' }}</div>
-                                            <span class="fw-semibold text-gray-500 fs-7">{{ $user->email }}</span>
+                                            <div class="fw-bold text-gray-900 fs-6" id="user-name-header">...</div>
+                                            <span class="fw-semibold text-gray-500 fs-7" id="user-email-header">...</span>
                                         </div>
                                     </div>
                                 </div>
@@ -70,12 +70,12 @@
                                         <div class="menu-content d-flex align-items-center px-3">
                                             <div class="symbol symbol-50px me-5">
                                                 <div class="symbol-label bg-light-primary">
-                                                    <span class="text-primary fw-bold fs-3">{{ strtoupper(substr($user->person->first_name ?? $user->email, 0, 1)) }}</span>
+                                                    <span class="text-primary fw-bold fs-3" id="user-avatar-menu">...</span>
                                                 </div>
                                             </div>
                                             <div class="d-flex flex-column">
-                                                <div class="fw-bold d-flex align-items-center fs-5">{{ $user->person->first_name ?? 'Usuário' }} {{ $user->person->surname ?? '' }}</div>
-                                                <span class="fw-semibold text-muted fs-7">{{ $user->email }}</span>
+                                                <div class="fw-bold d-flex align-items-center fs-5" id="user-name-menu">...</div>
+                                                <span class="fw-semibold text-muted fs-7" id="user-email-menu">...</span>
                                             </div>
                                         </div>
                                     </div>
@@ -124,39 +124,52 @@
                                         <div class="card card-flush h-xl-100">
                                             <!--begin::Card body-->
                                             <div class="card-body d-flex flex-column justify-content-center text-center p-15">
-                                                <!--begin::Illustration-->
-                                                <div class="mb-10">
-                                                    <i class="ki-outline ki-shield-tick fs-5x text-primary"></i>
+                                                <!--begin::Loading skeleton-->
+                                                <div id="dashboard-loading" class="text-center">
+                                                    <div class="spinner-border text-primary" role="status">
+                                                        <span class="visually-hidden">Carregando...</span>
+                                                    </div>
+                                                    <p class="text-gray-600 mt-3">Carregando dashboard...</p>
                                                 </div>
-                                                <!--end::Illustration-->
-                                                <!--begin::Heading-->
-                                                <h1 class="fw-bolder text-gray-900 mb-5">
-                                                    Bem-vindo ao Painel Administrativo
-                                                </h1>
-                                                <!--end::Heading-->
-                                                <!--begin::Subtitle-->
-                                                <div class="fw-semibold fs-3 text-gray-500 mb-10">
-                                                    {{ $user->person->first_name ?? 'Administrador' }}
-                                                </div>
-                                                <!--end::Subtitle-->
-                                                <!--begin::Content-->
-                                                <div class="mb-0">
-                                                    <div class="card bg-light-primary mb-8">
-                                                        <div class="card-body">
-                                                            <div class="d-flex align-items-center">
-                                                                <i class="ki-outline ki-information-5 fs-2x text-primary me-4"></i>
-                                                                <div class="text-start">
-                                                                    <h3 class="text-gray-900 fw-bold mb-2">Painel em Construção</h3>
-                                                                    <div class="text-gray-700 fw-semibold fs-6">
-                                                                        Em breve você terá acesso à gestão de tenants, planos, assinaturas e relatórios.
+                                                <!--end::Loading skeleton-->
+
+                                                <!--begin::Content (hidden until loaded)-->
+                                                <div id="dashboard-content" style="display: none;">
+                                                    <!--begin::Illustration-->
+                                                    <div class="mb-10">
+                                                        <i class="ki-outline ki-shield-tick fs-5x text-primary"></i>
+                                                    </div>
+                                                    <!--end::Illustration-->
+                                                    <!--begin::Heading-->
+                                                    <h1 class="fw-bolder text-gray-900 mb-5">
+                                                        Bem-vindo ao Painel Administrativo
+                                                    </h1>
+                                                    <!--end::Heading-->
+                                                    <!--begin::Subtitle-->
+                                                    <div class="fw-semibold fs-3 text-gray-500 mb-10">
+                                                        <span id="user-name-content">...</span>
+                                                    </div>
+                                                    <!--end::Subtitle-->
+                                                    <!--begin::Content-->
+                                                    <div class="mb-0">
+                                                        <div class="card bg-light-primary mb-8">
+                                                            <div class="card-body">
+                                                                <div class="d-flex align-items-center">
+                                                                    <i class="ki-outline ki-information-5 fs-2x text-primary me-4"></i>
+                                                                    <div class="text-start">
+                                                                        <h3 class="text-gray-900 fw-bold mb-2">Painel em Construção</h3>
+                                                                        <div class="text-gray-700 fw-semibold fs-6">
+                                                                            Em breve você terá acesso à gestão de tenants, planos, assinaturas e relatórios.
+                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         </div>
+                                                        <p class="text-gray-600 fw-semibold fs-6">
+                                                            O backoffice completo está sendo desenvolvido para você gerenciar todos os aspectos da plataforma SmartClick360.
+                                                        </p>
                                                     </div>
-                                                    <p class="text-gray-600 fw-semibold fs-6">
-                                                        O backoffice completo está sendo desenvolvido para você gerenciar todos os aspectos da plataforma SmartClick360.
-                                                    </p>
+                                                    <!--end::Content-->
                                                 </div>
                                                 <!--end::Content-->
                                             </div>
@@ -187,6 +200,71 @@
     <script src="{{ asset('assets/plugins/global/plugins.bundle.js') }}"></script>
     <script src="{{ asset('assets/js/scripts.bundle.js') }}"></script>
     <!--end::Global Javascript Bundle-->
+    <!--begin::Custom Javascript-->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const loadingElement = document.getElementById('dashboard-loading');
+        const contentElement = document.getElementById('dashboard-content');
+
+        fetch('/api/v1/landlord/dashboard', {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Erro ao carregar dashboard');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Preenche os dados do usuário
+                const firstName = data.data.user?.person?.first_name || 'Administrador';
+                const surname = data.data.user?.person?.surname || '';
+                const fullName = `${firstName} ${surname}`.trim();
+                const email = data.data.user?.email || '';
+                const avatar = firstName.charAt(0).toUpperCase();
+
+                // Header
+                document.getElementById('user-avatar-header').textContent = avatar;
+                document.getElementById('user-name-header').textContent = fullName;
+                document.getElementById('user-email-header').textContent = email;
+
+                // Menu dropdown
+                document.getElementById('user-avatar-menu').textContent = avatar;
+                document.getElementById('user-name-menu').textContent = fullName;
+                document.getElementById('user-email-menu').textContent = email;
+
+                // Conteúdo principal
+                document.getElementById('user-name-content').textContent = firstName;
+
+                // Esconde loading e mostra conteúdo
+                loadingElement.style.display = 'none';
+                contentElement.style.display = 'block';
+            } else {
+                throw new Error(data.message || 'Erro ao carregar dados');
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao carregar dashboard:', error);
+            loadingElement.innerHTML = `
+                <div class="text-center">
+                    <i class="ki-outline ki-information-5 fs-3x text-danger mb-3"></i>
+                    <p class="text-danger fw-bold">Erro ao carregar o dashboard</p>
+                    <p class="text-gray-600">${error.message}</p>
+                    <button onclick="location.reload()" class="btn btn-sm btn-primary mt-3">
+                        <i class="ki-outline ki-arrows-circle fs-3"></i>
+                        Tentar Novamente
+                    </button>
+                </div>
+            `;
+        });
+    });
+    </script>
+    <!--end::Custom Javascript-->
     <!--end::Javascript-->
 </body>
 <!--end::Body-->

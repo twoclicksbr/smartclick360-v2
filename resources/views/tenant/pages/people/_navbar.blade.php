@@ -1,5 +1,5 @@
-{{-- Navbar da Pessoa - Componente Reutilizável --}}
-{{-- Parâmetros: $person, $activeTab --}}
+{{-- Navbar da Pessoa - Migrado para API --}}
+{{-- Parâmetros: $code, $activeTab --}}
 
 <!--begin::Navbar-->
 <div class="card mb-5 mb-xl-10">
@@ -9,17 +9,10 @@
             <!--begin::Pic-->
             <div class="me-7 mb-4">
                 <div class="symbol symbol-100px symbol-lg-160px symbol-fixed position-relative">
-                    @php
-                        $avatar = $person->files->where('name', 'avatar')->first();
-                    @endphp
-
-                    @if ($avatar)
-                        <img src="{{ asset('storage/' . $avatar->path) }}" alt="{{ $person->first_name }} {{ $person->surname }}" />
-                    @else
-                        <div class="symbol-label fs-2 fw-semibold text-success bg-light-success">
-                            {{ strtoupper(substr($person->first_name, 0, 1)) }}{{ strtoupper(substr($person->surname, 0, 1)) }}
-                        </div>
-                    @endif
+                    <img id="navbar-avatar-img" src="" alt="Avatar" style="display: none;" />
+                    <div id="navbar-avatar-initials" class="symbol-label fs-2 fw-semibold text-success bg-light-success">
+                        ...
+                    </div>
                 </div>
             </div>
             <!--end::Pic-->
@@ -32,52 +25,34 @@
                     <div class="d-flex flex-column">
                         <!--begin::Name-->
                         <div class="d-flex align-items-center mb-2">
-                            @if ($person->status == 'active' || $person->status == 1 || $person->status === true)
-                                <i class="ki-duotone ki-check-circle fs-2 text-success me-2">
-                                    <span class="path1"></span>
-                                    <span class="path2"></span>
-                                </i>
-                            @else
-                                <i class="ki-duotone ki-cross-circle fs-2 text-danger me-2">
-                                    <span class="path1"></span>
-                                    <span class="path2"></span>
-                                </i>
-                            @endif
-                            <a href="{{ url('/people/' . encodeId($person->id)) }}" class="text-gray-900 text-hover-primary fs-2 fw-bold me-1">
-                                {{ $person->first_name }} {{ $person->surname }}
+                            <i id="navbar-status-icon" class="ki-duotone ki-check-circle fs-2 text-success me-2">
+                                <span class="path1"></span>
+                                <span class="path2"></span>
+                            </i>
+                            <a href="{{ url('/people/' . $code) }}" class="text-gray-900 text-hover-primary fs-2 fw-bold me-1">
+                                <span id="navbar-full-name">Carregando...</span>
                             </a>
                         </div>
                         <!--end::Name-->
 
                         <!--begin::Info-->
                         <div class="d-flex flex-wrap fw-semibold fs-6 mb-4 pe-2">
-                            @php
-                                $whatsapp = $person->contacts->where('typeContact.name', 'WhatsApp')->first();
-                                $email = $person->contacts->where('typeContact.name', 'Email')->first();
-                            @endphp
+                            <div id="navbar-birth-date-container" class="d-flex align-items-center text-gray-500 me-5 mb-2" style="display: none !important;">
+                                <i class="ki-outline ki-gift fs-4 me-1"></i>
+                                <span id="navbar-birth-date">...</span>
+                            </div>
 
-                            @if ($person->birth_date)
-                                <div class="d-flex align-items-center text-gray-500 me-5 mb-2">
-                                    <i class="ki-outline ki-gift fs-4 me-1"></i>
-                                    {{ $person->birth_date->format('d/m/Y') }} ({{ $person->birth_date->age }} anos)
-                                </div>
-                            @endif
+                            <a id="navbar-whatsapp-container" href="#" target="_blank"
+                                class="d-flex align-items-center text-gray-500 text-hover-primary me-5 mb-2" style="display: none !important;">
+                                <i class="ki-outline ki-whatsapp fs-4 me-1"></i>
+                                <span id="navbar-whatsapp">...</span>
+                            </a>
 
-                            @if ($whatsapp)
-                                <a href="https://wa.me/55{{ $whatsapp->value }}" target="_blank"
-                                    class="d-flex align-items-center text-gray-500 text-hover-primary me-5 mb-2">
-                                    <i class="ki-outline ki-whatsapp fs-4 me-1"></i>
-                                    {{ format_phone($whatsapp->value) }}
-                                </a>
-                            @endif
-
-                            @if ($email)
-                                <a href="mailto:{{ $email->value }}"
-                                    class="d-flex align-items-center text-gray-500 text-hover-primary mb-2">
-                                    <i class="ki-outline ki-sms fs-4 me-1"></i>
-                                    {{ $email->value }}
-                                </a>
-                            @endif
+                            <a id="navbar-email-container" href="#"
+                                class="d-flex align-items-center text-gray-500 text-hover-primary mb-2" style="display: none !important;">
+                                <i class="ki-outline ki-sms fs-4 me-1"></i>
+                                <span id="navbar-email">...</span>
+                            </a>
                         </div>
                         <!--end::Info-->
                     </div>
@@ -85,12 +60,7 @@
 
                     <!--begin::Actions-->
                     <div class="d-flex my-4">
-                        @php
-                            $avatarForEdit = $person->files->where('name', 'avatar')->first();
-                            $avatarUrl = $avatarForEdit ? asset('storage/' . $avatarForEdit->path) : '';
-                        @endphp
-                        <button type="button"
-                            onclick="editPerson({{ $person->id }}, '{{ $person->first_name }}', '{{ $person->surname }}', '{{ $person->birth_date?->format('Y-m-d') }}', '{{ $avatarUrl }}', {{ $person->status ? 'true' : 'false' }})"
+                        <button type="button" id="navbar-edit-btn"
                             class="btn btn-sm btn-primary me-3">
                             <i class="ki-outline ki-pencil fs-3"></i>
                             Editar
@@ -132,8 +102,8 @@
                             <!--begin::Stat-->
                             <div class="d-flex align-items-center me-2">
                                 <div class="symbol symbol-30px me-2">
-                                    <span class="symbol-label bg-light fs-6 fw-bold text-gray-800" id="contacts_counter">
-                                        {{ $person->contacts->count() }}
+                                    <span class="symbol-label bg-light fs-6 fw-bold text-gray-800" id="navbar-contacts-count">
+                                        0
                                     </span>
                                 </div>
                                 <div class="fs-8 text-gray-600">Contatos</div>
@@ -143,8 +113,8 @@
                             <!--begin::Stat-->
                             <div class="d-flex align-items-center me-2">
                                 <div class="symbol symbol-30px me-2">
-                                    <span class="symbol-label bg-light fs-6 fw-bold text-gray-800" id="documents_counter">
-                                        {{ $person->documents->count() }}
+                                    <span class="symbol-label bg-light fs-6 fw-bold text-gray-800" id="navbar-documents-count">
+                                        0
                                     </span>
                                 </div>
                                 <div class="fs-8 text-gray-600">Documentos</div>
@@ -154,8 +124,8 @@
                             <!--begin::Stat-->
                             <div class="d-flex align-items-center me-2">
                                 <div class="symbol symbol-30px me-2">
-                                    <span class="symbol-label bg-light fs-6 fw-bold text-gray-800" id="addresses_counter">
-                                        {{ $person->addresses->count() }}
+                                    <span class="symbol-label bg-light fs-6 fw-bold text-gray-800" id="navbar-addresses-count">
+                                        0
                                     </span>
                                 </div>
                                 <div class="fs-8 text-gray-600">Endereços</div>
@@ -165,8 +135,8 @@
                             <!--begin::Stat-->
                             <div class="d-flex align-items-center me-2">
                                 <div class="symbol symbol-30px me-2">
-                                    <span class="symbol-label bg-light fs-6 fw-bold text-gray-800" id="files_counter">
-                                        {{ $person->files->count() }}
+                                    <span class="symbol-label bg-light fs-6 fw-bold text-gray-800" id="navbar-files-count">
+                                        0
                                     </span>
                                 </div>
                                 <div class="fs-8 text-gray-600">Arquivos</div>
@@ -176,8 +146,8 @@
                             <!--begin::Stat-->
                             <div class="d-flex align-items-center me-2">
                                 <div class="symbol symbol-30px me-2">
-                                    <span class="symbol-label bg-light fs-6 fw-bold text-gray-800" id="notes_counter">
-                                        {{ $person->notes->count() }}
+                                    <span class="symbol-label bg-light fs-6 fw-bold text-gray-800" id="navbar-notes-count">
+                                        0
                                     </span>
                                 </div>
                                 <div class="fs-8 text-gray-600">Observações</div>
@@ -191,7 +161,7 @@
                             <!--begin::Stat-->
                             <div class="d-flex align-items-center me-2">
                                 <div class="symbol symbol-30px me-2">
-                                    <span class="symbol-label bg-light fs-6 fw-bold text-gray-800" id="purchases_counter">
+                                    <span class="symbol-label bg-light fs-6 fw-bold text-gray-800" id="navbar-purchases-count">
                                         0
                                     </span>
                                 </div>
@@ -202,7 +172,7 @@
                             <!--begin::Stat-->
                             <div class="d-flex align-items-center me-2">
                                 <div class="symbol symbol-30px me-2">
-                                    <span class="symbol-label bg-light fs-6 fw-bold text-gray-800" id="sales_counter">
+                                    <span class="symbol-label bg-light fs-6 fw-bold text-gray-800" id="navbar-sales-count">
                                         0
                                     </span>
                                 </div>
@@ -213,7 +183,7 @@
                             <!--begin::Stat-->
                             <div class="d-flex align-items-center me-2">
                                 <div class="symbol symbol-30px me-2">
-                                    <span class="symbol-label bg-light fs-6 fw-bold text-gray-800" id="payables_counter">
+                                    <span class="symbol-label bg-light fs-6 fw-bold text-gray-800" id="navbar-payables-count">
                                         0
                                     </span>
                                 </div>
@@ -224,7 +194,7 @@
                             <!--begin::Stat-->
                             <div class="d-flex align-items-center me-2">
                                 <div class="symbol symbol-30px me-2">
-                                    <span class="symbol-label bg-light fs-6 fw-bold text-gray-800" id="receivables_counter">
+                                    <span class="symbol-label bg-light fs-6 fw-bold text-gray-800" id="navbar-receivables-count">
                                         0
                                     </span>
                                 </div>
@@ -241,16 +211,14 @@
                         <div class="d-flex align-items-center mb-3">
                             <div class="text-end me-2">
                                 <div class="fs-7 text-gray-600">Cadastrado em</div>
-                                <div class="fs-6 fw-semibold text-gray-800">
-                                    {{ $person->created_at->format('d/m/Y H:i') }}</div>
+                                <div class="fs-6 fw-semibold text-gray-800" id="navbar-created-at">...</div>
                             </div>
                             <i class="ki-outline ki-calendar fs-3 text-primary"></i>
                         </div>
                         <div class="d-flex align-items-center">
                             <div class="text-end me-2">
                                 <div class="fs-7 text-gray-600">Última atualização</div>
-                                <div class="fs-6 fw-semibold text-gray-800">
-                                    {{ $person->updated_at->format('d/m/Y H:i') }}</div>
+                                <div class="fs-6 fw-semibold text-gray-800" id="navbar-updated-at">...</div>
                             </div>
                             <i class="ki-outline ki-time fs-3 text-primary"></i>
                         </div>
@@ -267,23 +235,23 @@
         <ul class="nav nav-stretch nav-line-tabs nav-line-tabs-2x border-transparent fs-5 fw-bold">
             <li class="nav-item mt-2">
                 <a class="nav-link text-active-primary ms-0 me-10 py-5 {{ $activeTab === 'overview' ? 'active' : '' }}"
-                   href="{{ url('/people/' . encodeId($person->id)) }}">Visão Geral</a>
+                   href="{{ url('/people/' . $code) }}">Visão Geral</a>
             </li>
             <li class="nav-item mt-2">
                 <a class="nav-link text-active-primary ms-0 me-10 py-5 {{ $activeTab === 'contacts' ? 'active' : '' }}"
-                   href="{{ url('/people/' . encodeId($person->id) . '/contacts') }}">Contatos</a>
+                   href="{{ url('/people/' . $code . '/contacts') }}">Contatos</a>
             </li>
             <li class="nav-item mt-2">
                 <a class="nav-link text-active-primary ms-0 me-10 py-5 {{ $activeTab === 'documents' ? 'active' : '' }}"
-                   href="{{ url('/people/' . encodeId($person->id) . '/documents') }}">Documentos</a>
+                   href="{{ url('/people/' . $code . '/documents') }}">Documentos</a>
             </li>
             <li class="nav-item mt-2">
                 <a class="nav-link text-active-primary ms-0 me-10 py-5 {{ $activeTab === 'addresses' ? 'active' : '' }}"
-                   href="{{ url('/people/' . encodeId($person->id) . '/addresses') }}">Endereços</a>
+                   href="{{ url('/people/' . $code . '/addresses') }}">Endereços</a>
             </li>
             <li class="nav-item mt-2">
                 <a class="nav-link text-active-primary ms-0 me-10 py-5 {{ $activeTab === 'files' ? 'active' : '' }}"
-                   href="{{ url('/people/' . encodeId($person->id) . '/files') }}">Arquivos</a>
+                   href="{{ url('/people/' . $code . '/files') }}">Arquivos</a>
             </li>
         </ul>
         <!--end::Navs-->

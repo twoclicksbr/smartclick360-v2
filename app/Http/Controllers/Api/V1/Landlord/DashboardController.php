@@ -15,6 +15,8 @@ class DashboardController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        $user = $request->user();
+
         $totalTenants = Tenant::count();
         $activeTenants = Tenant::where('status', 'active')->count();
         $trialSubscriptions = Subscription::where('status', 'trial')->count();
@@ -26,6 +28,7 @@ class DashboardController extends Controller
             ->get();
 
         return $this->success([
+            'user' => $user->load('person'),
             'stats' => [
                 'total_tenants' => $totalTenants,
                 'active_tenants' => $activeTenants,

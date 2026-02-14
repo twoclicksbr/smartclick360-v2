@@ -13,30 +13,14 @@ class TenantManagementController extends Controller
      */
     public function index()
     {
-        $tenants = Tenant::with(['subscriptions' => function($query) {
-            $query->whereIn('status', ['active', 'trial'])
-                  ->latest()
-                  ->limit(1);
-        }])
-        ->withCount('subscriptions')
-        ->orderBy('created_at', 'desc')
-        ->get();
-
-        return view('landlord.tenants.index', [
-            'tenants' => $tenants,
-        ]);
+        return view('landlord.tenants.index');
     }
 
     /**
      * Exibe detalhes de um tenant específico
      */
-    public function show($id)
+    public function show(string $code)
     {
-        $tenant = Tenant::with(['subscriptions.plan'])
-            ->findOrFail($id);
-
-        return view('landlord.tenants.show', [
-            'tenant' => $tenant,
-        ]);
+        return view('landlord.tenants.show');
     }
 }

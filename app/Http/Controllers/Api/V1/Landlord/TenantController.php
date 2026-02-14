@@ -23,6 +23,11 @@ class TenantController extends Controller
         ->orderBy('created_at', 'desc')
         ->get();
 
+        // Adiciona encoded_id em cada tenant
+        $tenants->each(function ($tenant) {
+            $tenant->encoded_id = encodeId($tenant->id);
+        });
+
         return $this->success([
             'tenants' => $tenants,
         ]);
@@ -35,6 +40,9 @@ class TenantController extends Controller
 
         $tenant = Tenant::with(['subscriptions.plan'])
             ->findOrFail($id);
+
+        // Adiciona encoded_id
+        $tenant->encoded_id = encodeId($tenant->id);
 
         return $this->success([
             'tenant' => $tenant,

@@ -1,37 +1,20 @@
 @extends('tenant.layouts.app')
 
-@php
-    // Função temporária para formatar telefone
-    if (!function_exists('format_phone')) {
-        function format_phone($phone)
-        {
-            if (empty($phone)) {
-                return '';
-            }
-            $phone = preg_replace('/[^0-9]/', '', $phone);
-            $length = strlen($phone);
-            if ($length == 11) {
-                return '(' . substr($phone, 0, 2) . ') ' . substr($phone, 2, 5) . '-' . substr($phone, 7, 4);
-            } elseif ($length == 10) {
-                return '(' . substr($phone, 0, 2) . ') ' . substr($phone, 2, 4) . '-' . substr($phone, 6, 4);
-            }
-            return $phone;
-        }
-    }
-
-    $breadcrumbs = [
-        ['label' => $tenant->name, 'url' => url('/dashboard/main')],
-        ['label' => 'Pessoas', 'url' => url('/people')],
-        ['label' => $person->first_name . ' ' . $person->surname, 'url' => null],
-    ];
-    $pageTitle = $person->first_name . ' ' . $person->surname;
-    $pageDescription = 'Detalhes da pessoa';
-@endphp
-
-@section('title', $person->first_name . ' ' . $person->surname . ' - ' . $tenant->name)
+@section('title', 'Carregando... - ' . $tenant->name)
 
 @section('content')
-    @include('tenant.pages.people._navbar', ['person' => $person, 'activeTab' => 'overview'])
+    <!--begin::Loading skeleton-->
+    <div id="person-loading" class="text-center py-20">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Carregando...</span>
+        </div>
+        <p class="text-gray-600 mt-3">Carregando detalhes...</p>
+    </div>
+    <!--end::Loading skeleton-->
+
+    <!--begin::Content (hidden until loaded)-->
+    <div id="person-content" style="display: none;">
+        @include('tenant.pages.people._navbar', ['code' => $code, 'activeTab' => 'overview'])
 
     <!--begin::Content-->
     <div class="row gx-9 gy-6">
@@ -43,9 +26,9 @@
                 <div class="card-header border-0 pt-5">
                     <h3 class="card-title align-items-start flex-column">
                         <span class="card-label fw-bold fs-3 mb-1">Contatos</span>
-                        <span class="text-muted mt-1 fw-semibold fs-7" id="contacts_subtitle">{{ $person->contacts->count() }}
-                            {{ $person->contacts->count() == 1 ? 'contato' : 'contatos' }}
-                            cadastrado{{ $person->contacts->count() == 1 ? '' : 's' }}</span>
+                        <span class="text-muted mt-1 fw-semibold fs-7" id="contacts_subtitle">
+                            Carregando...
+                        </span>
                     </h3>
                     <div class="card-toolbar">
                         <button type="button" onclick="addContact()" class="btn btn-sm btn-light-primary">
@@ -57,94 +40,28 @@
                 <!--end::Header-->
                 <!--begin::Body-->
                 <div class="card-body py-3">
-                    @if ($person->contacts->count() > 0)
-                        <!--begin::Table container-->
-                        <div class="table-responsive">
-                            <!--begin::Table-->
-                            <table class="table align-middle gs-0 gy-3" id="contacts_list">
-                                <!--begin::Table head-->
-                                <thead>
-                                    <tr>
-                                        <th class="p-0 w-50px"></th>
-                                        <th class="p-0 min-w-200px"></th>
-                                        <th class="p-0 min-w-100px"></th>
-                                    </tr>
-                                </thead>
-                                <!--end::Table head-->
-                                <!--begin::Table body-->
-                                <tbody>
-                                    @foreach ($person->contacts as $contact)
-                                        <tr data-contact-id="{{ $contact->id }}">
-                                            <td>
-                                                <div class="symbol symbol-50px me-2">
-                                                    <span
-                                                        class="symbol-label
-                                                        @if ($contact->typeContact->name == 'WhatsApp') bg-light-success
-                                                        @elseif($contact->typeContact->name == 'Email') bg-light-primary
-                                                        @elseif($contact->typeContact->name == 'Telefone') bg-light-info
-                                                        @elseif($contact->typeContact->name == 'Celular') bg-light-warning
-                                                        @else bg-light-secondary @endif">
-                                                        @if ($contact->typeContact->name == 'WhatsApp')
-                                                            <i class="ki-outline ki-whatsapp fs-2x text-success"></i>
-                                                        @elseif($contact->typeContact->name == 'Email')
-                                                            <i class="ki-outline ki-sms fs-2x text-primary"></i>
-                                                        @elseif($contact->typeContact->name == 'Telefone' || $contact->typeContact->name == 'Celular')
-                                                            <i
-                                                                class="ki-outline ki-phone fs-2x
-                                                                @if ($contact->typeContact->name == 'Telefone') text-info
-                                                                @else text-warning @endif"></i>
-                                                        @else
-                                                            <i class="ki-outline ki-message-text fs-2x text-secondary"></i>
-                                                        @endif
-                                                    </span>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <a href="#"
-                                                    onclick="event.preventDefault(); editContact({{ $contact->id }});"
-                                                    class="text-gray-900 fw-bold text-hover-primary mb-1 fs-6 d-block @if (!$contact->status) text-decoration-line-through opacity-50 @endif">
-                                                    @if ($contact->typeContact->name == 'WhatsApp' || $contact->typeContact->mask)
-                                                        {{ format_phone($contact->value) }}
-                                                    @else
-                                                        {{ $contact->value }}
-                                                    @endif
-                                                </a>
-                                                <div class="d-flex align-items-center gap-2">
-                                                    <span
-                                                        class="text-muted fw-semibold fs-7">{{ $contact->typeContact->name }}</span>
-                                                    @if (!$contact->status)
-                                                        <span class="badge badge-light-danger badge-sm">Inativo</span>
-                                                    @endif
-                                                </div>
-                                            </td>
-                                            <td class="text-end">
-                                                <a href="#"
-                                                    onclick="event.preventDefault(); editContact({{ $contact->id }});"
-                                                    class="btn btn-sm btn-icon btn-light-primary me-2"
-                                                    data-bs-toggle="tooltip" data-bs-placement="left" title="Editar">
-                                                    <i class="ki-outline ki-pencil fs-4"></i>
-                                                </a>
-                                                <a href="#"
-                                                    onclick="event.preventDefault(); deleteContact({{ $contact->id }});"
-                                                    class="btn btn-sm btn-icon btn-light-danger" data-bs-toggle="tooltip"
-                                                    data-bs-placement="left" title="Excluir">
-                                                    <i class="ki-outline ki-trash fs-4"></i>
-                                                </a>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                                <!--end::Table body-->
-                            </table>
-                            <!--end::Table-->
-                        </div>
-                        <!--end::Table container-->
-                    @else
-                        <div class="text-center text-muted py-10" id="contacts_empty_state">
-                            <i class="ki-outline ki-phone fs-3x text-gray-400 mb-3"></i>
-                            <div class="fw-semibold">Nenhum contato cadastrado</div>
-                        </div>
-                    @endif
+                    <!--begin::Table container-->
+                    <div class="table-responsive">
+                        <!--begin::Table-->
+                        <table class="table align-middle gs-0 gy-3" id="contacts_list">
+                            <!--begin::Table head-->
+                            <thead>
+                                <tr>
+                                    <th class="p-0 w-50px"></th>
+                                    <th class="p-0 min-w-200px"></th>
+                                    <th class="p-0 min-w-100px"></th>
+                                </tr>
+                            </thead>
+                            <!--end::Table head-->
+                            <!--begin::Table body-->
+                            <tbody id="contacts_list_tbody">
+                                <!-- Populated via JavaScript from API -->
+                            </tbody>
+                            <!--end::Table body-->
+                        </table>
+                        <!--end::Table-->
+                    </div>
+                    <!--end::Table container-->
                 </div>
                 <!--end::Body-->
             </div>
@@ -157,9 +74,9 @@
                     <h3 class="card-title align-items-start flex-column">
                         <span class="card-label fw-bold fs-3 mb-1">Endereços</span>
                         <span class="text-muted mt-1 fw-semibold fs-7"
-                            id="addresses_subtitle">{{ $person->addresses->count() }}
-                            {{ $person->addresses->count() == 1 ? 'endereço' : 'endereços' }}
-                            cadastrado{{ $person->addresses->count() == 1 ? '' : 's' }}</span>
+                            id="addresses_subtitle">
+                            Carregando...
+                        </span>
                     </h3>
                     <div class="card-toolbar">
                         <button type="button" onclick="addAddress()" class="btn btn-sm btn-light-primary">
@@ -171,81 +88,28 @@
                 <!--end::Header-->
                 <!--begin::Body-->
                 <div class="card-body py-3">
-                    @if ($person->addresses->count() > 0)
-                        <!--begin::Table container-->
-                        <div class="table-responsive">
-                            <!--begin::Table-->
-                            <table class="table align-middle gs-0 gy-3" id="addresses_list">
-                                <!--begin::Table head-->
-                                <thead>
-                                    <tr>
-                                        <th class="p-0 w-50px"></th>
-                                        <th class="p-0 min-w-200px"></th>
-                                        <th class="p-0 min-w-100px"></th>
-                                    </tr>
-                                </thead>
-                                <!--end::Table head-->
-                                <!--begin::Table body-->
-                                <tbody>
-                                    @foreach ($person->addresses as $address)
-                                        <tr data-address-id="{{ $address->id }}">
-                                            <td>
-                                                <div class="symbol symbol-50px me-2">
-                                                    <span class="symbol-label bg-light-success">
-                                                        <i class="ki-outline ki-geolocation fs-2x text-success"></i>
-                                                    </span>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <a href="#"
-                                                    onclick="event.preventDefault(); editAddress({{ $address->id }});"
-                                                    class="text-gray-900 fw-bold text-hover-primary mb-1 fs-6 d-block @if (!$address->status) text-decoration-line-through opacity-50 @endif">
-                                                    {{ $address->street }},
-                                                    {{ $address->number }}{{ $address->complement ? ' - ' . $address->complement : '' }}
-                                                </a>
-                                                <div class="d-flex align-items-center gap-2 flex-wrap">
-                                                    <span
-                                                        class="badge badge-light-success badge-sm">{{ $address->typeAddress->name }}</span>
-                                                    @if ($address->is_main)
-                                                        <span class="badge badge-success badge-sm">Principal</span>
-                                                    @endif
-                                                    <span class="text-muted fw-semibold fs-7">{{ $address->neighborhood }}
-                                                        - {{ $address->city }}/{{ $address->state }}</span>
-                                                    <span class="text-muted fw-semibold fs-7">CEP:
-                                                        {{ substr($address->zip_code, 0, 5) }}-{{ substr($address->zip_code, 5) }}</span>
-                                                    @if (!$address->status)
-                                                        <span class="badge badge-light-danger badge-sm">Inativo</span>
-                                                    @endif
-                                                </div>
-                                            </td>
-                                            <td class="text-end">
-                                                <a href="#"
-                                                    onclick="event.preventDefault(); editAddress({{ $address->id }});"
-                                                    class="btn btn-sm btn-icon btn-light-primary me-2"
-                                                    data-bs-toggle="tooltip" data-bs-placement="left" title="Editar">
-                                                    <i class="ki-outline ki-pencil fs-4"></i>
-                                                </a>
-                                                <a href="#"
-                                                    onclick="event.preventDefault(); deleteAddress({{ $address->id }}, '{{ $address->typeAddress->name }}');"
-                                                    class="btn btn-sm btn-icon btn-light-danger" data-bs-toggle="tooltip"
-                                                    data-bs-placement="left" title="Excluir">
-                                                    <i class="ki-outline ki-trash fs-4"></i>
-                                                </a>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                                <!--end::Table body-->
-                            </table>
-                            <!--end::Table-->
-                        </div>
-                        <!--end::Table container-->
-                    @else
-                        <div class="text-center text-muted py-10" id="addresses_empty_state">
-                            <i class="ki-outline ki-geolocation fs-3x text-gray-400 mb-3"></i>
-                            <div class="fw-semibold">Nenhum endereço cadastrado</div>
-                        </div>
-                    @endif
+                    <!--begin::Table container-->
+                    <div class="table-responsive">
+                        <!--begin::Table-->
+                        <table class="table align-middle gs-0 gy-3" id="addresses_list">
+                            <!--begin::Table head-->
+                            <thead>
+                                <tr>
+                                    <th class="p-0 w-50px"></th>
+                                    <th class="p-0 min-w-200px"></th>
+                                    <th class="p-0 min-w-100px"></th>
+                                </tr>
+                            </thead>
+                            <!--end::Table head-->
+                            <!--begin::Table body-->
+                            <tbody id="addresses_list_tbody">
+                                <!-- Populated via JavaScript from API -->
+                            </tbody>
+                            <!--end::Table body-->
+                        </table>
+                        <!--end::Table-->
+                    </div>
+                    <!--end::Table container-->
                 </div>
                 <!--end::Body-->
             </div>
@@ -258,9 +122,9 @@
                     <h3 class="card-title align-items-start flex-column">
                         <span class="card-label fw-bold fs-3 mb-1">Documentos</span>
                         <span class="text-muted mt-1 fw-semibold fs-7"
-                            id="documents_subtitle">{{ $person->documents->count() }}
-                            {{ $person->documents->count() == 1 ? 'documento' : 'documentos' }}
-                            cadastrado{{ $person->documents->count() == 1 ? '' : 's' }}</span>
+                            id="documents_subtitle">
+                            Carregando...
+                        </span>
                     </h3>
                     <div class="card-toolbar">
                         <button type="button" onclick="addDocument()" class="btn btn-sm btn-light-primary">
@@ -272,96 +136,28 @@
                 <!--end::Header-->
                 <!--begin::Body-->
                 <div class="card-body py-3">
-                    @if ($person->documents->count() > 0)
-                        <!--begin::Table container-->
-                        <div class="table-responsive">
-                            <!--begin::Table-->
-                            <table class="table align-middle gs-0 gy-3" id="documents_list">
-                                <!--begin::Table head-->
-                                <thead>
-                                    <tr>
-                                        <th class="p-0 w-50px"></th>
-                                        <th class="p-0 min-w-200px"></th>
-                                        <th class="p-0 min-w-100px"></th>
-                                    </tr>
-                                </thead>
-                                <!--end::Table head-->
-                                <!--begin::Table body-->
-                                <tbody>
-                                    @foreach ($person->documents as $document)
-                                        @php
-                                            $value = $document->value;
-                                            $mask = $document->typeDocument->mask;
-                                            $masked = $value;
-                                            if ($mask) {
-                                                $masked = '';
-                                                $valueIndex = 0;
-                                                for ($i = 0; $i < strlen($mask); $i++) {
-                                                    if (
-                                                        ($mask[$i] == '9' || $mask[$i] == '0') &&
-                                                        $valueIndex < strlen($value)
-                                                    ) {
-                                                        $masked .= $value[$valueIndex++];
-                                                    } elseif ($mask[$i] != '9' && $mask[$i] != '0') {
-                                                        $masked .= $mask[$i];
-                                                    }
-                                                }
-                                            }
-                                        @endphp
-                                        <tr data-document-id="{{ $document->id }}">
-                                            <td>
-                                                <div class="symbol symbol-50px me-2">
-                                                    <span class="symbol-label bg-light-info">
-                                                        <i class="ki-outline ki-document fs-2x text-info"></i>
-                                                    </span>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <a href="#"
-                                                    onclick="event.preventDefault(); editDocument({{ $document->id }});"
-                                                    class="text-gray-900 fw-bold text-hover-primary mb-1 fs-6 d-block @if (!$document->status) text-decoration-line-through opacity-50 @endif">
-                                                    {{ $masked }}
-                                                </a>
-                                                <div class="d-flex align-items-center gap-2">
-                                                    <span
-                                                        class="text-muted fw-semibold fs-7">{{ $document->typeDocument->name }}</span>
-                                                    @if ($document->expiration_date)
-                                                        <span class="text-muted fw-semibold fs-7">• Validade:
-                                                            {{ $document->expiration_date->format('d/m/Y') }}</span>
-                                                    @endif
-                                                    @if (!$document->status)
-                                                        <span class="badge badge-light-danger badge-sm">Inativo</span>
-                                                    @endif
-                                                </div>
-                                            </td>
-                                            <td class="text-end">
-                                                <a href="#"
-                                                    onclick="event.preventDefault(); editDocument({{ $document->id }});"
-                                                    class="btn btn-sm btn-icon btn-light-primary me-2"
-                                                    data-bs-toggle="tooltip" data-bs-placement="left" title="Editar">
-                                                    <i class="ki-outline ki-pencil fs-4"></i>
-                                                </a>
-                                                <a href="#"
-                                                    onclick="event.preventDefault(); deleteDocument({{ $document->id }}, '{{ $document->typeDocument->name }}');"
-                                                    class="btn btn-sm btn-icon btn-light-danger" data-bs-toggle="tooltip"
-                                                    data-bs-placement="left" title="Excluir">
-                                                    <i class="ki-outline ki-trash fs-4"></i>
-                                                </a>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                                <!--end::Table body-->
-                            </table>
-                            <!--end::Table-->
-                        </div>
-                        <!--end::Table container-->
-                    @else
-                        <div class="text-center text-muted py-10" id="documents_empty_state">
-                            <i class="ki-outline ki-document fs-3x text-gray-400 mb-3"></i>
-                            <div class="fw-semibold">Nenhum documento cadastrado</div>
-                        </div>
-                    @endif
+                    <!--begin::Table container-->
+                    <div class="table-responsive">
+                        <!--begin::Table-->
+                        <table class="table align-middle gs-0 gy-3" id="documents_list">
+                            <!--begin::Table head-->
+                            <thead>
+                                <tr>
+                                    <th class="p-0 w-50px"></th>
+                                    <th class="p-0 min-w-200px"></th>
+                                    <th class="p-0 min-w-100px"></th>
+                                </tr>
+                            </thead>
+                            <!--end::Table head-->
+                            <!--begin::Table body-->
+                            <tbody id="documents_list_tbody">
+                                <!-- Populated via JavaScript from API -->
+                            </tbody>
+                            <!--end::Table body-->
+                        </table>
+                        <!--end::Table-->
+                    </div>
+                    <!--end::Table container-->
                 </div>
                 <!--end::Body-->
             </div>
@@ -373,9 +169,9 @@
                 <div class="card-header border-0 pt-5">
                     <h3 class="card-title align-items-start flex-column">
                         <span class="card-label fw-bold fs-3 mb-1">Observações</span>
-                        <span class="text-muted mt-1 fw-semibold fs-7" id="notes_subtitle">{{ $person->notes->count() }}
-                            {{ $person->notes->count() == 1 ? 'observação' : 'observações' }}
-                            cadastrada{{ $person->notes->count() == 1 ? '' : 's' }}</span>
+                        <span class="text-muted mt-1 fw-semibold fs-7" id="notes_subtitle">
+                            Carregando...
+                        </span>
                     </h3>
                     <div class="card-toolbar">
                         <button type="button" onclick="addNote()" class="btn btn-sm btn-light-primary">
@@ -387,75 +183,27 @@
                 <!--end::Header-->
                 <!--begin::Body-->
                 <div class="card-body py-3">
-                    @if ($person->notes->count() > 0)
-                        <!--begin::Table container-->
-                        <div class="table-responsive">
-                            <!--begin::Table-->
-                            <table class="table align-middle gs-0 gy-3" id="notes_list">
-                                <!--begin::Table head-->
-                                <thead>
-                                    <tr>
-                                        <th class="p-0 w-50px"></th>
-                                        <th class="p-0 min-w-200px"></th>
-                                        <th class="p-0 min-w-100px"></th>
-                                    </tr>
-                                </thead>
-                                <!--end::Table head-->
-                                <!--begin::Table body-->
-                                <tbody>
-                                    @foreach ($person->notes as $note)
-                                        <tr data-note-id="{{ $note->id }}">
-                                            <td>
-                                                <div class="symbol symbol-50px me-2">
-                                                    <span class="symbol-label bg-light-primary">
-                                                        <i class="ki-outline ki-notepad fs-2x text-primary"></i>
-                                                    </span>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <a href="#"
-                                                    onclick="event.preventDefault(); editNote({{ $note->id }});"
-                                                    class="text-gray-900 fw-bold text-hover-primary mb-1 fs-6 d-block @if (!$note->status) text-decoration-line-through opacity-50 @endif">
-                                                    {{ $note->content }}
-                                                </a>
-                                                <div class="d-flex align-items-center gap-2">
-                                                    <span class="text-muted fw-semibold fs-7">
-                                                        <i
-                                                            class="ki-outline ki-calendar fs-7 me-1"></i>{{ $note->created_at->format('d/m/Y H:i') }}
-                                                    </span>
-                                                    @if (!$note->status)
-                                                        <span class="badge badge-light-danger badge-sm">Inativo</span>
-                                                    @endif
-                                                </div>
-                                            </td>
-                                            <td class="text-end">
-                                                <a href="#"
-                                                    onclick="event.preventDefault(); editNote({{ $note->id }});"
-                                                    class="btn btn-sm btn-icon btn-light-primary me-2"
-                                                    data-bs-toggle="tooltip" data-bs-placement="left" title="Editar">
-                                                    <i class="ki-outline ki-pencil fs-4"></i>
-                                                </a>
-                                                <a href="#"
-                                                    onclick="event.preventDefault(); deleteNote({{ $note->id }});"
-                                                    class="btn btn-sm btn-icon btn-light-danger" data-bs-toggle="tooltip"
-                                                    data-bs-placement="left" title="Excluir">
-                                                    <i class="ki-outline ki-trash fs-4"></i>
-                                                </a>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                                <!--end::Table body-->
-                            </table>
-                            <!--end::Table-->
-                        </div>
-                        <!--end::Table container-->
-                    @else
-                        <div class="text-center text-muted py-10" id="notes_empty_state">
-                            <i class="ki-outline ki-notepad fs-3x text-gray-400 mb-3"></i>
-                            <div class="fw-semibold">Nenhuma observação cadastrada</div>
-                        </div>
-                    @endif
+                    <!--begin::Table container-->
+                    <div class="table-responsive">
+                        <!--begin::Table-->
+                        <table class="table align-middle gs-0 gy-3" id="notes_list">
+                            <!--begin::Table head-->
+                            <thead>
+                                <tr>
+                                    <th class="p-0 min-w-300px"></th>
+                                    <th class="p-0 min-w-100px"></th>
+                                </tr>
+                            </thead>
+                            <!--end::Table head-->
+                            <!--begin::Table body-->
+                            <tbody id="notes_list_tbody">
+                                <!-- Populated via JavaScript from API -->
+                            </tbody>
+                            <!--end::Table body-->
+                        </table>
+                        <!--end::Table-->
+                    </div>
+                    <!--end::Table container-->
                 </div>
                 <!--end::Body-->
             </div>
@@ -559,21 +307,21 @@
     @include('tenant.layouts.modals.modal-submodule', [
         'submodule' => 'contact',
         'moduleSlug' => 'people',
-        'recordId' => $person->id,
+        'recordId' => $code,
     ])
 
     {{-- Modal - Adicionar/Editar Documento --}}
     @include('tenant.layouts.modals.modal-submodule', [
         'submodule' => 'document',
         'moduleSlug' => 'people',
-        'recordId' => $person->id,
+        'recordId' => $code,
     ])
 
     {{-- Modal - Adicionar/Editar Endereço --}}
     @include('tenant.layouts.modals.modal-submodule', [
         'submodule' => 'address',
         'moduleSlug' => 'people',
-        'recordId' => $person->id,
+        'recordId' => $code,
         'modalSize' => 'mw-750px',
     ])
 
@@ -581,7 +329,7 @@
     @include('tenant.layouts.modals.modal-submodule', [
         'submodule' => 'note',
         'moduleSlug' => 'people',
-        'recordId' => $person->id,
+        'recordId' => $code,
         'modalSize' => 'mw-650px',
     ])
 
@@ -589,7 +337,7 @@
     @include('tenant.layouts.modals.modal-submodule', [
         'submodule' => 'file',
         'moduleSlug' => 'people',
-        'recordId' => $person->id,
+        'recordId' => $code,
         'modalSize' => 'mw-650px',
     ])
 @endsection
@@ -597,6 +345,404 @@
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/inputmask@5.0.8/dist/inputmask.min.js"></script>
     <script>
+        // ========================================
+        // Variáveis Globais e Carregamento de Dados
+        // ========================================
+        window.personData = null;
+        window.personCode = '{{ $code }}';
+
+        // Função para formatar telefone
+        function formatPhone(phone) {
+            if (!phone) return '';
+            phone = phone.replace(/\D/g, '');
+            if (phone.length === 11) {
+                return `(${phone.substr(0,2)}) ${phone.substr(2,5)}-${phone.substr(7,4)}`;
+            } else if (phone.length === 10) {
+                return `(${phone.substr(0,2)}) ${phone.substr(2,4)}-${phone.substr(6,4)}`;
+            }
+            return phone;
+        }
+
+        // Função para calcular idade corretamente
+        function calculateAge(birthDateStr) {
+            const birth = new Date(birthDateStr);
+            const today = new Date();
+            let age = today.getFullYear() - birth.getFullYear();
+            const monthDiff = today.getMonth() - birth.getMonth();
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+                age--;
+            }
+            return age;
+        }
+
+        // Função para popular a página com dados da pessoa
+        function populatePersonPage(person) {
+            console.log('populatePersonPage chamada com:', person);
+            // Atualiza título da página
+            document.title = `${person.first_name} ${person.surname} - {{ $tenant->name }}`;
+
+            // Atualiza nome no header e breadcrumb
+            const fullName = person.first_name + ' ' + person.surname;
+
+            // Calcula contadores (usados no navbar e no conteúdo)
+            const contactsCount = person.contacts?.length || 0;
+            const addressesCount = person.addresses?.length || 0;
+            const documentsCount = person.documents?.length || 0;
+            const notesCount = person.notes?.length || 0;
+
+            // ========================================
+            // Popular Navbar
+            // ========================================
+
+            // Nome completo
+            const navFullName = document.getElementById('navbar-full-name');
+            if (navFullName) navFullName.textContent = fullName;
+
+            // Avatar
+            const avatar = person.files?.find(f => f.name === 'avatar');
+            const navAvatarImg = document.getElementById('navbar-avatar-img');
+            const navAvatarInitials = document.getElementById('navbar-avatar-initials');
+            if (avatar && navAvatarImg && navAvatarInitials) {
+                navAvatarImg.src = '/storage/' + avatar.path;
+                navAvatarImg.style.display = 'block';
+                navAvatarInitials.style.display = 'none';
+            } else if (navAvatarInitials) {
+                const initials = person.first_name.charAt(0).toUpperCase() + person.surname.charAt(0).toUpperCase();
+                navAvatarInitials.textContent = initials;
+            }
+
+            // Status icon
+            const navStatusIcon = document.getElementById('navbar-status-icon');
+            if (navStatusIcon) {
+                if (person.status == 1 || person.status === true || person.status === 'active') {
+                    navStatusIcon.className = 'ki-duotone ki-check-circle fs-2 text-success me-2';
+                } else {
+                    navStatusIcon.className = 'ki-duotone ki-cross-circle fs-2 text-danger me-2';
+                }
+            }
+
+            // Data de nascimento
+            if (person.birth_date) {
+                const navBirthDateContainer = document.getElementById('navbar-birth-date-container');
+                const navBirthDate = document.getElementById('navbar-birth-date');
+                if (navBirthDateContainer && navBirthDate) {
+                    const birthDate = new Date(person.birth_date);
+                    const age = calculateAge(person.birth_date);
+                    navBirthDate.textContent = birthDate.toLocaleDateString('pt-BR') + ' (' + age + ' anos)';
+                    navBirthDateContainer.style.display = 'flex';
+                }
+            }
+
+            // WhatsApp
+            const whatsapp = person.contacts?.find(c => c.type_contact?.name === 'WhatsApp');
+            if (whatsapp) {
+                const navWhatsappContainer = document.getElementById('navbar-whatsapp-container');
+                const navWhatsapp = document.getElementById('navbar-whatsapp');
+                if (navWhatsappContainer && navWhatsapp) {
+                    navWhatsappContainer.href = 'https://wa.me/55' + whatsapp.value;
+                    navWhatsapp.textContent = formatPhone(whatsapp.value);
+                    navWhatsappContainer.style.display = 'flex';
+                }
+            }
+
+            // Email
+            const email = person.contacts?.find(c => c.type_contact?.name === 'Email');
+            if (email) {
+                const navEmailContainer = document.getElementById('navbar-email-container');
+                const navEmail = document.getElementById('navbar-email');
+                if (navEmailContainer && navEmail) {
+                    navEmailContainer.href = 'mailto:' + email.value;
+                    navEmail.textContent = email.value;
+                    navEmailContainer.style.display = 'flex';
+                }
+            }
+
+            // Contadores do navbar
+            const navContactsCount = document.getElementById('navbar-contacts-count');
+            const navDocumentsCount = document.getElementById('navbar-documents-count');
+            const navAddressesCount = document.getElementById('navbar-addresses-count');
+            const navFilesCount = document.getElementById('navbar-files-count');
+            const navNotesCount = document.getElementById('navbar-notes-count');
+
+            if (navContactsCount) navContactsCount.textContent = contactsCount || 0;
+            if (navDocumentsCount) navDocumentsCount.textContent = documentsCount || 0;
+            if (navAddressesCount) navAddressesCount.textContent = addressesCount || 0;
+            if (navFilesCount) navFilesCount.textContent = person.files?.length || 0;
+            if (navNotesCount) navNotesCount.textContent = notesCount || 0;
+
+            // Datas
+            const navCreatedAt = document.getElementById('navbar-created-at');
+            const navUpdatedAt = document.getElementById('navbar-updated-at');
+            if (navCreatedAt && person.created_at) {
+                const createdDate = new Date(person.created_at);
+                navCreatedAt.textContent = createdDate.toLocaleString('pt-BR');
+            }
+            if (navUpdatedAt && person.updated_at) {
+                const updatedDate = new Date(person.updated_at);
+                navUpdatedAt.textContent = updatedDate.toLocaleString('pt-BR');
+            }
+
+            // Botão editar - configura onclick
+            const navEditBtn = document.getElementById('navbar-edit-btn');
+            if (navEditBtn) {
+                const avatarUrl = avatar ? '/storage/' + avatar.path : '';
+                // Extrai apenas YYYY-MM-DD para input type="date"
+                const birthDateFormatted = person.birth_date ? person.birth_date.substring(0, 10) : '';
+                navEditBtn.onclick = function() {
+                    editPerson(person.id, person.first_name, person.surname, birthDateFormatted, avatarUrl, person.status);
+                };
+            }
+
+            // Atualiza o título principal (h1.page-heading)
+            const pageHeading = document.querySelector('h1.page-heading');
+            if (pageHeading) {
+                // Procura por nós de texto que contenham "Mq" ou o código
+                pageHeading.childNodes.forEach(node => {
+                    if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
+                        node.textContent = fullName;
+                    }
+                });
+            }
+
+            // Corrige breadcrumb do módulo "People" → "Pessoas"
+            const breadcrumbItems = document.querySelectorAll('.breadcrumb-item');
+            breadcrumbItems.forEach(item => {
+                if (item.textContent.trim() === 'People') {
+                    // Se for um link, atualiza o texto dentro do <a>
+                    const link = item.querySelector('a');
+                    if (link) {
+                        link.textContent = 'Pessoas';
+                    } else {
+                        item.textContent = 'Pessoas';
+                    }
+                }
+            });
+
+            // Atualiza o último item do breadcrumb (que mostra "Mq")
+            if (breadcrumbItems.length > 0) {
+                const lastItem = breadcrumbItems[breadcrumbItems.length - 1];
+                lastItem.textContent = fullName;
+            }
+
+            // Popular contadores no conteúdo principal
+            document.getElementById('contacts_subtitle').innerHTML = `${contactsCount} ${contactsCount === 1 ? 'contato' : 'contatos'} cadastrado${contactsCount === 1 ? '' : 's'}`;
+            document.getElementById('addresses_subtitle').innerHTML = `${addressesCount} ${addressesCount === 1 ? 'endereço' : 'endereços'} cadastrado${addressesCount === 1 ? '' : 's'}`;
+            document.getElementById('documents_subtitle').innerHTML = `${documentsCount} ${documentsCount === 1 ? 'documento' : 'documentos'} cadastrado${documentsCount === 1 ? '' : 's'}`;
+            document.getElementById('notes_subtitle').innerHTML = `${notesCount} ${notesCount === 1 ? 'observação' : 'observações'} cadastrada${notesCount === 1 ? '' : 's'}`;
+
+            // Popular listas (substituindo os loops antigos)
+            populateContactsList(person.contacts || []);
+            populateAddressesList(person.addresses || []);
+            populateDocumentsList(person.documents || []);
+            populateNotesList(person.notes || []);
+
+            // Esconde loading e mostra conteúdo
+            document.getElementById('person-loading').style.display = 'none';
+            document.getElementById('person-content').style.display = 'block';
+        }
+
+        // Funções para popular cada lista
+        function populateContactsList(contacts) {
+            const container = document.getElementById('contacts_list_tbody');
+            if (!container) return;
+
+            if (contacts.length === 0) {
+                container.innerHTML = '<tr><td colspan="3" class="text-center text-gray-500 py-5">Nenhum contato cadastrado</td></tr>';
+                return;
+            }
+
+            let html = '';
+            contacts.forEach(contact => {
+                const typeName = contact.type_contact?.name || 'Contato';
+                let iconClass = 'ki-message-text';
+                let colorClass = 'secondary';
+
+                if (typeName === 'WhatsApp') {
+                    iconClass = 'ki-whatsapp';
+                    colorClass = 'success';
+                } else if (typeName === 'Email') {
+                    iconClass = 'ki-sms';
+                    colorClass = 'primary';
+                } else if (typeName === 'Telefone' || typeName === 'Celular') {
+                    iconClass = 'ki-phone';
+                    colorClass = typeName === 'Telefone' ? 'info' : 'warning';
+                }
+
+                const formattedValue = (typeName === 'WhatsApp' || typeName === 'Telefone' || typeName === 'Celular')
+                    ? formatPhone(contact.value)
+                    : contact.value;
+
+                html += `
+                    <tr data-contact-id="${contact.id}">
+                        <td>
+                            <div class="symbol symbol-50px me-2">
+                                <span class="symbol-label bg-light-${colorClass}">
+                                    <i class="ki-outline ${iconClass} fs-2x text-${colorClass}"></i>
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="text-gray-900 fw-bold mb-1 fs-6">${typeName}</span>
+                            <span class="text-muted fw-semibold text-muted d-block fs-7">${formattedValue}</span>
+                        </td>
+                        <td class="text-end">
+                            <a href="#" onclick="editContact(${contact.id}); return false;" class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1">
+                                <i class="ki-outline ki-pencil fs-2"></i>
+                            </a>
+                            <a href="#" onclick="deleteContact(${contact.id}); return false;" class="btn btn-icon btn-bg-light btn-active-color-danger btn-sm">
+                                <i class="ki-outline ki-trash fs-2"></i>
+                            </a>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function populateAddressesList(addresses) {
+            const container = document.getElementById('addresses_list_tbody');
+            if (!container) return;
+
+            if (addresses.length === 0) {
+                container.innerHTML = '<tr><td colspan="3" class="text-center text-gray-500 py-5">Nenhum endereço cadastrado</td></tr>';
+                return;
+            }
+
+            let html = '';
+            addresses.forEach(address => {
+                const typeName = address.type_address?.name || 'Endereço';
+                const fullAddress = `${address.street || ''}, ${address.number || 's/n'}${address.complement ? ' - ' + address.complement : ''}, ${address.neighborhood || ''} - ${address.city || ''}/${address.state || ''}`;
+
+                html += `
+                    <tr data-address-id="${address.id}">
+                        <td>
+                            <div class="symbol symbol-50px me-2">
+                                <span class="symbol-label bg-light-primary">
+                                    <i class="ki-outline ki-geolocation fs-2x text-primary"></i>
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="text-gray-900 fw-bold mb-1 fs-6">${typeName}</span>
+                            <span class="text-muted fw-semibold text-muted d-block fs-7">${fullAddress}</span>
+                        </td>
+                        <td class="text-end">
+                            <a href="#" onclick="editAddress(${address.id}); return false;" class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1">
+                                <i class="ki-outline ki-pencil fs-2"></i>
+                            </a>
+                            <a href="#" onclick="deleteAddress(${address.id}); return false;" class="btn btn-icon btn-bg-light btn-active-color-danger btn-sm">
+                                <i class="ki-outline ki-trash fs-2"></i>
+                            </a>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function populateDocumentsList(documents) {
+            const container = document.getElementById('documents_list_tbody');
+            if (!container) return;
+
+            if (documents.length === 0) {
+                container.innerHTML = '<tr><td colspan="3" class="text-center text-gray-500 py-5">Nenhum documento cadastrado</td></tr>';
+                return;
+            }
+
+            let html = '';
+            documents.forEach(doc => {
+                const typeName = doc.type_document?.name || 'Documento';
+                html += `
+                    <tr data-document-id="${doc.id}">
+                        <td>
+                            <div class="symbol symbol-50px me-2">
+                                <span class="symbol-label bg-light-warning">
+                                    <i class="ki-outline ki-document fs-2x text-warning"></i>
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="text-gray-900 fw-bold mb-1 fs-6">${typeName}</span>
+                            <span class="text-muted fw-semibold text-muted d-block fs-7">${doc.value}</span>
+                        </td>
+                        <td class="text-end">
+                            <a href="#" onclick="editDocument(${doc.id}); return false;" class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1">
+                                <i class="ki-outline ki-pencil fs-2"></i>
+                            </a>
+                            <a href="#" onclick="deleteDocument(${doc.id}); return false;" class="btn btn-icon btn-bg-light btn-active-color-danger btn-sm">
+                                <i class="ki-outline ki-trash fs-2"></i>
+                            </a>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function populateNotesList(notes) {
+            const container = document.getElementById('notes_list_tbody');
+            if (!container) return;
+
+            if (notes.length === 0) {
+                container.innerHTML = '<tr><td colspan="2" class="text-center text-gray-500 py-5">Nenhuma observação cadastrada</td></tr>';
+                return;
+            }
+
+            let html = '';
+            notes.forEach(note => {
+                html += `
+                    <tr data-note-id="${note.id}">
+                        <td>
+                            <span class="text-gray-900 fw-bold d-block fs-6">${note.title || 'Sem título'}</span>
+                            <span class="text-muted fw-semibold d-block fs-7">${note.content ? note.content.substring(0, 100) + (note.content.length > 100 ? '...' : '') : ''}</span>
+                        </td>
+                        <td class="text-end">
+                            <a href="#" onclick="editNote(${note.id}); return false;" class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1">
+                                <i class="ki-outline ki-pencil fs-2"></i>
+                            </a>
+                            <a href="#" onclick="deleteNote(${note.id}); return false;" class="btn btn-icon btn-bg-light btn-active-color-danger btn-sm">
+                                <i class="ki-outline ki-trash fs-2"></i>
+                            </a>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Carrega dados da API ao carregar a página
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Fetching person from:', '/api/v1/people/' + window.personCode);
+            fetch('/api/v1/people/' + window.personCode, {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                console.log('API Response status:', response.status, response.statusText);
+                return response.json();
+            })
+            .then(data => {
+                console.log('API Response data:', data);
+                if (data.success) {
+                    window.personData = data.data.person;
+                    populatePersonPage(window.personData);
+                    console.log('✓ Dados da pessoa carregados via API');
+                } else {
+                    console.error('✗ Erro ao carregar pessoa:', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('✗ Erro ao buscar pessoa da API:', error);
+            });
+        });
+
         // ========================================
         // Modal - Editar Pessoa
         // ========================================
@@ -619,7 +765,8 @@
             // Preenche os campos
             document.getElementById('person_first_name').value = firstName;
             document.getElementById('person_surname').value = surname;
-            document.getElementById('person_birth_date').value = birthDate || '';
+            // Garante formato YYYY-MM-DD para input type="date"
+            document.getElementById('person_birth_date').value = birthDate ? birthDate.substring(0, 10) : '';
 
             // Atualiza o preview do avatar se houver
             if (avatarUrl) {
@@ -657,7 +804,7 @@
             modalTitle.textContent = 'Adicionar Contato';
             document.getElementById('contact_form_method').value = 'POST';
             document.getElementById('contact_id').value = '';
-            contactForm.action = "{{ url('/people/' . $person->id . '/contacts') }}";
+            contactForm.action = `/people/${window.personCode}/contacts`;
 
             // Reseta o Select2
             $('#contact_type_select').val('').trigger('change');
@@ -680,7 +827,7 @@
             var modalTitle = document.getElementById('modal_contact_title');
 
             // Busca os dados do contato via AJAX
-            fetch(`/people/{{ $person->id }}/contacts/${contactId}`, {
+            fetch(`/people/${window.personCode}/contacts/${contactId}`, {
                     method: 'GET',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
@@ -694,7 +841,7 @@
                         modalTitle.textContent = 'Editar Contato';
                         document.getElementById('contact_form_method').value = 'PUT';
                         document.getElementById('contact_id').value = contactId;
-                        contactForm.action = `/people/{{ $person->id }}/contacts/${contactId}`;
+                        contactForm.action = `/people/${window.personCode}/contacts/${contactId}`;
 
                         // Preenche o tipo de contato
                         $('#contact_type_select').val(data.contact.type_contact_id).trigger('change');
@@ -1307,7 +1454,7 @@
             }).then((result) => {
                 if (result.isConfirmed) {
                     // Executa a exclusão
-                    fetch(`/people/{{ $person->id }}/contacts/${contactId}`, {
+                    fetch(`/people/${window.personCode}/contacts/${contactId}`, {
                             method: 'DELETE',
                             headers: {
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -1435,7 +1582,7 @@
             modalTitle.textContent = 'Adicionar Documento';
             document.getElementById('document_form_method').value = 'POST';
             document.getElementById('document_id').value = '';
-            documentForm.action = "{{ url('/people/' . $person->id . '/documents') }}";
+            documentForm.action = `/people/${window.personCode}/documents`;
 
             // Reseta o Select2
             $('#document_type_select').val('').trigger('change');
@@ -1461,7 +1608,7 @@
             var modalTitle = document.getElementById('modal_document_title');
 
             // Busca os dados do documento via AJAX
-            fetch(`/people/{{ $person->id }}/documents/${documentId}`, {
+            fetch(`/people/${window.personCode}/documents/${documentId}`, {
                     method: 'GET',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
@@ -1475,7 +1622,7 @@
                         modalTitle.textContent = 'Editar Documento';
                         document.getElementById('document_form_method').value = 'PUT';
                         document.getElementById('document_id').value = documentId;
-                        documentForm.action = `/people/{{ $person->id }}/documents/${documentId}`;
+                        documentForm.action = `/people/${window.personCode}/documents/${documentId}`;
 
                         // Preenche o tipo de documento
                         $('#document_type_select').val(data.document.type_document_id).trigger('change');
@@ -1556,7 +1703,7 @@
                 }
             }).then((result) => {
                 if (result.isConfirmed) {
-                    fetch(`/people/{{ $person->id }}/documents/${documentId}`, {
+                    fetch(`/people/${window.personCode}/documents/${documentId}`, {
                             method: 'DELETE',
                             headers: {
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -1635,7 +1782,7 @@
             modalTitle.textContent = 'Adicionar Endereço';
             document.getElementById('address_form_method').value = 'POST';
             document.getElementById('address_id').value = '';
-            addressForm.action = "{{ url('/people/' . $person->id . '/addresses') }}";
+            addressForm.action = `/people/${window.personCode}/addresses`;
 
             // Reseta os Select2
             $('#address_type_select').val('').trigger('change');
@@ -1665,7 +1812,7 @@
             var modalTitle = document.getElementById('modal_address_title');
 
             // Busca os dados do endereço via AJAX
-            fetch(`/people/{{ $person->id }}/addresses/${addressId}`, {
+            fetch(`/people/${window.personCode}/addresses/${addressId}`, {
                     method: 'GET',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
@@ -1679,7 +1826,7 @@
                         modalTitle.textContent = 'Editar Endereço';
                         document.getElementById('address_form_method').value = 'PUT';
                         document.getElementById('address_id').value = addressId;
-                        addressForm.action = `/people/{{ $person->id }}/addresses/${addressId}`;
+                        addressForm.action = `/people/${window.personCode}/addresses/${addressId}`;
 
                         // Preenche os campos
                         $('#address_type_select').val(data.address.type_address_id).trigger('change');
@@ -1723,7 +1870,7 @@
                 cancelButtonText: 'Cancelar'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    fetch(`/people/{{ $person->id }}/addresses/${addressId}`, {
+                    fetch(`/people/${window.personCode}/addresses/${addressId}`, {
                             method: 'DELETE',
                             headers: {
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -1798,7 +1945,7 @@
             modalTitle.textContent = 'Adicionar Observação';
             document.getElementById('note_form_method').value = 'POST';
             document.getElementById('note_id').value = '';
-            noteForm.action = "{{ url('/people/' . $person->id . '/notes') }}";
+            noteForm.action = `/people/${window.personCode}/notes`;
 
             // Reseta o status para ativo
             document.getElementById('note_status_switch').checked = true;
@@ -1818,7 +1965,7 @@
             var modalTitle = document.getElementById('modal_note_title');
 
             // Busca os dados da nota via AJAX
-            fetch(`/people/{{ $person->id }}/notes/${noteId}`, {
+            fetch(`/people/${window.personCode}/notes/${noteId}`, {
                     method: 'GET',
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest',
@@ -1832,7 +1979,7 @@
                         modalTitle.textContent = 'Editar Observação';
                         document.getElementById('note_form_method').value = 'PUT';
                         document.getElementById('note_id').value = noteId;
-                        noteForm.action = `/people/{{ $person->id }}/notes/${noteId}`;
+                        noteForm.action = `/people/${window.personCode}/notes/${noteId}`;
 
                         // Preenche o campo
                         document.getElementById('note_content').value = data.note.content || '';
@@ -1870,7 +2017,7 @@
                 cancelButtonText: 'Cancelar'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    fetch(`/people/{{ $person->id }}/notes/${noteId}`, {
+                    fetch(`/people/${window.personCode}/notes/${noteId}`, {
                             method: 'DELETE',
                             headers: {
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -2123,7 +2270,7 @@
             // Configura modo criação
             modalTitle.textContent = 'Adicionar Arquivo';
             document.getElementById('file_form_method').value = 'POST';
-            fileForm.action = "{{ url('/people/' . $person->id . '/files') }}";
+            fileForm.action = `/people/${window.personCode}/files`;
 
             // Limpa o formulário
             fileForm.reset();
@@ -2273,7 +2420,7 @@
                 cancelButtonText: 'Cancelar'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    fetch(`/people/{{ $person->id }}/files/${fileId}`, {
+                    fetch(`/people/${window.personCode}/files/${fileId}`, {
                             method: 'DELETE',
                             headers: {
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,

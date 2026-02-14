@@ -18,125 +18,7 @@ class PeopleController extends Controller
      */
     public function index(Request $request, string $slug, string $module)
     {
-        // dd('index específico de PeopleController');
-
-        $user = Auth::guard('tenant')->user();
-        $tenant = request()->attributes->get('tenant');
-
-        // Inicia a query com eager loading de WhatsApp e Avatar
-        $query = Person::with([
-            'contacts' => function ($query) {
-                $query->whereHas('typeContact', function ($q) {
-                    $q->where('name', 'WhatsApp');
-                })->with('typeContact');
-            },
-            'files' => function ($query) {
-                $query->where('name', 'avatar');
-            }
-        ]);
-
-        // ==============================================
-        // FILTROS DE PESQUISA AVANÇADA
-        // ==============================================
-
-        // Filtro: Busca Rápida (campo do header)
-        if ($request->filled('quick_search')) {
-            $quickSearch = $request->quick_search;
-            $query->where(function ($q) use ($quickSearch) {
-                // Busca no nome completo (first_name + surname)
-                $q->whereRaw("first_name || ' ' || surname ILIKE ?", ['%' . $quickSearch . '%'])
-                    // Ou busca no ID
-                    ->orWhere('id', 'LIKE', '%' . $quickSearch . '%');
-            });
-        }
-
-        // Filtro: ID
-        if ($request->filled('search_id')) {
-            $query->where('id', $request->search_id);
-        }
-
-        // Filtro: Nome (busca na concatenação de first_name + surname)
-        if ($request->filled('search_name')) {
-            $searchName = $request->search_name;
-            $operator = $request->search_operator ?? 'contains';
-
-            $query->where(function ($q) use ($searchName, $operator) {
-                if ($operator === 'contains') {
-                    // Busca na concatenação de first_name + surname (case-insensitive)
-                    $q->whereRaw("first_name || ' ' || surname ILIKE ?", ['%' . $searchName . '%']);
-                } elseif ($operator === 'starts_with') {
-                    // Busca se o nome completo começa com o termo
-                    $q->whereRaw("first_name || ' ' || surname ILIKE ?", [$searchName . '%']);
-                } elseif ($operator === 'exact') {
-                    // Busca exata no nome completo
-                    $q->whereRaw("first_name || ' ' || surname ILIKE ?", [$searchName]);
-                }
-            });
-        }
-
-        // Filtro: Status
-        if ($request->filled('search_status')) {
-            $query->where('status', $request->search_status);
-        }
-
-        // Filtro: Incluir deletados
-        if ($request->filled('search_deleted') && $request->search_deleted == '1') {
-            $query->withTrashed();
-        }
-
-        // Filtro: Datas (periodo com daterangepicker)
-        if ($request->filled('search_date_range')) {
-            // Parse do range "DD/MM/YYYY - DD/MM/YYYY"
-            $dates = explode(' - ', $request->search_date_range);
-            if (count($dates) === 2) {
-                try {
-                    $startDate = \Carbon\Carbon::createFromFormat('d/m/Y', $dates[0])->startOfDay();
-                    $endDate = \Carbon\Carbon::createFromFormat('d/m/Y', $dates[1])->endOfDay();
-                    $dateField = $request->search_date_field ?? 'created_at';
-
-                    $query->whereBetween($dateField, [$startDate, $endDate]);
-                } catch (\Exception $e) {
-                    // Se houver erro no parse da data, ignora o filtro
-                }
-            }
-        }
-
-        // Ordenação e paginação
-        $perPage = $request->search_per_page ?? 25;
-
-        // Ordenação dinâmica (se houver parâmetro sort_by)
-        $sortBy = $request->get('sort_by', 'order'); // padrão: order
-        $sortDirection = $request->get('sort_direction', 'asc'); // padrão: asc
-
-        // Validação: apenas colunas permitidas
-        $allowedColumns = ['id', 'first_name', 'status', 'order', 'created_at', 'updated_at'];
-        if (!in_array($sortBy, $allowedColumns)) {
-            $sortBy = 'order';
-        }
-
-        // Validação: apenas asc ou desc
-        if (!in_array($sortDirection, ['asc', 'desc'])) {
-            $sortDirection = 'asc';
-        }
-
-        $people = $query
-            ->orderBy($sortBy, $sortDirection)
-            ->orderBy('first_name', 'asc') // fallback para nome quando ordem for igual
-            ->paginate($perPage)
-            ->appends($request->except('page')); // mantém os filtros na paginação
-
-        // Se for requisição AJAX, retorna apenas a tabela (HTML parcial)
-        if ($request->ajax()) {
-            return view('tenant.components.people-table', [
-                'people' => $people,
-            ])->render();
-        }
-
-        // Se for requisição normal, retorna a view completa
-        return view('tenant.pages.people.index', [
-            'people' => $people,
-            'tenant' => $tenant,
-        ]);
+        return view('tenant.pages.people.index');
     }
 
     /**
@@ -280,25 +162,7 @@ class PeopleController extends Controller
      */
     public function show(string $slug, string $module, string $code)
     {
-        $user = Auth::guard('tenant')->user();
-        $tenant = request()->attributes->get('tenant');
-
-        // Decodifica o código para obter o ID
-        $id = decodeId($code);
-
-        // Busca a pessoa com relacionamentos necessários (files foi movido para página separada)
-        $person = Person::with([
-            'contacts.typeContact',
-            'documents.typeDocument',
-            'addresses.typeAddress',
-            'notes'
-        ])->findOrFail($id);
-
-        return view('tenant.pages.people.show', [
-            'person' => $person,
-            'tenant' => $tenant,
-            'module' => $module,
-        ]);
+        return view('tenant.pages.people.show', compact('code'));
     }
 
     /**
@@ -306,18 +170,6 @@ class PeopleController extends Controller
      */
     public function showFiles(string $slug, string $code)
     {
-        $tenant = request()->attributes->get('tenant');
-
-        // Decodifica o código para obter o ID
-        $id = decodeId($code);
-
-        // Busca a pessoa com arquivos e contatos (para exibir no header)
-        $person = Person::with(['files', 'contacts.typeContact'])->findOrFail($id);
-
-        return view('tenant.pages.people.show-files', [
-            'person' => $person,
-            'tenant' => $tenant,
-            'module' => 'people',
-        ]);
+        return view('tenant.pages.people.show-files', compact('code'));
     }
 }

@@ -16,7 +16,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'identify.tenant' => \App\Http\Middleware\IdentifyTenant::class,
         ]);
 
-        // Garante que IdentifyTenant rode antes do Authenticate
+        // Adiciona middleware Sanctum SPA para autenticação via cookie/session
+        $middleware->api(prepend: [
+            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+        ]);
+
+        // Garante que IdentifyTenant rode antes do EnsureFrontendRequestsAreStateful e Authenticate
         $middleware->priority([
             \Illuminate\Foundation\Http\Middleware\HandlePrecognitiveRequests::class,
             \Illuminate\Cookie\Middleware\EncryptCookies::class,
@@ -25,7 +30,8 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
-            \App\Http\Middleware\IdentifyTenant::class, // ANTES do Authenticate
+            \App\Http\Middleware\IdentifyTenant::class, // ANTES do Sanctum e Authenticate
+            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
             \Illuminate\Auth\Middleware\Authenticate::class,
             \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
             \Illuminate\Auth\Middleware\Authorize::class,

@@ -6,6 +6,7 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\View;
 use Symfony\Component\HttpFoundation\Response;
 
 class IdentifyTenant
@@ -64,6 +65,9 @@ class IdentifyTenant
             'tenant_name' => $tenant->name,
             'tenant_db'   => $tenant->database_name,
         ]);
+
+        // Compartilhar tenant com todas as views
+        View::share('tenant', $tenant);
 
         return $next($request);
     }

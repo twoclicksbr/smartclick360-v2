@@ -53,7 +53,14 @@
 
         <!--begin::Card body-->
         <div class="card-body py-4" id="people_table_container">
-            <x-tenant.people-table :people="$people" />
+            <!--begin::Loading skeleton-->
+            <div class="text-center py-20">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Carregando...</span>
+                </div>
+                <p class="text-gray-600 mt-3">Carregando pessoas...</p>
+            </div>
+            <!--end::Loading skeleton-->
         </div>
         <!--end::Card body-->
     </div>
@@ -95,47 +102,204 @@
             var searchTimeout;
             var currentSortable = null; // Guardar referência do Sortable
 
+            // Função para gerar HTML de uma linha da tabela
+            function buildPersonRow(person) {
+                const avatar = person.files?.find(f => f.name === 'avatar');
+                const whatsapp = person.contacts?.[0];
+                const avatarHtml = avatar
+                    ? `<img src="/storage/${avatar.path}" alt="${person.first_name} ${person.surname}" />`
+                    : `<div class="symbol-label fs-6 fw-semibold text-success bg-light-success">
+                        ${person.first_name.charAt(0).toUpperCase()}${person.surname.charAt(0).toUpperCase()}
+                       </div>`;
+
+                const whatsappHtml = whatsapp
+                    ? `<a href="https://wa.me/55${whatsapp.value}" target="_blank" class="text-gray-800 text-hover-success fw-bold">
+                        <i class="ki-solid ki-whatsapp fs-4 me-1 text-success"></i>
+                        ${formatPhone(whatsapp.value)}
+                       </a>`
+                    : `<span class="text-gray-400 text-muted">-</span>`;
+
+                const encodedId = encodeId(person.id);
+                const statusBadge = person.status == 1
+                    ? '<span class="badge badge-light-success">Ativo</span>'
+                    : '<span class="badge badge-light-danger">Inativo</span>';
+
+                return `
+                    <tr data-id="${person.id}">
+                        <td class="ps-4">
+                            <div class="d-flex justify-content-center align-items-center" data-kt-sortable-handle="true" style="cursor: move;">
+                                <i class="ki-duotone ki-abstract-14 fs-2 text-gray-400">
+                                    <span class="path1"></span>
+                                    <span class="path2"></span>
+                                </i>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="form-check form-check-sm form-check-custom form-check-solid">
+                                <input class="form-check-input" type="checkbox" value="${person.id}" />
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="d-flex justify-content-start flex-column">${person.id}</div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="symbol symbol-35px symbol-circle me-3">${avatarHtml}</div>
+                                <div class="d-flex justify-content-start flex-column">
+                                    <a href="/people/${encodedId}" class="text-gray-800 text-hover-primary fw-bold mb-1">
+                                        ${person.first_name} ${person.surname}
+                                    </a>
+                                </div>
+                            </div>
+                        </td>
+                        <td>${whatsappHtml}</td>
+                        <td>${statusBadge}</td>
+                        <td class="text-end">
+                            <a href="#" class="btn btn-light btn-active-light-primary btn-flex btn-center btn-sm" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end">
+                                Ações
+                                <i class="ki-duotone ki-down fs-5 ms-1"></i>
+                            </a>
+                            <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-light-primary fw-semibold fs-7 w-125px py-4" data-kt-menu="true">
+                                <div class="menu-item px-3">
+                                    <a href="/people/${encodedId}" class="menu-link px-3">Ver</a>
+                                </div>
+                                <div class="menu-item px-3">
+                                    <a href="#" class="menu-link px-3">Editar</a>
+                                </div>
+                                <div class="menu-item px-3">
+                                    <a href="#" class="menu-link px-3 text-danger">Deletar</a>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+
+            // Função para formatar telefone
+            function formatPhone(phone) {
+                if (!phone) return '';
+                phone = phone.replace(/\D/g, '');
+                if (phone.length === 11) {
+                    return `(${phone.substr(0,2)}) ${phone.substr(2,5)}-${phone.substr(7,4)}`;
+                } else if (phone.length === 10) {
+                    return `(${phone.substr(0,2)}) ${phone.substr(2,4)}-${phone.substr(6,4)}`;
+                }
+                return phone;
+            }
+
             function performSearch() {
                 var searchValue = quickSearchInput.value;
-                console.log('🔍 Busca AJAX disparada:', searchValue);
+                console.log('🔍 Busca API disparada:', searchValue);
 
-                // Monta a URL com o parâmetro de busca
-                var url = new URL(window.location.href);
+                // Monta a URL da API com parâmetros
+                var apiUrl = new URL('/api/v1/people', window.location.origin);
+                var params = new URLSearchParams(window.location.search);
+
                 if (searchValue.trim() !== '') {
-                    url.searchParams.set('quick_search', searchValue);
+                    params.set('quick_search', searchValue);
                 } else {
-                    url.searchParams.delete('quick_search');
+                    params.delete('quick_search');
                 }
 
-                // Faz requisição AJAX
-                fetch(url.toString(), {
+                apiUrl.search = params.toString();
+
+                // Faz requisição AJAX para API
+                fetch(apiUrl.toString(), {
                     headers: {
+                        'Accept': 'application/json',
                         'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const people = data.data.people.data;
+                        const pagination = data.data.people;
+
+                        // Constrói HTML da tabela
+                        let tableHTML = `
+                            <div class="table-responsive">
+                                <table id="kt_table_people" class="table align-middle table-row-dashed fs-6 gy-5">
+                                    <thead class="fw-bold text-muted bg-light">
+                                        <tr class="text-start text-muted fw-bold fs-7 text-uppercase gs-0">
+                                            <th class="w-2 ps-4 rounded-start">
+                                                <i class="ki-duotone ki-abstract-16"><span class="path1"></span><span class="path2"></span></i>
+                                            </th>
+                                            <th class="w-10 min-w-125px">
+                                                <div class="form-check form-check-sm form-check-custom form-check-solid me-3">
+                                                    <input class="form-check-input" type="checkbox" data-kt-check="true" data-kt-check-target="#kt_table_people tbody .form-check-input" value="1" />
+                                                </div>
+                                            </th>
+                                            <th class="w-5">#</th>
+                                            <th class="">Nome</th>
+                                            <th class="w-20">WhatsApp</th>
+                                            <th class="w-10">Status</th>
+                                            <th class="text-end w-10 pe-4 rounded-end">Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="text-gray-600 fw-semibold" data-kt-sortable="true">
+                        `;
+
+                        if (people.length > 0) {
+                            people.forEach(person => {
+                                tableHTML += buildPersonRow(person);
+                            });
+                        } else {
+                            tableHTML += `
+                                <tr>
+                                    <td colspan="7" class="text-center py-10">
+                                        <div class="d-flex flex-column align-items-center">
+                                            <i class="ki-outline ki-information-4 fs-5x text-gray-400 mb-5"></i>
+                                            <h3 class="text-gray-800 fw-bold mb-2">Nenhuma pessoa encontrada</h3>
+                                            <p class="text-gray-500 fs-6 mb-0">Tente ajustar os filtros de busca</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                        }
+
+                        tableHTML += `
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="pt-5">
+                                <div class="d-flex flex-stack flex-wrap">
+                                    <div class="fs-6 fw-semibold text-gray-700">
+                                        Mostrando ${pagination.from || 0} a ${pagination.to || 0} de ${pagination.total} resultados
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+
+                        // Atualiza o container
+                        peopleTableContainer.innerHTML = tableHTML;
+
+                        // Atualiza URL sem reload
+                        var newUrl = new URL(window.location.href);
+                        if (searchValue.trim() !== '') {
+                            newUrl.searchParams.set('quick_search', searchValue);
+                        } else {
+                            newUrl.searchParams.delete('quick_search');
+                        }
+                        window.history.pushState({}, '', newUrl.toString());
+
+                        // Restaura foco
+                        quickSearchInput.focus();
+                        var length = quickSearchInput.value.length;
+                        quickSearchInput.setSelectionRange(length, length);
+
+                        // Reinicializa
+                        initSortable();
+                        initBulkActions();
+
+                        console.log('✓ Tabela atualizada via API');
                     }
                 })
-                .then(response => response.text())
-                .then(html => {
-                    // Atualiza apenas o container da tabela
-                    peopleTableContainer.innerHTML = html;
-
-                    // Atualiza a URL sem reload
-                    window.history.pushState({}, '', url.toString());
-
-                    // Restaura o foco e cursor
-                    quickSearchInput.focus();
-                    var length = quickSearchInput.value.length;
-                    quickSearchInput.setSelectionRange(length, length);
-
-                    // Reinicializa o Sortable na nova tabela
-                    initSortable();
-
-                    // Reinicializa os event listeners de bulk actions
-                    initBulkActions();
-
-                    console.log('✓ Tabela atualizada via AJAX');
-                })
                 .catch(error => {
-                    console.error('✗ Erro na busca AJAX:', error);
+                    console.error('✗ Erro na busca API:', error);
                 });
             }
 
@@ -270,9 +434,8 @@
                 updateBulkActions();
             }
 
-            // Inicializa na primeira carga
-            initSortable();
-            initBulkActions();
+            // Carrega dados iniciais via API
+            performSearch();
 
             // ==============================================
             // Modal - Adicionar/Editar Pessoa

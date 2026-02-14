@@ -43,10 +43,7 @@ Route::domain('smartclick360-v2.test')->group(function () {
     // Dashboard admin (protegido por auth)
     Route::middleware('auth:web')->group(function () {
         Route::get('/dashboard', function () {
-            $user = Auth::guard('web')->user();
-            return view('landlord.dashboard', [
-                'user' => $user,
-            ]);
+            return view('landlord.dashboard');
         })->name('landlord.dashboard');
 
         // Gestão de Tenants
@@ -85,12 +82,7 @@ Route::domain('{slug}.smartclick360-v2.test')->middleware('identify.tenant')->gr
     Route::middleware('auth:tenant')->group(function () {
         // Dashboard
         Route::get('/dashboard/main', function () {
-            $tenant = request()->attributes->get('tenant');
-            $user = Auth::guard('tenant')->user();
-            return view('tenant.pages.dashboard.main', [
-                'tenant' => $tenant,
-                'user'   => $user,
-            ]);
+            return view('tenant.pages.dashboard.main');
         })->name('tenant.dashboard.main');
 
         // Configurações do Tenant
