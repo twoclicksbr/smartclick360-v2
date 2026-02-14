@@ -43,7 +43,7 @@
                                     <span class="path2"></span>
                                 </i>
                             @endif
-                            <a href="{{ url('/people/' . $person->id) }}" class="text-gray-900 text-hover-primary fs-2 fw-bold me-1">
+                            <a href="{{ url('/people/' . encodeId($person->id)) }}" class="text-gray-900 text-hover-primary fs-2 fw-bold me-1">
                                 {{ $person->first_name }} {{ $person->surname }}
                             </a>
                         </div>
@@ -267,23 +267,23 @@
         <ul class="nav nav-stretch nav-line-tabs nav-line-tabs-2x border-transparent fs-5 fw-bold">
             <li class="nav-item mt-2">
                 <a class="nav-link text-active-primary ms-0 me-10 py-5 {{ $activeTab === 'overview' ? 'active' : '' }}"
-                   href="{{ url('/people/' . $person->id) }}">Visão Geral</a>
+                   href="{{ url('/people/' . encodeId($person->id)) }}">Visão Geral</a>
             </li>
             <li class="nav-item mt-2">
                 <a class="nav-link text-active-primary ms-0 me-10 py-5 {{ $activeTab === 'contacts' ? 'active' : '' }}"
-                   href="{{ url('/people/' . $person->id . '/contacts') }}">Contatos</a>
+                   href="{{ url('/people/' . encodeId($person->id) . '/contacts') }}">Contatos</a>
             </li>
             <li class="nav-item mt-2">
                 <a class="nav-link text-active-primary ms-0 me-10 py-5 {{ $activeTab === 'documents' ? 'active' : '' }}"
-                   href="{{ url('/people/' . $person->id . '/documents') }}">Documentos</a>
+                   href="{{ url('/people/' . encodeId($person->id) . '/documents') }}">Documentos</a>
             </li>
             <li class="nav-item mt-2">
                 <a class="nav-link text-active-primary ms-0 me-10 py-5 {{ $activeTab === 'addresses' ? 'active' : '' }}"
-                   href="{{ url('/people/' . $person->id . '/addresses') }}">Endereços</a>
+                   href="{{ url('/people/' . encodeId($person->id) . '/addresses') }}">Endereços</a>
             </li>
             <li class="nav-item mt-2">
                 <a class="nav-link text-active-primary ms-0 me-10 py-5 {{ $activeTab === 'files' ? 'active' : '' }}"
-                   href="{{ url('/people/' . $person->id . '/files') }}">Arquivos</a>
+                   href="{{ url('/people/' . encodeId($person->id) . '/files') }}">Arquivos</a>
             </li>
         </ul>
         <!--end::Navs-->

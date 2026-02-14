@@ -605,11 +605,16 @@
             var personForm = document.getElementById('kt_modal_add_person_form');
             var modalTitle = document.getElementById('modal_person_title');
 
+            // Função helper para encode de ID
+            function encodeId(id) {
+                return btoa(String(id)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+            }
+
             // Configura modo edição
             modalTitle.textContent = 'Editar Pessoa';
             document.getElementById('person_form_method').value = 'PUT';
             document.getElementById('person_id').value = id;
-            personForm.action = "{{ url('/people') }}/" + id;
+            personForm.action = "{{ url('/people') }}/" + encodeId(id);
 
             // Preenche os campos
             document.getElementById('person_first_name').value = firstName;

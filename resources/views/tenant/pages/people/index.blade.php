@@ -69,6 +69,12 @@
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script>
+        // Função helper para encode de ID (igual ao PHP)
+        function encodeId(id) {
+            // Converte para string antes de encodar (btoa só aceita strings)
+            return btoa(String(id)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             // ==============================================
             // Flash Messages - Notificações de sucesso/erro
@@ -306,7 +312,9 @@
                 modalTitle.textContent = 'Editar Pessoa';
                 document.getElementById('person_form_method').value = 'PUT';
                 document.getElementById('person_id').value = id;
-                personForm.action = "{{ url('/people') }}/" + id;
+                var encodedId = encodeId(id);
+                personForm.action = "{{ url('/people') }}/" + encodedId;
+                console.log('ID:', id, '→ Encoded:', encodedId, '→ Action:', personForm.action);
 
                 // Preenche os campos
                 document.getElementById('person_first_name').value = firstName;

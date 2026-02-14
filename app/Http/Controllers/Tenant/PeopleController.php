@@ -194,17 +194,20 @@ class PeopleController extends Controller
             ]);
         }
 
-        return redirect('/people/' . $person->id)
+        return redirect('/people/' . encodeId($person->id))
             ->with('success', 'Pessoa adicionada com sucesso!');
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $slug, string $module, string $id)
+    public function update(Request $request, string $slug, string $module, string $code)
     {
         $user = Auth::guard('tenant')->user();
         $tenant = request()->attributes->get('tenant');
+
+        // Decodifica o código para obter o ID
+        $id = decodeId($code);
 
         // Busca a pessoa
         $person = Person::findOrFail($id);
@@ -268,17 +271,20 @@ class PeopleController extends Controller
             ]);
         }
 
-        return redirect('/people/' . $person->id)
+        return redirect('/people/' . encodeId($person->id))
             ->with('success', 'Pessoa atualizada com sucesso!');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $slug, string $module, string $id)
+    public function show(string $slug, string $module, string $code)
     {
         $user = Auth::guard('tenant')->user();
         $tenant = request()->attributes->get('tenant');
+
+        // Decodifica o código para obter o ID
+        $id = decodeId($code);
 
         // Busca a pessoa com relacionamentos necessários (files foi movido para página separada)
         $person = Person::with([
@@ -298,9 +304,12 @@ class PeopleController extends Controller
     /**
      * Exibe a página de arquivos da pessoa
      */
-    public function showFiles(string $slug, string $id)
+    public function showFiles(string $slug, string $code)
     {
         $tenant = request()->attributes->get('tenant');
+
+        // Decodifica o código para obter o ID
+        $id = decodeId($code);
 
         // Busca a pessoa com arquivos e contatos (para exibir no header)
         $person = Person::with(['files', 'contacts.typeContact'])->findOrFail($id);

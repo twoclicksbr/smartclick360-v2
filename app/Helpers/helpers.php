@@ -87,3 +87,29 @@ if (!function_exists('format_cep')) {
         return $cep;
     }
 }
+
+if (!function_exists('encodeId')) {
+    /**
+     * Codifica um ID para URL amigável
+     *
+     * @param int $id ID a ser codificado
+     * @return string ID codificado
+     */
+    function encodeId($id)
+    {
+        return rtrim(strtr(base64_encode($id), '+/', '-_'), '=');
+    }
+}
+
+if (!function_exists('decodeId')) {
+    /**
+     * Decodifica um ID de URL amigável
+     *
+     * @param string $encoded ID codificado
+     * @return int ID original
+     */
+    function decodeId($encoded)
+    {
+        return (int) base64_decode(strtr($encoded . str_repeat('=', (4 - strlen($encoded) % 4) % 4), '-_', '+/'));
+    }
+}

@@ -72,7 +72,7 @@
                             @endif
 
                             <div class="d-flex justify-content-start flex-column">
-                                <a href="{{ url('/people/' . $person->id) }}"
+                                <a href="{{ url('/people/' . encodeId($person->id)) }}"
                                    class="text-gray-800 text-hover-primary fw-bold mb-1">
                                     {{ $person->first_name }} {{ $person->surname }}
                                 </a>

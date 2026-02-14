@@ -74,13 +74,13 @@ class ModuleController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $slug, string $module, string $id)
+    public function show(string $slug, string $module, string $code)
     {
         // Verifica se existe controller específico
         $specificController = $this->getSpecificController($module);
 
         if ($specificController && method_exists($specificController, 'show')) {
-            return $specificController->show($slug, $module, $id);
+            return $specificController->show($slug, $module, $code);
         }
 
         // Lógica genérica (ainda não implementada)
@@ -90,13 +90,13 @@ class ModuleController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $slug, string $module, string $id)
+    public function edit(string $slug, string $module, string $code)
     {
         // Verifica se existe controller específico
         $specificController = $this->getSpecificController($module);
 
         if ($specificController && method_exists($specificController, 'edit')) {
-            return $specificController->edit($slug, $module, $id);
+            return $specificController->edit($slug, $module, $code);
         }
 
         // Lógica genérica (ainda não implementada)
@@ -106,13 +106,13 @@ class ModuleController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $slug, string $module, string $id)
+    public function update(Request $request, string $slug, string $module, string $code)
     {
         // Verifica se existe controller específico
         $specificController = $this->getSpecificController($module);
 
         if ($specificController && method_exists($specificController, 'update')) {
-            return $specificController->update($request, $slug, $module, $id);
+            return $specificController->update($request, $slug, $module, $code);
         }
 
         // Lógica genérica (ainda não implementada)
@@ -122,13 +122,13 @@ class ModuleController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $slug, string $module, string $id)
+    public function destroy(string $slug, string $module, string $code)
     {
         // Verifica se existe controller específico
         $specificController = $this->getSpecificController($module);
 
         if ($specificController && method_exists($specificController, 'destroy')) {
-            return $specificController->destroy($slug, $module, $id);
+            return $specificController->destroy($slug, $module, $code);
         }
 
         // Lógica genérica (ainda não implementada)
@@ -138,13 +138,13 @@ class ModuleController extends Controller
     /**
      * Restore a soft deleted resource.
      */
-    public function restore(string $slug, string $module, string $m_id)
+    public function restore(string $slug, string $module, string $code)
     {
         // Verifica se existe controller específico
         $specificController = $this->getSpecificController($module);
 
         if ($specificController && method_exists($specificController, 'restore')) {
-            return $specificController->restore($slug, $module, $m_id);
+            return $specificController->restore($slug, $module, $code);
         }
 
         // Lógica genérica (ainda não implementada)
