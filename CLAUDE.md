@@ -1,6 +1,6 @@
 # SmartClick360 v2 — Contexto do Projeto
 
-**Última atualização:** 14/02/2026 (após implementação da API REST)
+**Última atualização:** 15/02/2026 (auditoria completa do projeto)
 
 ---
 
@@ -52,7 +52,7 @@
 | 8 | Sistema de encoding de IDs (URL-safe) | ✅ Concluída |
 | 9 | Backoffice landlord (gestão de tenants) | ✅ Concluída |
 | 10 | Componentes reutilizáveis e sistema modular | ✅ Concluída |
-| 11 | API REST completa (51 endpoints com Sanctum) | ✅ Concluída |
+| 11 | API REST completa (52 endpoints com Sanctum) | ✅ Concluída |
 | 12+ | Demais módulos do ERP | 🔲 Pendente |
 
 ---
@@ -224,7 +224,7 @@ $user = Auth::guard('tenant')->user();
 A API REST foi implementada usando **Laravel Sanctum 4.3** com autenticação via **Bearer Token**. Todas as rotas da API são prefixadas com `/api/v1` e retornam respostas JSON padronizadas.
 
 **Características:**
-- 51 endpoints funcionais
+- 52 endpoints funcionais
 - Autenticação stateless (Bearer Token)
 - Versionamento (v1)
 - Respostas JSON padronizadas
@@ -246,6 +246,7 @@ app/Http/Controllers/Api/V1/
 ├── Modules/
 │   └── PeopleController.php          (CRUD completo de pessoas)
 ├── DashboardController.php           (dashboard do tenant)
+├── SettingsController.php            (configurações do tenant)
 ├── ModuleController.php              (delegação para módulos)
 └── SubmoduleController.php           (CRUD de submódulos)
 ```
@@ -399,6 +400,7 @@ curl -X POST http://twoclicks.smartclick360-v2.test/api/v1/auth/tenant/login \
 | Método | Endpoint | Middleware | Descrição |
 |--------|----------|------------|-----------|
 | GET | /api/v1/dashboard | identify.tenant + auth:sanctum | Dashboard do tenant (TODO) |
+| GET | /api/v1/settings | identify.tenant + auth:sanctum | Configurações do tenant (TODO) |
 
 #### Módulo de Pessoas (CRUD Completo)
 
@@ -578,7 +580,7 @@ curl -X POST http://twoclicks.smartclick360-v2.test/api/v1/auth/tenant/logout \
 
 ## 6. Estrutura de Banco de Dados
 
-### 5.1 Tabelas do Landlord (sc360_main)
+### 6.1 Tabelas do Landlord (sc360_main)
 
 #### tenants
 - id, name, slug (unique), database_name (unique), order, status (active/suspended/cancelled), timestamps, softDeletes
@@ -623,19 +625,19 @@ curl -X POST http://twoclicks.smartclick360-v2.test/api/v1/auth/tenant/logout \
 #### notes
 - id, module_id (FK), register_id, user_id (FK), title, content, order, status, timestamps, softDeletes
 
-### 5.2 Tabelas do Tenant (schemas production e sandbox)
+### 6.2 Tabelas do Tenant (schemas production e sandbox)
 
 **Mesma estrutura do landlord, EXCETO:**
 - **Não tem:** tenants, plans, subscriptions
 - **people NÃO tem** tenant_id (isolamento já é por banco)
 - Total: 11 tabelas core (people, users, modules, type_contacts, type_documents, type_addresses, contacts, documents, addresses, files, notes)
 
-### 5.3 Tabela do Tenant (schema log)
+### 6.3 Tabela do Tenant (schema log)
 
 #### audit_logs
 - id, user_id, action (insert/update/delete), table_name, record_id, old_values (JSON), new_values (JSON), ip_address, user_agent, created_at
 
-### 5.4 Dados de Seed
+### 6.4 Dados de Seed
 
 #### Modules (12 registros)
 - Módulos: Pessoas, Tenants, Usuários, Produtos, Vendas, Compras, Financeiro
@@ -659,13 +661,13 @@ curl -X POST http://twoclicks.smartclick360-v2.test/api/v1/auth/tenant/logout \
 
 ---
 
-## 5. Padrões de Desenvolvimento
+## 7. Padrões de Desenvolvimento
 
-### 5.1 Colunas Padrão em Tabelas
+### 7.1 Colunas Padrão em Tabelas
 
 Todas as tabelas têm: `id`, `order`, `status`, `created_at`, `updated_at`, `deleted_at` (soft delete)
 
-### 5.2 Gravação sem Máscara
+### 7.2 Gravação sem Máscara
 
 Todos os campos com máscara são gravados **apenas com números** no banco:
 - Telefone: `12997698040` (não `(12) 99769-8040`)
@@ -675,7 +677,7 @@ Todos os campos com máscara são gravados **apenas com números** no banco:
 
 A máscara é aplicada apenas na **exibição**, usando o campo `mask` das tabelas `type_contacts` e `type_documents`.
 
-### 5.3 Submódulos Globais (Polimórficos)
+### 7.3 Submódulos Globais (Polimórficos)
 
 Reutilizáveis em qualquer módulo via `module_id` + `register_id`:
 - **Contacts** — telefones, emails, WhatsApp
@@ -684,7 +686,7 @@ Reutilizáveis em qualquer módulo via `module_id` + `register_id`:
 - **Files** — anexos
 - **Notes** — anotações
 
-### 5.4 Controller Genérica (BaseController)
+### 7.4 Controller Genérica (BaseController)
 
 | Método | Rota | Descrição |
 |--------|------|-----------|
@@ -695,7 +697,7 @@ Reutilizáveis em qualquer módulo via `module_id` + `register_id`:
 | `destroy($id)` | DELETE /resource/{id} | Soft delete |
 | `restore($id)` | PATCH /resource/{id}/restore | Restaurar |
 
-### 5.5 Sistema de Encoding de IDs (URL-Safe)
+### 7.5 Sistema de Encoding de IDs (URL-Safe)
 
 Para evitar exposição de IDs sequenciais nas URLs, foi implementado um sistema de encoding:
 
@@ -724,7 +726,7 @@ $person = Person::findOrFail($id);
 - URLs mais profissionais
 - Mantém compatibilidade com findOrFail (após decode)
 
-### 5.6 Permissões (Planejado)
+### 7.6 Permissões (Planejado)
 
 - Granulares por módulo + ação (checkboxes)
 - Sem roles fixas (nada de "admin", "vendedor")
@@ -732,9 +734,9 @@ $person = Person::findOrFail($id);
 
 ---
 
-## 6. Sistema Modular de Controllers e Componentes
+## 8. Sistema Modular de Controllers e Componentes
 
-### 6.1 Arquitetura de Roteamento Modular
+### 8.1 Arquitetura de Roteamento Modular
 
 O sistema usa uma arquitetura de **delegação inteligente** onde:
 
@@ -759,7 +761,7 @@ Se NÃO: executa lógica genérica (abort 404 por enquanto)
 - Rotas genéricas já estão definidas (não precisa duplicar)
 - Lógica específica fica isolada no controller do módulo
 
-### 6.2 SubmoduleController — CRUD Genérico
+### 8.2 SubmoduleController — CRUD Genérico
 
 O SubmoduleController implementa CRUD completo para os 5 submódulos globais:
 - Contacts (telefone, email, WhatsApp)
@@ -785,7 +787,7 @@ POST /people/Mg/contacts
 }
 ```
 
-### 6.3 Componentes Blade Reutilizáveis
+### 8.3 Componentes Blade Reutilizáveis
 
 Foram criados 10 componentes reutilizáveis para evitar duplicação de código:
 
@@ -813,31 +815,60 @@ Foram criados 10 componentes reutilizáveis para evitar duplicação de código:
 
 ---
 
-## 7. O Que Já Foi Construído
+## 9. O Que Já Foi Construído
 
-### 7.1 Arquivos Existentes
+### 9.1 Resumo Geral de Arquivos
+
+**Total de arquivos do projeto:**
+
+| Categoria | Quantidade | Detalhes |
+|-----------|------------|----------|
+| Controllers Web | 10 | PageController, Auth (3), Landlord (1), Tenant (3), Controller base |
+| Controllers API | 9 | Auth (2), Landlord (2), Modules (1), Dashboard, Settings, ModuleController, SubmoduleController |
+| Models Landlord | 14 | Tenant, Person, User, Contact, Document, Address, File, Note, Subscription, Plan, Module, TypeContact, TypeDocument, TypeAddress |
+| Models Tenant | 11 | Person, User, Contact, Document, Address, File, Note, Module, TypeContact, TypeDocument, TypeAddress |
+| Models Customizados | 2 | PersonalAccessToken (Sanctum multi-tenancy), User (base) |
+| Middleware | 1 | IdentifyTenant |
+| Traits | 1 | ApiResponse |
+| Exception Handlers | 1 | ApiExceptionHandler |
+| Services | 1 | TenantService |
+| Helpers | 1 | helpers.php |
+| Migrations Landlord | 16 | 14 tabelas + personal_access_tokens + índices de performance |
+| Migrations Tenant Production | 15 | 11 tabelas + cache + jobs + personal_access_tokens + índices |
+| Migrations Tenant Sandbox | 15 | Idênticos aos de production |
+| Migrations Tenant Log | 1 | audit_logs |
+| Seeders | 14 | 7 landlord + 1 tenant + 6 raiz |
+| Commands Artisan | 2 | TenantReset, TenantSeedFake |
+| Views Total | 58 | Landing (4), Auth (3), Errors (2), Deprecated (2), Landlord (5), Tenant (42) |
+| Rotas Web | ~25 | Landlord (13) + Tenant (12+) |
+| Rotas API | 52 endpoints | Landlord (6) + Tenant (46) |
+
+**Total geral:** ~180 arquivos ativos (sem contar vendor, node_modules, storage)
+
+### 9.2 Arquivos Existentes (Detalhado)
 
 **Controllers Web** (10 arquivos):
+- `app/Http/Controllers/Controller.php` — base controller do Laravel
 - `app/Http/Controllers/PageController.php` — landing pages (home, about, pricing)
 - `app/Http/Controllers/Auth/RegisterController.php` — registro + validações AJAX (checkSlug, checkEmail, checkDocument)
-- `app/Http/Controllers/Auth/LoginController.php` — login do tenant (autenticação no guard 'tenant')
-- `app/Http/Controllers/Auth/LandlordLoginController.php` — login do admin (autenticação no guard 'web')
-- `app/Http/Controllers/Landlord/TenantManagementController.php` — gestão de tenants (index, show)
-- `app/Http/Controllers/Tenant/TenantController.php` — configurações do tenant
-- `app/Http/Controllers/Tenant/PeopleController.php` — CRUD específico de pessoas (index, store, update, show, showFiles)
-- `app/Http/Controllers/Tenant/ModuleController.php` — roteador genérico para módulos (delega para controllers específicos)
-- `app/Http/Controllers/Tenant/SubmoduleController.php` — CRUD genérico para submódulos (contacts, documents, addresses, files, notes)
-- `app/Http/Controllers/Controller.php` — base controller do Laravel
+- `app/Http/Controllers/Auth/LoginController.php` — login do tenant (guard 'tenant')
+- `app/Http/Controllers/Auth/LandlordLoginController.php` — login do admin (guard 'web')
+- `app/Http/Controllers/Landlord/TenantManagementController.php` — gestão de tenants web (index, show)
+- `app/Http/Controllers/Tenant/TenantController.php` — configurações do tenant web (settings)
+- `app/Http/Controllers/Tenant/PeopleController.php` — CRUD pessoas web (index, store, update, show, showFiles)
+- `app/Http/Controllers/Tenant/ModuleController.php` — delegação para controllers específicos de módulos
+- `app/Http/Controllers/Tenant/SubmoduleController.php` — CRUD genérico submódulos web (contacts, documents, addresses, files, notes)
 
-**Controllers API** (8 arquivos em `app/Http/Controllers/Api/V1/`):
+**Controllers API** (9 arquivos em `app/Http/Controllers/Api/V1/`):
 - `Auth/TenantAuthController.php` — autenticação do tenant (login, logout, me)
 - `Auth/LandlordAuthController.php` — autenticação do landlord (login, logout, me)
 - `Landlord/DashboardController.php` — estatísticas do landlord
 - `Landlord/TenantController.php` — gestão de tenants via API (index, show)
-- `Modules/PeopleController.php` — CRUD completo de pessoas com filtros avançados (332 linhas)
+- `Modules/PeopleController.php` — CRUD completo de pessoas com filtros avançados
 - `DashboardController.php` — dashboard do tenant (stub)
-- `ModuleController.php` — delegação para controllers específicos de módulos (74 linhas)
-- `SubmoduleController.php` — CRUD genérico para 5 submódulos (contacts, documents, addresses, files, notes) (468 linhas)
+- `SettingsController.php` — configurações do tenant via API (stub)
+- `ModuleController.php` — delegação para controllers específicos de módulos
+- `SubmoduleController.php` — CRUD genérico para 5 submódulos (contacts, documents, addresses, files, notes)
 
 **Middleware** (1 arquivo):
 - `app/Http/Middleware/IdentifyTenant.php` — identifica tenant pelo subdomínio, configura conexão dinâmica, valida status
@@ -885,7 +916,7 @@ Foram criados 10 componentes reutilizáveis para evitar duplicação de código:
 - `app/Console/Commands/TenantReset.php` — reset completo (dropa tenants + migrate:fresh + seed)
 - `app/Console/Commands/TenantSeedFake.php` — popula tenant com dados fake (`php artisan tenant:seed-fake {slug}`)
 
-**Layouts Blade** (4 arquivos):
+**Layouts Blade** (5 arquivos):
 - `resources/views/layouts/landing.blade.php` — layout das páginas públicas
 - `resources/views/layouts/dashboard.blade.php` — (deprecated, não usado)
 - `resources/views/layouts/tenant.blade.php` — (deprecated, não usado)
@@ -905,42 +936,77 @@ Foram criados 10 componentes reutilizáveis para evitar duplicação de código:
 - `table-sortable-handle.blade.php` — handle de drag and drop
 
 **Views Auth** (3 arquivos):
-- `resources/views/auth/register.blade.php` — formulário de registro (~940 linhas com JS)
+- `resources/views/auth/register.blade.php` — formulário de registro completo com validações
 - `resources/views/auth/login.blade.php` — login do tenant
 - `resources/views/auth/landlord-login.blade.php` — login do admin
 
-**Views Landing** (3 arquivos):
-- `resources/views/pages/home.blade.php`
-- `resources/views/pages/about.blade.php`
-- `resources/views/pages/pricing.blade.php`
+**Views Errors** (2 arquivos):
+- `resources/views/errors/403.blade.php` — página de erro 403 (Acesso Negado)
+- `resources/views/errors/404.blade.php` — página de erro 404 (Não Encontrado)
 
-**Views Landlord** (3 arquivos):
+**Views Deprecated** (2 arquivos):
+- `resources/views/layouts/dashboard.blade.php` — layout antigo (não usado)
+- `resources/views/layouts/tenant.blade.php` — layout antigo (não usado)
+
+**Views Landing** (4 arquivos):
+- `resources/views/pages/home.blade.php` — página inicial
+- `resources/views/pages/about.blade.php` — sobre nós
+- `resources/views/pages/pricing.blade.php` — planos e preços
+- `resources/views/pages/dashboard-test.blade.php` — página de teste (desenvolvimento)
+
+**Views Landlord** (4 arquivos):
+- `resources/views/landlord/layouts/app.blade.php` — layout principal do landlord
+- `resources/views/landlord/layouts/header.blade.php` — header do landlord
 - `resources/views/landlord/dashboard.blade.php` — dashboard do admin
 - `resources/views/landlord/tenants/index.blade.php` — listagem de tenants (grid com cards)
 - `resources/views/landlord/tenants/show.blade.php` — detalhes de um tenant
 
-**Views Tenant** (28+ arquivos):
-- Dashboard: `resources/views/tenant/pages/dashboard/main.blade.php`
-- Settings: `resources/views/tenant/pages/settings.blade.php`
-- People (5 arquivos):
-  - `resources/views/tenant/pages/people/index.blade.php` — listagem com busca avançada
-  - `resources/views/tenant/pages/people/show.blade.php` — detalhes (abas: visão geral, documentos, endereços, observações)
-  - `resources/views/tenant/pages/people/show-files.blade.php` — aba de arquivos
-  - `resources/views/tenant/pages/people/_navbar.blade.php` — navbar de navegação entre abas
-  - `resources/views/tenant/pages/people/forms/people.blade.php` — formulário de pessoa
-- Layouts (19 arquivos):
+**Views Tenant** (33 arquivos):
+- **Pages** (3 arquivos):
+  - `resources/views/tenant/pages/dashboard/main.blade.php` — dashboard principal
+  - `resources/views/tenant/pages/settings.blade.php` — configurações do tenant
+  - People (5 arquivos):
+    - `resources/views/tenant/pages/people/index.blade.php` — listagem com busca avançada
+    - `resources/views/tenant/pages/people/show.blade.php` — detalhes com abas
+    - `resources/views/tenant/pages/people/show-files.blade.php` — aba de arquivos
+    - `resources/views/tenant/pages/people/_navbar.blade.php` — navbar de navegação entre abas
+    - `resources/views/tenant/pages/people/forms/people.blade.php` — formulário de pessoa
+- **Layouts** (7 arquivos):
   - `resources/views/tenant/layouts/app.blade.php` — layout principal
   - `resources/views/tenant/layouts/head.blade.php` — meta tags e CSS
   - `resources/views/tenant/layouts/header.blade.php` — header com menu
   - `resources/views/tenant/layouts/toolbar.blade.php` — toolbar de breadcrumb
-  - `resources/views/tenant/layouts/footer.blade.php`
-  - `resources/views/tenant/layouts/scrolltop.blade.php`
+  - `resources/views/tenant/layouts/footer.blade.php` — rodapé
+  - `resources/views/tenant/layouts/scrolltop.blade.php` — botão scroll to top
   - `resources/views/tenant/layouts/script.blade.php` — scripts JS
-  - Drawers (4 arquivos): `index.blade.php`, `activities.blade.php`, `chat.blade.php`, `shopping-cart.blade.php`
-  - Modals (6 arquivos):
-    - `index.blade.php`, `help.blade.php`, `modal-module.blade.php`, `modal-submodule.blade.php`
-    - Forms: `contact.blade.php`, `document.blade.php`, `address.blade.php`, `note.blade.php`, `file.blade.php`
-  - Menu: `wrapper/user.blade.php`
+- **Drawers** (4 arquivos):
+  - `resources/views/tenant/layouts/drawers/index.blade.php` — loader de drawers
+  - `resources/views/tenant/layouts/drawers/activities.blade.php` — drawer de atividades
+  - `resources/views/tenant/layouts/drawers/chat.blade.php` — drawer de chat
+  - `resources/views/tenant/layouts/drawers/shopping-cart.blade.php` — drawer de carrinho
+- **Modals** (10 arquivos):
+  - `resources/views/tenant/layouts/modals/index.blade.php` — loader de modais
+  - `resources/views/tenant/layouts/modals/help.blade.php` — modal de ajuda
+  - `resources/views/tenant/layouts/modals/modal-module.blade.php` — modal genérico de módulo
+  - `resources/views/tenant/layouts/modals/modal-submodule.blade.php` — modal genérico de submódulo
+  - `resources/views/tenant/layouts/modals/forms/contact.blade.php` — formulário de contato
+  - `resources/views/tenant/layouts/modals/forms/document.blade.php` — formulário de documento
+  - `resources/views/tenant/layouts/modals/forms/address.blade.php` — formulário de endereço
+  - `resources/views/tenant/layouts/modals/forms/note.blade.php` — formulário de nota
+  - `resources/views/tenant/layouts/modals/forms/file.blade.php` — formulário de arquivo
+- **Components** (10 arquivos):
+  - `resources/views/tenant/components/action-button.blade.php` — botão de ação genérico
+  - `resources/views/tenant/components/bulk-actions.blade.php` — ações em massa
+  - `resources/views/tenant/components/pagination-info.blade.php` — info de paginação
+  - `resources/views/tenant/components/people-table.blade.php` — tabela de pessoas (AJAX)
+  - `resources/views/tenant/components/quick-search.blade.php` — busca rápida
+  - `resources/views/tenant/components/search-modal.blade.php` — modal de busca avançada
+  - `resources/views/tenant/components/status-badge.blade.php` — badge de status
+  - `resources/views/tenant/components/table-checkbox.blade.php` — checkbox de tabela
+  - `resources/views/tenant/components/table-row-actions.blade.php` — ações de linha
+  - `resources/views/tenant/components/table-sortable-handle.blade.php` — handle de drag and drop
+- **Menu** (1 arquivo):
+  - `resources/views/tenant/layouts/menu/wrapper/user.blade.php` — menu do usuário
 
 **Rotas Web** (`routes/web.php`):
 
@@ -1023,6 +1089,7 @@ POST   /api/v1/auth/tenant/logout         → logout (auth:sanctum)
 GET    /api/v1/auth/tenant/me             → dados do usuário (auth:sanctum)
 
 GET    /api/v1/dashboard                  → dashboard tenant (auth:sanctum)
+GET    /api/v1/settings                   → configurações tenant (auth:sanctum)
 
 Módulos (auth:sanctum):
 GET    /api/v1/{module}                   → index
@@ -1043,9 +1110,9 @@ DELETE /api/v1/{module}/{code}/{submodule}/{s_code}       → destroy
 PATCH  /api/v1/{module}/{code}/{submodule}/{s_code}/restore → restore
 ```
 
-**Total:** 51 endpoints funcionais
+**Total:** 52 endpoints funcionais
 
-### 7.2 Fluxo de Registro (Funcionando)
+### 9.3 Fluxo de Registro (Funcionando)
 
 1. Usuário preenche formulário em `/register`
 2. Validação em tempo real: slug, email, CPF/CNPJ (AJAX com debounce 500ms)
@@ -1061,7 +1128,7 @@ PATCH  /api/v1/{module}/{code}/{submodule}/{s_code}/restore → restore
 6. Redirect para `http://{slug}.smartclick360-v2.test/login`
 7. Em caso de erro: rollback + DROP DATABASE
 
-### 7.3 AlexSeeder (Tenant de teste)
+### 9.4 AlexSeeder (Tenant de teste)
 
 Cria automaticamente:
 - Tenant: SmartClick360, slug: smartclick360, db: sc360_main
@@ -1071,7 +1138,7 @@ Cria automaticamente:
 - Contact Email: alex@smartclick360.com
 - Document CPF: 35564485807
 
-### 7.4 Comandos Artisan
+### 9.5 Comandos Artisan
 
 #### tenant:reset
 
@@ -1091,30 +1158,30 @@ Popula o banco do tenant com 50 pessoas fake (nomes brasileiros + WhatsApp). Út
 
 ---
 
-## 8. Regras de Negócio
+## 10. Regras de Negócio
 
-### 8.1 Multi-tenancy
+### 10.1 Multi-tenancy
 - Cada tenant = 1 banco PostgreSQL exclusivo (`sc360_{slug}`)
 - 3 schemas: production (dados reais), sandbox (testes internos), log (auditoria)
 - Schema public é removido
 
-### 8.2 Planos e Assinatura
+### 10.2 Planos e Assinatura
 - Trial: 7 dias gratuitos em todos os planos
 - Após expirar: mantém acesso + exibe aviso
 - Ciclos: mensal e anual
 - Gateway: Asaas (cartão, boleto, PIX)
 
-### 8.3 CPF/CNPJ
+### 10.3 CPF/CNPJ
 - Permite duplicação (mesmo CNPJ em múltiplas contas)
 - Auto-detecta CPF (11 dígitos) ou CNPJ (14 dígitos) pelo tamanho
 
-### 8.4 Submódulos Globais
+### 10.4 Submódulos Globais
 - Contacts, Documents, Addresses, Files, Notes
 - Vinculados via `module_id` + `register_id` (polimórfico por tabela modules)
 
 ---
 
-## 9. Decisões de Arquitetura
+## 11. Decisões de Arquitetura
 
 1. **Database-per-Tenant** — isolamento total, conformidade LGPD, facilidade de backup
 2. **PostgreSQL** — suporte nativo a schemas, performance, JSON, full-text search
@@ -1134,7 +1201,7 @@ Popula o banco do tenant com 50 pessoas fake (nomes brasileiros + WhatsApp). Út
 
 ---
 
-## 10. Módulos do ERP (Planejados)
+## 12. Módulos do ERP (Planejados)
 
 | Módulo | Descrição |
 |--------|-----------|
@@ -1146,7 +1213,7 @@ Popula o banco do tenant com 50 pessoas fake (nomes brasileiros + WhatsApp). Út
 
 ---
 
-## 11. Painel Admin (Backoffice)
+## 13. Painel Admin (Backoffice)
 
 ### Status: Implementação Básica ✅
 
@@ -1170,7 +1237,7 @@ Popula o banco do tenant com 50 pessoas fake (nomes brasileiros + WhatsApp). Út
 
 ---
 
-## 12. Commits (Últimos 20)
+## 14. Commits (Últimos 20)
 
 ```
 50ff85f - feat: implement complete REST API with Laravel Sanctum (51 endpoints, multi-tenancy support, custom token resolution)
@@ -1195,7 +1262,7 @@ fbf8d69 - Fix: Remove duplicate users migration
 
 ---
 
-## 13. .gitignore (Regras Adicionais)
+## 15. .gitignore (Regras Adicionais)
 
 ```
 .claude/
@@ -1206,9 +1273,9 @@ PROJETO.md
 
 ---
 
-## 14. Funcionalidades Implementadas
+## 16. Funcionalidades Implementadas
 
-### 14.1 Módulo de Pessoas (CRUD Completo)
+### 16.1 Módulo de Pessoas (CRUD Completo)
 
 **Listagem:**
 - Tabela com paginação (25, 50, 100 registros por página)
@@ -1245,7 +1312,7 @@ PROJETO.md
 - Opção de incluir deletados na busca
 - Restauração de registros deletados
 
-### 14.2 Sistema de Upload de Arquivos
+### 16.2 Sistema de Upload de Arquivos
 
 **Características:**
 - Upload via formulário ou drag and drop
@@ -1260,7 +1327,7 @@ PROJETO.md
 - Avatar de pessoa (pasta `avatars/`)
 - Arquivos gerais (pasta `files/`)
 
-### 14.3 Sistema de Busca Avançada
+### 16.3 Sistema de Busca Avançada
 
 **Implementação:**
 - Modal com formulário de filtros
@@ -1278,7 +1345,7 @@ PROJETO.md
 - Eager loading de relacionamentos
 - Paginação eficiente
 
-### 14.4 Validações em Tempo Real
+### 16.4 Validações em Tempo Real
 
 **Registro:**
 - Validação de slug (AJAX com debounce 500ms)
@@ -1292,7 +1359,7 @@ PROJETO.md
 - Validação de formato de email
 - Remoção automática de máscaras antes de salvar
 
-### 14.5 Gestão de Assinaturas
+### 16.5 Gestão de Assinaturas
 
 **Trial:**
 - 7 dias gratuitos em todos os planos
@@ -1311,7 +1378,7 @@ PROJETO.md
 
 ---
 
-## 15. Próximos Passos
+## 17. Próximos Passos
 
 ### Fase 12 — Módulo de Produtos
 - [ ] Tabelas: products, product_categories, product_brands

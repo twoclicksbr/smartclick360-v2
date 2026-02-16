@@ -187,6 +187,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
+        // Event listener de submit do form
+        document.getElementById('kt_modal_add_file_form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            uploadFilesSequentially();
+        });
+
         // Upload sequencial de arquivos
         window.uploadFilesSequentially = async function() {
             if (selectedFiles.length === 0) {

@@ -9,7 +9,9 @@
             <!--begin::Pic-->
             <div class="me-7 mb-4">
                 <div class="symbol symbol-100px symbol-lg-160px symbol-fixed position-relative">
-                    <img id="navbar-avatar-img" src="" alt="Avatar" style="display: none;" />
+                    <img id="navbar-avatar-img" src="" alt="Avatar"
+                         class="symbol-label"
+                         style="display: none; object-fit: cover;" />
                     <div id="navbar-avatar-initials" class="symbol-label fs-2 fw-semibold text-success bg-light-success">
                         ...
                     </div>
@@ -66,24 +68,36 @@
                             Editar
                         </button>
 
+                        <div id="navbar-restore-option" style="display: none;">
+                            <a href="#" onclick="restorePerson(); return false;" class="btn btn-sm btn-light-warning me-2">
+                                <i class="ki-duotone ki-arrow-circle-left fs-3">
+                                    <span class="path1"></span>
+                                    <span class="path2"></span>
+                                </i>
+                                Restaurar
+                            </a>
+                        </div>
+
                         <!--begin::Menu-->
                         <div class="me-0">
-                            <button class="btn btn-sm btn-icon btn-bg-light btn-active-color-primary"
+                            <button class="btn btn-sm btn-icon btn-light-danger"
                                 data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end">
-                                <i class="ki-solid ki-dots-horizontal fs-2x"></i>
+                                <i class="ki-duotone ki-cross fs-1">
+                                    <span class="path1"></span>
+                                    <span class="path2"></span>
+                                </i>
                             </button>
 
                             <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-800 menu-state-bg-light-primary fw-semibold w-200px py-3"
                                 data-kt-menu="true">
                                 <div class="menu-item px-3">
-                                    <a href="#" class="menu-link px-3">Adicionar Nota</a>
+                                    <a href="{{ url('/people') }}" class="menu-link px-3">Fechar</a>
                                 </div>
-                                <div class="menu-item px-3">
-                                    <a href="#" onclick="addFile(); return false;" class="menu-link px-3">Adicionar Arquivo</a>
-                                </div>
-                                <div class="separator my-2"></div>
-                                <div class="menu-item px-3">
-                                    <a href="#" class="menu-link px-3 text-danger">Excluir</a>
+                                <div id="navbar-delete-option">
+                                    <div class="separator my-2"></div>
+                                    <div class="menu-item px-3">
+                                        <a href="#" onclick="deletePerson(); return false;" class="menu-link px-3 text-danger">Excluir</a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -135,22 +149,22 @@
                             <!--begin::Stat-->
                             <div class="d-flex align-items-center me-2">
                                 <div class="symbol symbol-30px me-2">
-                                    <span class="symbol-label bg-light fs-6 fw-bold text-gray-800" id="navbar-files-count">
+                                    <span class="symbol-label bg-light fs-6 fw-bold text-gray-800" id="navbar-notes-count">
                                         0
                                     </span>
                                 </div>
-                                <div class="fs-8 text-gray-600">Arquivos</div>
+                                <div class="fs-8 text-gray-600">Observações</div>
                             </div>
                             <!--end::Stat-->
 
                             <!--begin::Stat-->
                             <div class="d-flex align-items-center me-2">
                                 <div class="symbol symbol-30px me-2">
-                                    <span class="symbol-label bg-light fs-6 fw-bold text-gray-800" id="navbar-notes-count">
+                                    <span class="symbol-label bg-light fs-6 fw-bold text-gray-800" id="navbar-files-count">
                                         0
                                     </span>
                                 </div>
-                                <div class="fs-8 text-gray-600">Observações</div>
+                                <div class="fs-8 text-gray-600">Arquivos</div>
                             </div>
                             <!--end::Stat-->
                         </div>

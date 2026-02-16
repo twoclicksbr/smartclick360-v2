@@ -153,8 +153,22 @@ class PeopleController extends Controller
             ]);
         }
 
-        return redirect('/people/' . encodeId($person->id))
-            ->with('success', 'Pessoa atualizada com sucesso!');
+        // Redireciona de volta para a página de origem (se veio de /files, volta para /files)
+        $previousUrl = url()->previous();
+        $baseUrl = '/people/' . encodeId($person->id);
+
+        // Se a URL anterior contém /files, /contacts, etc, redireciona para lá
+        if (str_contains($previousUrl, '/files')) {
+            return redirect($baseUrl . '/files')->with('success', 'Pessoa atualizada com sucesso!');
+        } elseif (str_contains($previousUrl, '/contacts')) {
+            return redirect($baseUrl . '/contacts')->with('success', 'Pessoa atualizada com sucesso!');
+        } elseif (str_contains($previousUrl, '/documents')) {
+            return redirect($baseUrl . '/documents')->with('success', 'Pessoa atualizada com sucesso!');
+        } elseif (str_contains($previousUrl, '/addresses')) {
+            return redirect($baseUrl . '/addresses')->with('success', 'Pessoa atualizada com sucesso!');
+        } else {
+            return redirect($baseUrl)->with('success', 'Pessoa atualizada com sucesso!');
+        }
     }
 
     /**
@@ -171,5 +185,51 @@ class PeopleController extends Controller
     public function showFiles(string $slug, string $code)
     {
         return view('tenant.pages.people.show-files', compact('code'));
+    }
+
+    /**
+     * Remove a pessoa (soft delete)
+     */
+    public function destroy(string $slug, string $module, string $code)
+    {
+        $id = decodeId($code);
+        $person = Person::findOrFail($id);
+
+        // Soft delete
+        $person->delete();
+
+        // Retorna JSON para AJAX
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Pessoa excluída com sucesso!'
+            ]);
+        }
+
+        // Redirect para web
+        return redirect('/people')->with('success', 'Pessoa excluída com sucesso!');
+    }
+
+    /**
+     * Restaura uma pessoa soft-deleted
+     */
+    public function restore(string $slug, string $module, string $code)
+    {
+        $id = decodeId($code);
+        $person = Person::withTrashed()->findOrFail($id);
+
+        // Restaura a pessoa
+        $person->restore();
+
+        // Retorna JSON para AJAX
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Pessoa restaurada com sucesso!'
+            ]);
+        }
+
+        // Redirect para web
+        return redirect('/people/' . $code)->with('success', 'Pessoa restaurada com sucesso!');
     }
 }

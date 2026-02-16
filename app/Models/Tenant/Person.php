@@ -60,7 +60,9 @@ class Person extends Model
                     ->from('modules')
                     ->where('slug', 'people')
                     ->limit(1);
-            });
+            })
+            ->orderBy('is_main', 'desc')
+            ->orderBy('created_at', 'desc');
     }
 
     public function files()
@@ -82,6 +84,7 @@ class Person extends Model
                     ->from('modules')
                     ->where('slug', 'people')
                     ->limit(1);
-            });
+            })
+            ->orderBy('created_at', 'desc');
     }
 }

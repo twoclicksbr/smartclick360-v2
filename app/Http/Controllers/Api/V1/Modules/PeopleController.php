@@ -46,7 +46,10 @@ class PeopleController extends Controller
 
         // Filtro: ID
         if ($request->filled('search_id')) {
-            $query->where('id', $request->search_id);
+            $ids = $this->parseIdFilter($request->search_id);
+            if (!empty($ids)) {
+                $query->whereIn('id', $ids);
+            }
         }
 
         // Filtro: Nome (busca na concatenação de first_name + surname)
@@ -199,11 +202,15 @@ class PeopleController extends Controller
         // Decodifica o código para obter o ID
         $id = decodeId($code);
 
-        // Busca a pessoa com relacionamentos necessários
-        $person = Person::with([
+        // Busca a pessoa com relacionamentos necessários (incluindo soft-deleted)
+        $person = Person::withTrashed()->with([
             'contacts.typeContact',
             'documents.typeDocument',
-            'addresses.typeAddress',
+            'addresses' => function($query) {
+                $query->orderBy('is_main', 'desc')
+                      ->orderBy('created_at', 'desc')
+                      ->with('typeAddress');
+            },
             'notes',
             'files'
         ])->findOrFail($id);
@@ -314,6 +321,37 @@ class PeopleController extends Controller
         $person->restore();
 
         return $this->restored('Pessoa restaurada com sucesso');
+    }
+
+    /**
+     * Parseia string de IDs flexível
+     * Suporta: "2" | "2,5" | "1-5" | "2,4-8,11"
+     */
+    private function parseIdFilter(string $input): array
+    {
+        $ids = [];
+        $parts = explode(',', $input);
+
+        foreach ($parts as $part) {
+            $part = trim($part);
+            if (str_contains($part, '-')) {
+                // Range: "1-5" → [1,2,3,4,5]
+                [$start, $end] = explode('-', $part, 2);
+                $start = (int) trim($start);
+                $end = (int) trim($end);
+                if ($start > 0 && $end > 0 && $end >= $start) {
+                    $ids = array_merge($ids, range($start, $end));
+                }
+            } else {
+                // Single: "2" → [2]
+                $id = (int) $part;
+                if ($id > 0) {
+                    $ids[] = $id;
+                }
+            }
+        }
+
+        return array_unique($ids);
     }
 
     public function reorder(Request $request): JsonResponse

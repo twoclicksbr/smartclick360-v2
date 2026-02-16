@@ -9,6 +9,23 @@
     $routeName = Route::currentRouteName();
     $currentPath = request()->path();
 
+    // Mapa de tradução de slugs para português
+    $breadcrumbLabels = [
+        'people' => 'Pessoas',
+        'products' => 'Produtos',
+        'sales' => 'Vendas',
+        'purchases' => 'Compras',
+        'financial' => 'Financeiro',
+        'files' => 'Arquivos',
+        'contacts' => 'Contatos',
+        'documents' => 'Documentos',
+        'addresses' => 'Endereços',
+        'notes' => 'Observações',
+        'settings' => 'Configurações',
+        'dashboard' => 'Painel',
+        'main' => 'Principal',
+    ];
+
     // Breadcrumbs padrão (podem ser sobrescritos nas views com @section('breadcrumbs'))
     $breadcrumbs = $breadcrumbs ?? [];
 
@@ -17,12 +34,14 @@
         $segments = collect(explode('/', $currentPath))->filter()->values();
 
         foreach ($segments as $index => $segment) {
-            $label = Str::title(str_replace('-', ' ', $segment));
+            // Usa o mapa de tradução ou fallback para Str::title
+            $label = $breadcrumbLabels[strtolower($segment)] ?? Str::title(str_replace('-', ' ', $segment));
             $url = $index < $segments->count() - 1 ? url(implode('/', $segments->take($index + 1)->toArray())) : null;
 
             $breadcrumbs[] = [
                 'label' => $label,
-                'url' => $url
+                'url' => $url,
+                'segment' => $segment // Adiciona o segmento original para permitir atualização via JS
             ];
         }
     }
@@ -61,10 +80,10 @@
                         <li class="breadcrumb-item text-white fw-bold lh-1">
                             @if($breadcrumb['url'])
                                 <a href="{{ $breadcrumb['url'] }}" class="text-white text-hover-primary">
-                                    {{ $breadcrumb['label'] }}
+                                    <span class="breadcrumb-segment" data-segment="{{ $breadcrumb['segment'] ?? '' }}">{{ $breadcrumb['label'] }}</span>
                                 </a>
                             @else
-                                {{ $breadcrumb['label'] }}
+                                <span class="breadcrumb-segment" data-segment="{{ $breadcrumb['segment'] ?? '' }}">{{ $breadcrumb['label'] }}</span>
                             @endif
                         </li>
                         <!--end::Item-->

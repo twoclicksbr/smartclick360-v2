@@ -38,6 +38,9 @@ class SubmoduleController extends Controller
         $user = Auth::guard('tenant')->user();
         $tenant = request()->attributes->get('tenant');
 
+        // Decodifica o code para register_id
+        $registerId = decodeId($module_id);
+
         // Mapeamento de submódulos para models
         $submoduleModelMap = [
             'contacts' => \App\Models\Tenant\Contact::class,
@@ -78,7 +81,7 @@ class SubmoduleController extends Controller
                 $existingCount = \App\Models\Tenant\Contact::where('value', $request->value)
                     ->where('type_contact_id', $typeContact->id)
                     ->where('module_id', $moduleRecord->id)
-                    ->where('register_id', $module_id)
+                    ->where('register_id', $registerId)
                     ->count();
 
                 if ($existingCount > 0) {
@@ -111,11 +114,11 @@ class SubmoduleController extends Controller
 
             $data = [
                 'module_id' => $moduleRecord->id,
-                'register_id' => $module_id,
+                'register_id' => $registerId,
                 'type_contact_id' => $validated['type_contact_id'],
                 'value' => $validated['value'],
                 'order' => $modelClass::where('module_id', $moduleRecord->id)
-                    ->where('register_id', $module_id)
+                    ->where('register_id', $registerId)
                     ->max('order') + 1,
                 'status' => true,
             ];
@@ -132,12 +135,12 @@ class SubmoduleController extends Controller
 
             $data = [
                 'module_id' => $moduleRecord->id,
-                'register_id' => $module_id,
+                'register_id' => $registerId,
                 'type_document_id' => $validated['type_document_id'],
                 'value' => $validated['value'],
                 'expiration_date' => $validated['expiration_date'] ?? null,
                 'order' => $modelClass::where('module_id', $moduleRecord->id)
-                    ->where('register_id', $module_id)
+                    ->where('register_id', $registerId)
                     ->max('order') + 1,
                 'status' => true,
             ];
@@ -158,9 +161,21 @@ class SubmoduleController extends Controller
             // Remove máscara do CEP (deixa só números)
             $validated['zip_code'] = preg_replace('/[^0-9]/', '', $validated['zip_code']);
 
+            // Se está marcando como principal, desmarca todos os outros
+            if ($request->has('is_main')) {
+                \App\Models\Tenant\Address::where('module_id', $moduleRecord->id)
+                    ->where('register_id', $registerId)
+                    ->update(['is_main' => false]);
+            }
+
+            // Se é o primeiro endereço, marca como principal automaticamente
+            $isFirstAddress = \App\Models\Tenant\Address::where('module_id', $moduleRecord->id)
+                ->where('register_id', $registerId)
+                ->count() === 0;
+
             $data = [
                 'module_id' => $moduleRecord->id,
-                'register_id' => $module_id,
+                'register_id' => $registerId,
                 'type_address_id' => $validated['type_address_id'],
                 'zip_code' => $validated['zip_code'],
                 'street' => $validated['street'],
@@ -170,9 +185,9 @@ class SubmoduleController extends Controller
                 'city' => $validated['city'],
                 'state' => $validated['state'],
                 'country' => $validated['country'],
-                'is_main' => $request->has('is_main'),
+                'is_main' => $isFirstAddress ? true : $request->has('is_main'),
                 'order' => $modelClass::where('module_id', $moduleRecord->id)
-                    ->where('register_id', $module_id)
+                    ->where('register_id', $registerId)
                     ->max('order') + 1,
                 'status' => true,
             ];
@@ -184,10 +199,11 @@ class SubmoduleController extends Controller
 
             $data = [
                 'module_id' => $moduleRecord->id,
-                'register_id' => $module_id,
+                'register_id' => $registerId,
+                'title' => null,
                 'content' => $validated['content'],
                 'order' => $modelClass::where('module_id', $moduleRecord->id)
-                    ->where('register_id', $module_id)
+                    ->where('register_id', $registerId)
                     ->max('order') + 1,
                 'status' => $request->input('status', 1) == 1,
             ];
@@ -206,13 +222,13 @@ class SubmoduleController extends Controller
 
             $data = [
                 'module_id' => $moduleRecord->id,
-                'register_id' => $module_id,
+                'register_id' => $registerId,
                 'name' => $uploadedFile->getClientOriginalName(),
                 'path' => $path,
                 'mime_type' => $uploadedFile->getClientMimeType(),
                 'size' => $uploadedFile->getSize(),
                 'order' => $modelClass::where('module_id', $moduleRecord->id)
-                    ->where('register_id', $module_id)
+                    ->where('register_id', $registerId)
                     ->max('order') + 1,
                 'status' => $request->input('status', 1) == 1,
             ];
@@ -226,7 +242,7 @@ class SubmoduleController extends Controller
         // Se for requisição AJAX, retorna JSON
         if ($request->ajax()) {
             if ($submodule === 'contacts') {
-                // Carrega relacionamentos
+                // Carrega o relacionamento type_contact
                 $record->load('typeContact');
 
                 return response()->json([
@@ -234,13 +250,18 @@ class SubmoduleController extends Controller
                     'message' => ucfirst($submodule) . ' adicionado com sucesso!',
                     'contact' => [
                         'id' => $record->id,
+                        'type_contact' => [
+                            'id' => $record->typeContact->id,
+                            'name' => $record->typeContact->name,
+                            'mask' => $record->typeContact->mask,
+                        ],
                         'type_name' => $record->typeContact->name,
                         'type_mask' => $record->typeContact->mask,
                         'value' => $record->value,
                     ],
                 ]);
             } elseif ($submodule === 'documents') {
-                // Carrega relacionamentos
+                // Carrega o relacionamento type_document
                 $record->load('typeDocument');
 
                 return response()->json([
@@ -248,6 +269,11 @@ class SubmoduleController extends Controller
                     'message' => 'Documento adicionado com sucesso!',
                     'document' => [
                         'id' => $record->id,
+                        'type_document' => [
+                            'id' => $record->typeDocument->id,
+                            'name' => $record->typeDocument->name,
+                            'mask' => $record->typeDocument->mask,
+                        ],
                         'type_name' => $record->typeDocument->name,
                         'type_mask' => $record->typeDocument->mask,
                         'value' => $record->value,
@@ -256,7 +282,7 @@ class SubmoduleController extends Controller
                     ],
                 ]);
             } elseif ($submodule === 'addresses') {
-                // Carrega relacionamentos
+                // Carrega o relacionamento type_address
                 $record->load('typeAddress');
 
                 return response()->json([
@@ -264,6 +290,10 @@ class SubmoduleController extends Controller
                     'message' => 'Endereço adicionado com sucesso!',
                     'address' => [
                         'id' => $record->id,
+                        'type_address' => [
+                            'id' => $record->typeAddress->id,
+                            'name' => $record->typeAddress->name,
+                        ],
                         'type_name' => $record->typeAddress->name,
                         'zip_code' => $record->zip_code,
                         'street' => $record->street,
@@ -283,7 +313,7 @@ class SubmoduleController extends Controller
                     'note' => [
                         'id' => $record->id,
                         'content' => $record->content,
-                        'created_at' => $record->created_at->format('d/m/Y H:i'),
+                        'created_at' => $record->created_at,
                         'status' => $record->status,
                     ],
                 ]);
@@ -531,6 +561,14 @@ class SubmoduleController extends Controller
             // Remove máscara do CEP
             $validated['zip_code'] = preg_replace('/[^0-9]/', '', $validated['zip_code']);
 
+            // Se está marcando como principal, desmarca todos os outros (exceto o atual)
+            if ($request->has('is_main')) {
+                \App\Models\Tenant\Address::where('module_id', $record->module_id)
+                    ->where('register_id', $record->register_id)
+                    ->where('id', '!=', $record->id)
+                    ->update(['is_main' => false]);
+            }
+
             // Atualiza o registro
             $record->update([
                 'type_address_id' => $validated['type_address_id'],
@@ -553,6 +591,7 @@ class SubmoduleController extends Controller
 
             // Atualiza o registro
             $record->update([
+                'title' => null,
                 'content' => $validated['content'],
                 'status' => $request->input('status', 1) == 1,
             ]);
@@ -563,7 +602,7 @@ class SubmoduleController extends Controller
         // Se for requisição AJAX, retorna JSON
         if ($request->ajax()) {
             if ($submodule === 'contacts') {
-                // Carrega relacionamentos
+                // Recarrega o relacionamento type_contact
                 $record->load('typeContact');
 
                 return response()->json([
@@ -571,13 +610,18 @@ class SubmoduleController extends Controller
                     'message' => ucfirst($submodule) . ' atualizado com sucesso!',
                     'contact' => [
                         'id' => $record->id,
+                        'type_contact' => [
+                            'id' => $record->typeContact->id,
+                            'name' => $record->typeContact->name,
+                            'mask' => $record->typeContact->mask,
+                        ],
                         'type_name' => $record->typeContact->name,
                         'type_mask' => $record->typeContact->mask,
                         'value' => $record->value,
                     ],
                 ]);
             } elseif ($submodule === 'documents') {
-                // Carrega relacionamentos
+                // Recarrega o relacionamento type_document
                 $record->load('typeDocument');
 
                 return response()->json([
@@ -585,6 +629,11 @@ class SubmoduleController extends Controller
                     'message' => 'Documento atualizado com sucesso!',
                     'document' => [
                         'id' => $record->id,
+                        'type_document' => [
+                            'id' => $record->typeDocument->id,
+                            'name' => $record->typeDocument->name,
+                            'mask' => $record->typeDocument->mask,
+                        ],
                         'type_name' => $record->typeDocument->name,
                         'type_mask' => $record->typeDocument->mask,
                         'value' => $record->value,
@@ -593,7 +642,7 @@ class SubmoduleController extends Controller
                     ],
                 ]);
             } elseif ($submodule === 'addresses') {
-                // Carrega relacionamentos
+                // Recarrega o relacionamento type_address
                 $record->load('typeAddress');
 
                 return response()->json([
@@ -601,6 +650,10 @@ class SubmoduleController extends Controller
                     'message' => 'Endereço atualizado com sucesso!',
                     'address' => [
                         'id' => $record->id,
+                        'type_address' => [
+                            'id' => $record->typeAddress->id,
+                            'name' => $record->typeAddress->name,
+                        ],
                         'type_name' => $record->typeAddress->name,
                         'zip_code' => $record->zip_code,
                         'street' => $record->street,
@@ -620,7 +673,7 @@ class SubmoduleController extends Controller
                     'note' => [
                         'id' => $record->id,
                         'content' => $record->content,
-                        'created_at' => $record->created_at->format('d/m/Y H:i'),
+                        'created_at' => $record->created_at,
                         'status' => $record->status,
                     ],
                 ]);

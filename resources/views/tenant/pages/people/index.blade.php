@@ -127,8 +127,8 @@
                 return `
                     <tr data-id="${person.id}">
                         <td class="ps-4">
-                            <div class="d-flex justify-content-center align-items-center" data-kt-sortable-handle="true" style="cursor: move;">
-                                <i class="ki-duotone ki-abstract-14 fs-2 text-gray-400">
+                            <div class="d-flex justify-content-center align-items-center" data-kt-sortable-handle="true" style="cursor: move;" data-bs-toggle="tooltip" data-bs-placement="right" title="Arrastar para reordenar">
+                                <i class="ki-duotone ki-abstract-16 fs-5 text-gray-400">
                                     <span class="path1"></span>
                                     <span class="path2"></span>
                                 </i>
@@ -157,21 +157,12 @@
                         <td>${whatsappHtml}</td>
                         <td>${statusBadge}</td>
                         <td class="text-end">
-                            <a href="#" class="btn btn-light btn-active-light-primary btn-flex btn-center btn-sm" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end">
-                                Ações
-                                <i class="ki-duotone ki-down fs-5 ms-1"></i>
+                            <a href="/people/${encodedId}" class="btn btn-icon btn-light-primary btn-sm me-1" data-bs-toggle="tooltip" data-bs-placement="left" title="Editar">
+                                <i class="ki-outline ki-pencil fs-4"></i>
                             </a>
-                            <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-light-primary fw-semibold fs-7 w-125px py-4" data-kt-menu="true">
-                                <div class="menu-item px-3">
-                                    <a href="/people/${encodedId}" class="menu-link px-3">Ver</a>
-                                </div>
-                                <div class="menu-item px-3">
-                                    <a href="#" class="menu-link px-3">Editar</a>
-                                </div>
-                                <div class="menu-item px-3">
-                                    <a href="#" class="menu-link px-3 text-danger">Deletar</a>
-                                </div>
-                            </div>
+                            <a href="#" class="btn btn-icon btn-light-danger btn-sm" data-bs-toggle="tooltip" data-bs-placement="left" title="Deletar">
+                                <i class="ki-outline ki-trash fs-4"></i>
+                            </a>
                         </td>
                     </tr>
                 `;
@@ -225,10 +216,10 @@
                                 <table id="kt_table_people" class="table align-middle table-row-dashed fs-6 gy-5">
                                     <thead class="fw-bold text-muted bg-light">
                                         <tr class="text-start text-muted fw-bold fs-7 text-uppercase gs-0">
-                                            <th class="w-2 ps-4 rounded-start">
-                                                <i class="ki-duotone ki-abstract-16"><span class="path1"></span><span class="path2"></span></i>
+                                            <th class="w-1 ps-4 rounded-start">
+                                                <i class="ki-duotone ki-abstract-16 fs-5"><span class="path1"></span><span class="path2"></span></i>
                                             </th>
-                                            <th class="w-10 min-w-125px">
+                                            <th class="w-1">
                                                 <div class="form-check form-check-sm form-check-custom form-check-solid me-3">
                                                     <input class="form-check-input" type="checkbox" data-kt-check="true" data-kt-check-target="#kt_table_people tbody .form-check-input" value="1" />
                                                 </div>
@@ -294,6 +285,12 @@
                         // Reinicializa
                         initSortable();
                         initBulkActions();
+
+                        // Inicializa tooltips
+                        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                            return new bootstrap.Tooltip(tooltipTriggerEl);
+                        });
 
                         console.log('✓ Tabela atualizada via API');
                     }
