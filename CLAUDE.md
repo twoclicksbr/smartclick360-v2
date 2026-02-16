@@ -1520,7 +1520,81 @@ php artisan tenant:migrate-all --schema=production
 
 ---
 
-## 18. Próximos Passos
+## 18. Scripts de Deploy Local
+
+### 18.1 Visão Geral
+
+4 scripts bash na pasta `deploy/` automatizam todo o fluxo de desenvolvimento e deploy. Requerem GitHub CLI (`gh`) autenticado e acesso SSH ao servidor.
+
+### 18.2 Fluxo de Trabalho
+
+```
+bash deploy/branch.sh          → Cria branch a partir de sandbox
+↓ (desenvolver e testar no localhost)
+bash deploy/push.sh             → Commit + push automático
+↓
+bash deploy/sandbox.sh          → PR + merge + deploy no sandbox
+↓ (testar em sandbox.smartclick360.com)
+bash deploy/production.sh       → PR + merge + deploy em produção
+```
+
+### 18.3 Scripts
+
+#### deploy/branch.sh
+
+- Pergunta o nome da branch
+- Detecta prefixo automaticamente:
+  - Palavras `bug`, `fix`, `erro`, `correção` → `fix/`
+  - Qualquer outra → `feature/`
+- Remove acentos, converte para minúsculo, espaços viram hífens
+- Remove a palavra-chave do nome
+- Executa: `git checkout sandbox` → `git pull origin sandbox` → `git checkout -b {prefixo}/{nome}`
+- Exemplo: "bug redirect login" → `fix/redirect-login`
+- Exemplo: "alteração financeiro" → `feature/alteracao-financeiro`
+
+#### deploy/push.sh
+
+- Detecta branch atual automaticamente
+- Valida se é `feature/*` ou `fix/*`
+- Gera mensagem de commit a partir do nome da branch:
+  - `feature/alteracao-financeiro` → `feat: alteracao-financeiro`
+  - `fix/redirect-login` → `fix: redirect-login`
+- Executa: `git add .` → `git commit -m "{mensagem}"` → `git push origin {branch}`
+
+#### deploy/sandbox.sh
+
+- Detecta branch atual e valida prefixo
+- Cria PR via GitHub CLI ({branch} → sandbox)
+- Faz merge automático + deleta branch (local e remota)
+- Deploy via SSH: `git fetch` → `git reset --hard` → `artisan config:clear` + `route:clear` + `view:clear`
+
+#### deploy/production.sh
+
+- Pede confirmação antes de executar
+- Muda para sandbox e atualiza
+- Cria PR via GitHub CLI (sandbox → main) — se já existir, usa o existente
+- Faz merge automático
+- Deploy via SSH em produção
+
+### 18.4 Requisitos
+
+- GitHub CLI (`gh`) instalado e autenticado (`gh auth login`)
+- Acesso SSH ao servidor (`root@168.231.64.36`) — pede senha a cada deploy
+- Estar na branch correta antes de executar cada script
+
+### 18.5 Commits Diretos no Sandbox
+
+Alterações nos próprios scripts de deploy podem ser commitadas direto na branch sandbox (sem criar feature branch), já que são infraestrutura:
+
+```bash
+git add deploy/
+git commit -m "fix: descrição da alteração"
+git push origin sandbox
+```
+
+---
+
+## 19. Próximos Passos
 
 ### Fase 12 — Módulo de Produtos
 - [ ] Tabelas: products, product_categories, product_brands
