@@ -19,7 +19,7 @@ use App\Http\Controllers\Landlord\TenantManagementController;
 |
 */
 
-Route::domain('smartclick360-v2.test')->group(function () {
+Route::domain(env('APP_DOMAIN', 'smartclick360-v2.test'))->group(function () {
 
     // Landing pages
     Route::get('/', [PageController::class, 'home'])->name('home');
@@ -64,7 +64,7 @@ Route::domain('smartclick360-v2.test')->group(function () {
 |
 */
 
-Route::domain('{slug}.smartclick360-v2.test')->middleware('identify.tenant')->group(function () {
+Route::domain('{slug}.' . env('APP_DOMAIN', 'smartclick360-v2.test'))->middleware('identify.tenant')->group(function () {
 
     // Raiz do subdomínio → redireciona para login
     Route::get('/', function () {
