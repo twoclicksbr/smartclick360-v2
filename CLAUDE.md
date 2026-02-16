@@ -1,6 +1,6 @@
 # SmartClick360 v2 — Contexto do Projeto
 
-**Última atualização:** 15/02/2026 (auditoria completa do projeto)
+**Última atualização:** 16/02/2026 (deploy completo + infraestrutura de produção)
 
 ---
 
@@ -53,7 +53,8 @@
 | 9 | Backoffice landlord (gestão de tenants) | ✅ Concluída |
 | 10 | Componentes reutilizáveis e sistema modular | ✅ Concluída |
 | 11 | API REST completa (52 endpoints com Sanctum) | ✅ Concluída |
-| 12+ | Demais módulos do ERP | 🔲 Pendente |
+| 12 | Infraestrutura de Deploy (GitHub + VPS + SSL + CI/CD) | ✅ Concluída |
+| 13+ | Demais módulos do ERP | 🔲 Pendente |
 
 ---
 
@@ -75,6 +76,9 @@ O SmartClick360 é um **ERP web multi-tenant** SaaS. Cada empresa (tenant) tem s
 | Ícones | KTIcons |
 | Máscaras | Inputmask.js |
 | Servidor Local | Laravel Herd |
+| Controle de Versão | Git + GitHub (Git Flow) |
+| CI/CD | GitHub Actions + Deploy Panel PHP |
+| Web Server | Nginx |
 | Hospedagem (produção) | VPS Hostinger |
 | Gateway de Pagamento | Asaas |
 
@@ -83,6 +87,15 @@ O SmartClick360 é um **ERP web multi-tenant** SaaS. Cada empresa (tenant) tem s
 - **Projeto Laravel:** `C:\Herd\smartclick360-v2`
 - **Metronic (SOMENTE LEITURA):** `C:\Herd\themeforest\metronic\demo34`
 - **URL local:** `http://smartclick360-v2.test`
+
+### Caminhos no Servidor (VPS)
+
+- **IP:** `168.231.64.36`
+- **Production:** `/home/smartclick360.com/production` (branch `main`)
+- **Sandbox:** `/home/smartclick360.com/sandbox` (branch `sandbox`)
+- **Deploy Panel:** `/home/smartclick360.com/deploy`
+- **Nginx configs:** `/etc/nginx/sites-available/`
+- **SSL certs:** `/etc/letsencrypt/live/smartclick360.com-0001/`
 
 ---
 
@@ -1378,7 +1391,136 @@ PROJETO.md
 
 ---
 
-## 17. Próximos Passos
+## 17. Infraestrutura de Deploy
+
+### 17.1 Visão Geral
+
+O projeto usa uma estratégia de deploy com dois ambientes no mesmo servidor VPS, cada um conectado a uma branch diferente do GitHub:
+
+| Ambiente | URL | Branch | Pasta no Servidor |
+|----------|-----|--------|-------------------|
+| Production | `https://smartclick360.com` | `main` | `/home/smartclick360.com/production` |
+| Sandbox | `https://sandbox.smartclick360.com` | `sandbox` | `/home/smartclick360.com/sandbox` |
+| Deploy Panel | `https://deploy.smartclick360.com` | — | `/home/smartclick360.com/deploy` |
+| Tenants | `https://{slug}.smartclick360.com` | — | Via production |
+| Tenants Sandbox | `https://{slug}.sandbox.smartclick360.com` | — | Via sandbox |
+
+### 17.2 Git Flow
+
+**Branches:**
+- `main` — produção (protegida, requer PR de `sandbox`)
+- `sandbox` — staging (protegida, requer PR)
+- `feature/*` — desenvolvimento (sem proteção)
+
+**Fluxo:**
+```
+feature/* → PR → sandbox → PR → main
+```
+
+**GitHub Action** (`.github/workflows/protect-main.yml`):
+- Bloqueia PRs para `main` que não venham de `sandbox`
+- Garante o fluxo: `feature/*` → `sandbox` → `main`
+
+**Processo completo de deploy:**
+1. Desenvolver localmente na branch `feature/*`
+2. Push para GitHub
+3. Criar PR `feature/*` → `sandbox`, merge no GitHub
+4. Acessar `https://deploy.smartclick360.com` e clicar **Deploy Sandbox**
+5. Testar em `https://sandbox.smartclick360.com`
+6. Se OK → PR `sandbox` → `main`, merge no GitHub
+7. Clicar **Deploy Production** no painel
+
+### 17.3 Servidor VPS
+
+**Especificações:**
+- IP: `168.231.64.36`
+- OS: Ubuntu 22.04.5 LTS
+- Web Server: Nginx
+- PHP: 8.4 (FPM)
+- PostgreSQL: 16
+- CyberPanel instalado (LiteSpeed desabilitado)
+
+**Nginx — Server Blocks:**
+- `/etc/nginx/sites-available/smartclick360-production.conf` — porta 443, SSL, root em production
+- `/etc/nginx/sites-available/smartclick360-sandbox.conf` — porta 443, SSL, root em sandbox
+- `/etc/nginx/sites-available/smartclick360-deploy.conf` — porta 443, SSL, root em deploy
+- Redirect automático HTTP → HTTPS em todos
+
+### 17.4 SSL (Let's Encrypt)
+
+**Certificado wildcard** cobrindo:
+- `smartclick360.com`
+- `*.smartclick360.com` (inclui subdomínios de tenant e sandbox.smartclick360.com)
+- `*.sandbox.smartclick360.com` (subdomínios de tenant no sandbox)
+
+**Localização:** `/etc/letsencrypt/live/smartclick360.com-0001/`
+
+**Expiração:** 17/05/2026
+
+**Renovação:** Manual (DNS challenge). Para renovar, usar:
+```bash
+certbot certonly --manual --preferred-challenges dns --force-renewal \
+  -d "smartclick360.com" -d "*.smartclick360.com" -d "*.sandbox.smartclick360.com"
+```
+Adicionar os registros TXT solicitados no DNS da Hostinger, aguardar propagação, confirmar.
+
+### 17.5 DNS (Hostinger)
+
+| Tipo | Nome | Conteúdo |
+|------|------|----------|
+| A | @ | 168.231.64.36 |
+| A | * | 168.231.64.36 |
+| A | sandbox | 168.231.64.36 |
+| A | *.sandbox | 168.231.64.36 |
+| A | deploy | 168.231.64.36 |
+| CNAME | www | smartclick360.com |
+
+### 17.6 Variáveis de Ambiente (.env)
+
+Variáveis específicas de deploy (além das padrão do Laravel):
+
+| Variável | Production | Sandbox | Local |
+|----------|-----------|---------|-------|
+| APP_ENV | production | sandbox | local |
+| APP_DEBUG | false | true | true |
+| APP_URL | https://smartclick360.com | https://sandbox.smartclick360.com | http://smartclick360-v2.test |
+| APP_DOMAIN | smartclick360.com | sandbox.smartclick360.com | smartclick360-v2.test |
+| TENANT_SCHEMA | production | sandbox | production |
+| SESSION_DRIVER | file | file | database ou file |
+
+### 17.7 Comandos Artisan de Deploy
+
+```bash
+# Sincronizar production → sandbox de um tenant
+php artisan tenant:sync-sandbox {slug}
+php artisan tenant:sync-sandbox {slug} --force
+
+# Rodar migrations no sandbox de um tenant
+php artisan tenant:migrate-sandbox {slug}
+
+# Rodar migrations em todos os tenants ativos
+php artisan tenant:migrate-all
+php artisan tenant:migrate-all --schema=sandbox
+php artisan tenant:migrate-all --schema=production
+```
+
+### 17.8 Deploy Panel
+
+**URL:** `https://deploy.smartclick360.com`
+
+**Senha:** `Sc360@Deploy!2026`
+
+**Funcionalidades:**
+- Login com senha
+- Botão "Deploy Sandbox" — faz git fetch + reset --hard + cache clear no sandbox
+- Botão "Deploy Production" — faz git fetch + reset --hard + cache clear no production
+- Exibe output dos comandos executados
+- Botão de copiar resultado
+- Confirmação antes de executar (JavaScript confirm)
+
+---
+
+## 18. Próximos Passos
 
 ### Fase 12 — Módulo de Produtos
 - [ ] Tabelas: products, product_categories, product_brands
