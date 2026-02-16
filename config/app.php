@@ -56,6 +56,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Application Domain
+    |--------------------------------------------------------------------------
+    |
+    | This value is the base domain for your multi-tenant application.
+    | It will be used to construct tenant subdomains and redirects.
+    |
+    */
+
+    'domain' => env('APP_DOMAIN', 'smartclick360-v2.test'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |
