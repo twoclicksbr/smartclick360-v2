@@ -54,7 +54,8 @@
 | 10 | Componentes reutilizáveis e sistema modular | ✅ Concluída |
 | 11 | API REST completa (52 endpoints com Sanctum) | ✅ Concluída |
 | 12 | Infraestrutura de Deploy (GitHub + VPS + SSL + CI/CD) | ✅ Concluída |
-| 13+ | Demais módulos do ERP | 🔲 Pendente |
+| 13 | Módulo de Produtos — Tabelas Auxiliares (16 tabelas) | 🔄 Em Andamento |
+| 14+ | Demais módulos do ERP | 🔲 Pendente |
 
 ---
 
@@ -837,26 +838,31 @@ Foram criados 10 componentes reutilizáveis para evitar duplicação de código:
 | Categoria | Quantidade | Detalhes |
 |-----------|------------|----------|
 | Controllers Web | 10 | PageController, Auth (3), Landlord (1), Tenant (3), Controller base |
+| Controllers Tenant Auxiliares | 16 | TypeProducts, Brands, Units, Groups, Families, Warehouses, Origins, Ncms, Cfops, TaxSituations, PriceLists, VariationTypes, VariationOptions, SalesChannels, DiscountTables, Transactions |
 | Controllers API | 9 | Auth (2), Landlord (2), Modules (1), Dashboard, Settings, ModuleController, SubmoduleController |
-| Models Landlord | 14 | Tenant, Person, User, Contact, Document, Address, File, Note, Subscription, Plan, Module, TypeContact, TypeDocument, TypeAddress |
-| Models Tenant | 11 | Person, User, Contact, Document, Address, File, Note, Module, TypeContact, TypeDocument, TypeAddress |
+| Models Landlord | 30 | Core (14) + Auxiliares (16) |
+| Models Tenant | 27 | Core (11) + Auxiliares (16) |
 | Models Customizados | 2 | PersonalAccessToken (Sanctum multi-tenancy), User (base) |
 | Middleware | 1 | IdentifyTenant |
 | Traits | 1 | ApiResponse |
 | Exception Handlers | 1 | ApiExceptionHandler |
 | Services | 1 | TenantService |
 | Helpers | 1 | helpers.php |
-| Migrations Landlord | 16 | 14 tabelas + personal_access_tokens + índices de performance |
-| Migrations Tenant Production | 15 | 11 tabelas + cache + jobs + personal_access_tokens + índices |
-| Migrations Tenant Sandbox | 15 | Idênticos aos de production |
+| Migrations Landlord | 32 | Core (14) + Auxiliares (16) + personal_access_tokens + índices |
+| Migrations Tenant Production | 31 | Core (11) + Auxiliares (16) + cache + jobs + personal_access_tokens + índices |
+| Migrations Tenant Sandbox | 31 | Idênticos aos de production |
 | Migrations Tenant Log | 1 | audit_logs |
-| Seeders | 14 | 7 landlord + 1 tenant + 6 raiz |
+| Seeders Landlord | 13 | Core (7) + Auxiliares (6) |
+| Seeders Raiz | 6 | Modules, TypeContacts, TypeDocuments, TypeAddresses, TypeProducts, Plans |
+| Seeders Tenant | 1 | PeopleFakeSeeder |
 | Commands Artisan | 2 | TenantReset, TenantSeedFake |
-| Views Total | 58 | Landing (4), Auth (3), Errors (2), Deprecated (2), Landlord (5), Tenant (42) |
+| Views Tenant Auxiliares | 16 | Listagens (index.blade.php) das 16 tabelas auxiliares |
+| Modais Tenant Auxiliares | 16 | Formulários create/edit das 16 tabelas auxiliares |
+| Views Total | 90 | Landing (4), Auth (3), Errors (2), Deprecated (2), Landlord (5), Tenant (42 core + 16 auxiliares + 16 modais) |
 | Rotas Web | ~25 | Landlord (13) + Tenant (12+) |
 | Rotas API | 52 endpoints | Landlord (6) + Tenant (46) |
 
-**Total geral:** ~180 arquivos ativos (sem contar vendor, node_modules, storage)
+**Total geral:** ~280 arquivos ativos (sem contar vendor, node_modules, storage)
 
 ### 9.2 Arquivos Existentes (Detalhado)
 
@@ -1168,6 +1174,168 @@ php artisan tenant:seed-fake {slug}
 ```
 
 Popula o banco do tenant com 50 pessoas fake (nomes brasileiros + WhatsApp). Útil para testes de performance e UI.
+
+### 9.6 Módulo de Produtos — Tabelas Auxiliares (16 tabelas)
+
+**Status:** 🔄 Em Andamento (tabelas auxiliares concluídas, aguardando tabela principal de produtos)
+
+#### Controllers Tenant (16 arquivos)
+- `app/Http/Controllers/Tenant/TypeProductsController.php`
+- `app/Http/Controllers/Tenant/BrandsController.php`
+- `app/Http/Controllers/Tenant/UnitsController.php`
+- `app/Http/Controllers/Tenant/GroupsController.php`
+- `app/Http/Controllers/Tenant/FamiliesController.php`
+- `app/Http/Controllers/Tenant/WarehousesController.php`
+- `app/Http/Controllers/Tenant/OriginsController.php`
+- `app/Http/Controllers/Tenant/NcmsController.php`
+- `app/Http/Controllers/Tenant/CfopsController.php`
+- `app/Http/Controllers/Tenant/TaxSituationsController.php`
+- `app/Http/Controllers/Tenant/PriceListsController.php`
+- `app/Http/Controllers/Tenant/VariationTypesController.php`
+- `app/Http/Controllers/Tenant/VariationOptionsController.php`
+- `app/Http/Controllers/Tenant/SalesChannelsController.php`
+- `app/Http/Controllers/Tenant/DiscountTablesController.php`
+- `app/Http/Controllers/Tenant/TransactionsController.php`
+
+#### Models Landlord (16 arquivos)
+- `app/Models/Landlord/TypeProduct.php`
+- `app/Models/Landlord/Brand.php`
+- `app/Models/Landlord/Unit.php`
+- `app/Models/Landlord/Group.php`
+- `app/Models/Landlord/Family.php`
+- `app/Models/Landlord/Warehouse.php`
+- `app/Models/Landlord/Origin.php`
+- `app/Models/Landlord/Ncm.php`
+- `app/Models/Landlord/Cfop.php`
+- `app/Models/Landlord/TaxSituation.php`
+- `app/Models/Landlord/PriceList.php`
+- `app/Models/Landlord/VariationType.php`
+- `app/Models/Landlord/VariationOption.php` (FK: variation_type_id)
+- `app/Models/Landlord/SalesChannel.php` (FK: price_list_id nullable)
+- `app/Models/Landlord/DiscountTable.php`
+- `app/Models/Landlord/Transaction.php`
+
+#### Models Tenant (16 arquivos)
+- `app/Models/Tenant/TypeProduct.php`
+- `app/Models/Tenant/Brand.php`
+- `app/Models/Tenant/Unit.php`
+- `app/Models/Tenant/Group.php`
+- `app/Models/Tenant/Family.php`
+- `app/Models/Tenant/Warehouse.php`
+- `app/Models/Tenant/Origin.php`
+- `app/Models/Tenant/Ncm.php`
+- `app/Models/Tenant/Cfop.php`
+- `app/Models/Tenant/TaxSituation.php`
+- `app/Models/Tenant/PriceList.php`
+- `app/Models/Tenant/VariationType.php`
+- `app/Models/Tenant/VariationOption.php` (FK: variation_type_id)
+- `app/Models/Tenant/SalesChannel.php` (FK: price_list_id nullable)
+- `app/Models/Tenant/DiscountTable.php`
+- `app/Models/Tenant/Transaction.php`
+
+#### Migrations Landlord (16 arquivos - 2026_02_16_000001 a 000016)
+- `database/migrations/landlord/2026_02_16_000001_create_type_products_table.php`
+- `database/migrations/landlord/2026_02_16_000002_create_brands_table.php`
+- `database/migrations/landlord/2026_02_16_000003_create_units_table.php`
+- `database/migrations/landlord/2026_02_16_000004_create_families_table.php`
+- `database/migrations/landlord/2026_02_16_000005_create_groups_table.php`
+- `database/migrations/landlord/2026_02_16_000006_create_warehouses_table.php`
+- `database/migrations/landlord/2026_02_16_000007_create_origins_table.php`
+- `database/migrations/landlord/2026_02_16_000008_create_ncms_table.php`
+- `database/migrations/landlord/2026_02_16_000009_create_cfops_table.php`
+- `database/migrations/landlord/2026_02_16_000010_create_tax_situations_table.php`
+- `database/migrations/landlord/2026_02_16_000011_create_price_lists_table.php`
+- `database/migrations/landlord/2026_02_16_000012_create_variation_types_table.php`
+- `database/migrations/landlord/2026_02_16_000013_create_variation_options_table.php`
+- `database/migrations/landlord/2026_02_16_000014_create_sales_channels_table.php`
+- `database/migrations/landlord/2026_02_16_000015_create_discount_tables_table.php`
+- `database/migrations/landlord/2026_02_16_000016_create_transactions_table.php`
+
+#### Migrations Tenant Production (16 arquivos - 2026_02_16_000001 a 000016)
+- `database/migrations/tenant/production/2026_02_16_000001_create_type_products_table.php`
+- `database/migrations/tenant/production/2026_02_16_000002_create_brands_table.php`
+- `database/migrations/tenant/production/2026_02_16_000003_create_units_table.php`
+- `database/migrations/tenant/production/2026_02_16_000004_create_families_table.php`
+- `database/migrations/tenant/production/2026_02_16_000005_create_groups_table.php`
+- `database/migrations/tenant/production/2026_02_16_000006_create_warehouses_table.php`
+- `database/migrations/tenant/production/2026_02_16_000007_create_origins_table.php`
+- `database/migrations/tenant/production/2026_02_16_000008_create_ncms_table.php`
+- `database/migrations/tenant/production/2026_02_16_000009_create_cfops_table.php`
+- `database/migrations/tenant/production/2026_02_16_000010_create_tax_situations_table.php`
+- `database/migrations/tenant/production/2026_02_16_000011_create_price_lists_table.php`
+- `database/migrations/tenant/production/2026_02_16_000012_create_variation_types_table.php`
+- `database/migrations/tenant/production/2026_02_16_000013_create_variation_options_table.php`
+- `database/migrations/tenant/production/2026_02_16_000014_create_sales_channels_table.php`
+- `database/migrations/tenant/production/2026_02_16_000015_create_discount_tables_table.php`
+- `database/migrations/tenant/production/2026_02_16_000016_create_transactions_table.php`
+
+#### Migrations Tenant Sandbox (16 arquivos - 2026_02_16_000001 a 000016)
+- `database/migrations/tenant/sandbox/2026_02_16_000001_create_type_products_table.php`
+- `database/migrations/tenant/sandbox/2026_02_16_000002_create_brands_table.php`
+- `database/migrations/tenant/sandbox/2026_02_16_000003_create_units_table.php`
+- `database/migrations/tenant/sandbox/2026_02_16_000004_create_families_table.php`
+- `database/migrations/tenant/sandbox/2026_02_16_000005_create_groups_table.php`
+- `database/migrations/tenant/sandbox/2026_02_16_000006_create_warehouses_table.php`
+- `database/migrations/tenant/sandbox/2026_02_16_000007_create_origins_table.php`
+- `database/migrations/tenant/sandbox/2026_02_16_000008_create_ncms_table.php`
+- `database/migrations/tenant/sandbox/2026_02_16_000009_create_cfops_table.php`
+- `database/migrations/tenant/sandbox/2026_02_16_000010_create_tax_situations_table.php`
+- `database/migrations/tenant/sandbox/2026_02_16_000011_create_price_lists_table.php`
+- `database/migrations/tenant/sandbox/2026_02_16_000012_create_variation_types_table.php`
+- `database/migrations/tenant/sandbox/2026_02_16_000013_create_variation_options_table.php`
+- `database/migrations/tenant/sandbox/2026_02_16_000014_create_sales_channels_table.php`
+- `database/migrations/tenant/sandbox/2026_02_16_000015_create_discount_tables_table.php`
+- `database/migrations/tenant/sandbox/2026_02_16_000016_create_transactions_table.php`
+
+#### Seeders Landlord (6 arquivos com seeds)
+- `database/seeders/Landlord/TypeProductSeeder.php` (7 registros)
+- `database/seeders/Landlord/UnitSeeder.php` (8 registros)
+- `database/seeders/Landlord/OriginSeeder.php` (9 registros)
+- `database/seeders/Landlord/CfopSeeder.php` (15 registros)
+- `database/seeders/Landlord/TaxSituationSeeder.php` (21 registros: 11 CST + 10 CSOSN)
+- `database/seeders/Landlord/TransactionSeeder.php` (10 registros)
+
+**Registrado em:**
+- `database/seeders/Landlord/LandlordDatabaseSeeder.php`
+- `app/Services/TenantService.php` (método `getSeedData()`)
+
+#### Views de Listagem (16 arquivos)
+- `resources/views/tenant/pages/type-products/index.blade.php`
+- `resources/views/tenant/pages/brands/index.blade.php`
+- `resources/views/tenant/pages/units/index.blade.php`
+- `resources/views/tenant/pages/groups/index.blade.php`
+- `resources/views/tenant/pages/families/index.blade.php`
+- `resources/views/tenant/pages/warehouses/index.blade.php`
+- `resources/views/tenant/pages/origins/index.blade.php`
+- `resources/views/tenant/pages/ncms/index.blade.php`
+- `resources/views/tenant/pages/cfops/index.blade.php`
+- `resources/views/tenant/pages/tax-situations/index.blade.php`
+- `resources/views/tenant/pages/price-lists/index.blade.php`
+- `resources/views/tenant/pages/variation-types/index.blade.php`
+- `resources/views/tenant/pages/variation-options/index.blade.php`
+- `resources/views/tenant/pages/sales-channels/index.blade.php`
+- `resources/views/tenant/pages/discount-tables/index.blade.php`
+- `resources/views/tenant/pages/transactions/index.blade.php`
+
+#### Modais Create/Edit (16 arquivos)
+- `resources/views/tenant/layouts/modals/modal-type-product.blade.php`
+- `resources/views/tenant/layouts/modals/modal-brand.blade.php`
+- `resources/views/tenant/layouts/modals/modal-unit.blade.php`
+- `resources/views/tenant/layouts/modals/modal-group.blade.php`
+- `resources/views/tenant/layouts/modals/modal-family.blade.php`
+- `resources/views/tenant/layouts/modals/modal-warehouse.blade.php`
+- `resources/views/tenant/layouts/modals/modal-origin.blade.php`
+- `resources/views/tenant/layouts/modals/modal-ncm.blade.php`
+- `resources/views/tenant/layouts/modals/modal-cfop.blade.php`
+- `resources/views/tenant/layouts/modals/modal-tax-situation.blade.php`
+- `resources/views/tenant/layouts/modals/modal-price-list.blade.php`
+- `resources/views/tenant/layouts/modals/modal-variation-type.blade.php`
+- `resources/views/tenant/layouts/modals/modal-variation-option.blade.php`
+- `resources/views/tenant/layouts/modals/modal-sales-channel.blade.php`
+- `resources/views/tenant/layouts/modals/modal-discount-table.blade.php`
+- `resources/views/tenant/layouts/modals/modal-transaction.blade.php`
+
+**Total de arquivos criados/modificados:** 98 arquivos (16 controllers + 32 models + 48 migrations + 6 seeders + 16 views + 16 modais + 2 modificados: LandlordDatabaseSeeder + TenantService)
 
 ---
 
@@ -1604,25 +1772,28 @@ git push origin sandbox
 
 ## 19. Próximos Passos
 
-### Fase 12 — Módulo de Produtos
-- [ ] Tabelas: products, product_categories, product_brands
+### Fase 13 — Módulo de Produtos (Continuação)
+- [x] 16 tabelas auxiliares implementadas — ✅ **Concluída**
+- [ ] Tabela principal: products
 - [ ] CRUD completo de produtos (web + API)
 - [ ] Gestão de estoque básica
 - [ ] Upload de imagens de produtos
+- [ ] Variações de produtos
+- [ ] Relatórios de estoque
 
-### Fase 13 — Módulo de Vendas
+### Fase 14 — Módulo de Vendas
 - [ ] Tabelas: sales, sale_items
 - [ ] Criação de orçamentos
 - [ ] Conversão de orçamento em venda
 - [ ] Relatório de vendas
 
-### Fase 14 — Módulo Financeiro
+### Fase 15 — Módulo Financeiro
 - [ ] Tabelas: financial_accounts, transactions
 - [ ] Contas a pagar
 - [ ] Contas a receber
 - [ ] Fluxo de caixa
 
-### Fase 15 — Integração Asaas
+### Fase 16 — Integração Asaas
 - [ ] Webhook para atualização de status de pagamento
 - [ ] Criação de assinaturas no Asaas
 - [ ] Gestão de cartão de crédito
@@ -1645,3 +1816,121 @@ git push origin sandbox
 - [ ] Impersonate (admin se passar por tenant)
 - [ ] Modo sandbox completo no landlord
 - [ ] Testes automatizados (Pest/PHPUnit)
+
+---
+
+## 20. Módulo de Produtos — Tabelas Auxiliares
+
+### 20.1 Visão Geral
+
+Foram implementadas **16 tabelas auxiliares** para suportar o módulo de produtos. Cada tabela segue o padrão:
+- CRUD completo via AJAX
+- Soft delete + restore
+- Ordenação drag and drop
+- Quick search
+- Badges de status
+
+### 20.2 Status de Implementação
+
+| # | Tabela | Passos | Seeder | Registros | Status |
+|---|--------|--------|--------|-----------|--------|
+| 1 | type_products | 7 | ✅ | 7 | ✅ Concluída |
+| 2 | brands | 6 | ❌ | — | ✅ Concluída |
+| 3 | units | 7 | ✅ | 8 | ✅ Concluída |
+| 4 | groups | 6 | ❌ | — | ✅ Concluída |
+| 5 | families | 6 | ❌ | — | ✅ Concluída |
+| 6 | warehouses | 6 | ❌ | — | ✅ Concluída |
+| 7 | origins | 7 | ✅ | 9 | ✅ Concluída |
+| 8 | ncms | 6 | ❌ | — | ✅ Concluída |
+| 9 | cfops | 7 | ✅ | 15 | ✅ Concluída |
+| 10 | tax_situations | 7 | ✅ | 21 | ✅ Concluída |
+| 11 | price_lists | 6 | ❌ | — | ✅ Concluída |
+| 12 | variation_types | 6 | ❌ | — | ✅ Concluída |
+| 13 | variation_options | 6 | ❌ | — | ✅ Concluída |
+| 14 | sales_channels | 6 | ❌ | — | ✅ Concluída |
+| 15 | discount_tables | 6 | ❌ | — | ✅ Concluída |
+| 16 | transactions | 7 | ✅ | 10 | ✅ Concluída |
+
+**Total de registros via seeder:** 70 registros (7 + 8 + 9 + 15 + 21 + 10)
+
+### 20.3 Relacionamentos (Foreign Keys)
+
+Apenas 2 tabelas possuem FK:
+
+1. **variation_options** → FK para **variation_types**
+   - `variation_type_id` (required, cascadeOnDelete)
+   - Exemplo: "Tamanho" (tipo) → "P", "M", "G" (opções)
+
+2. **sales_channels** → FK para **price_lists**
+   - `price_list_id` (nullable, nullOnDelete)
+   - Exemplo: "E-commerce" (canal) → "Tabela Web" (preço)
+   - Quando a tabela de preço é deletada, o canal fica sem tabela (null)
+
+### 20.4 Estrutura Padrão das Tabelas
+
+Todas as 16 tabelas seguem a estrutura base:
+
+```php
+$table->id();
+// campos específicos da tabela
+$table->integer('order')->default(0);
+$table->boolean('status')->default(true);
+$table->timestamps();
+$table->softDeletes();
+```
+
+### 20.5 Campos Específicos por Tabela
+
+| Tabela | Campos Específicos | Observações |
+|--------|-------------------|-------------|
+| type_products | name, type | type: 'product' ou 'service' |
+| brands | name | — |
+| units | name, abbreviation, decimal_places | abbreviation: 'kg', 'un', 'L', etc. |
+| groups | name | — |
+| families | name | — |
+| warehouses | name | — |
+| origins | code, description | code: '0' a '8' (Origem fiscal) |
+| ncms | code, description | code: 8 dígitos (NCM) |
+| cfops | code, description, type | type: 'entry' ou 'exit' |
+| tax_situations | code, description, regime | regime: 'normal' (CST) ou 'simples' (CSOSN) |
+| price_lists | name, type, percentage | type: 'discount' ou 'addition', percentage: 0-100 |
+| variation_types | name | Ex: Tamanho, Cor, Voltagem |
+| variation_options | variation_type_id, name | Ex: P, M, G |
+| sales_channels | name, price_list_id | price_list_id nullable |
+| discount_tables | name, percentage | percentage: 0-100 |
+| transactions | name, type, stock_movement, financial_impact | Controla estoque e financeiro |
+
+### 20.6 Padrão de Desenvolvimento
+
+Cada tabela foi implementada em **6 ou 7 passos**:
+
+1. **Migrations** — 3 arquivos (landlord, tenant/production, tenant/sandbox)
+2. **Models** — 2 arquivos (Landlord, Tenant)
+3. **Seeder** — 1 arquivo (apenas 6 tabelas têm seeder) + registro no LandlordDatabaseSeeder + TenantService
+4. **Controller** — 1 arquivo com 8 métodos (index, create, store, show, edit, update, destroy, restore, reorder)
+5. **View** — 1 arquivo de listagem (index.blade.php)
+6. **Modal** — 1 arquivo de formulário create/edit
+7. **Destroy/Restore** — Verificação de soft delete + restore (withTrashed)
+
+### 20.7 Badges e Indicadores Visuais
+
+**Tabelas com badges coloridos:**
+
+- **type_products:** "Produto" (azul) / "Serviço" (verde)
+- **cfops:** "Entrada" (verde) / "Saída" (vermelho)
+- **tax_situations:** "Regime Normal" (azul) / "Simples Nacional" (verde)
+- **price_lists:** "Desconto" (vermelho) / "Acréscimo" (verde)
+- **transactions:**
+  - Stock movement: "Entrada" (verde) / "Saída" (vermelho) / "Nenhum" (cinza)
+  - Financial impact: "A Receber" (verde) / "A Pagar" (vermelho) / "Nenhum" (cinza)
+
+Todas as tabelas possuem badge de **status**: "Ativo" (verde) / "Inativo" (vermelho)
+
+### 20.8 Próximas Etapas
+
+- [ ] Implementar tabela principal **products** com FK para todas as auxiliares
+- [ ] Sistema de variações de produtos (combinações de variation_options)
+- [ ] Gestão de estoque multi-depósito (warehouses)
+- [ ] Precificação automática por canal de venda (sales_channels + price_lists)
+- [ ] Relatórios de movimentação (transactions)
+- [ ] API para módulo de produtos
