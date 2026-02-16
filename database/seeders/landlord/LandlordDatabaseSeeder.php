@@ -13,6 +13,12 @@ class LandlordDatabaseSeeder extends Seeder
             TypeContactSeeder::class,
             TypeDocumentSeeder::class,
             TypeAddressSeeder::class,
+            TypeProductSeeder::class,
+            UnitSeeder::class,
+            OriginSeeder::class,
+            CfopSeeder::class,
+            TaxSituationSeeder::class,
+            TransactionSeeder::class,
             PlanSeeder::class,
             // AlexSeeder::class,
         ]);
