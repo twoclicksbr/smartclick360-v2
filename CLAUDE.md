@@ -1422,7 +1422,7 @@ feature/* → PR → sandbox → PR → main
 - Garante o fluxo: `feature/*` → `sandbox` → `main`
 
 **Processo completo de deploy:**
-1. `bash deploy/branch.sh` — cria branch a partir de sandbox
+1. `bash deploy/newBranch.sh` — cria branch a partir de sandbox
 2. Desenvolver e testar no localhost
 3. `bash deploy/push.sh` — commit + push automático
 4. `bash deploy/sandbox.sh` — PR + merge + deploy no sandbox
@@ -1530,7 +1530,7 @@ php artisan tenant:migrate-all --schema=production
 ### 18.2 Fluxo de Trabalho
 
 ```
-bash deploy/branch.sh          → Cria branch a partir de sandbox
+bash deploy/newBranch.sh          → Cria branch a partir de sandbox
 ↓ (desenvolver e testar no localhost)
 bash deploy/push.sh             → Commit + push automático
 ↓
@@ -1541,7 +1541,7 @@ bash deploy/production.sh       → PR + merge + deploy em produção
 
 ### 18.3 Scripts
 
-#### deploy/branch.sh
+#### deploy/newBranch.sh
 
 - Pergunta o nome da branch
 - Detecta prefixo automaticamente:
