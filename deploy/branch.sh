@@ -18,8 +18,23 @@ fi
 # Converte para minúsculo
 branch_input=$(echo "$branch_input" | tr '[:upper:]' '[:lower:]')
 
-# Remove acentos
-branch_input=$(echo "$branch_input" | iconv -f utf-8 -t ascii//TRANSLIT 2>/dev/null || echo "$branch_input")
+# Remove acentos manualmente
+branch_input=$(echo "$branch_input" | sed '
+  s/[áàâã]/a/g
+  s/[éèê]/e/g
+  s/[íìî]/i/g
+  s/[óòôõ]/o/g
+  s/[úùû]/u/g
+  s/[ÁÀÂÃ]/a/g
+  s/[ÉÈÊË]/e/g
+  s/[ÍÌÎ]/i/g
+  s/[ÓÒÔÕ]/o/g
+  s/[ÚÙÛ]/u/g
+  s/ç/c/g
+  s/Ç/c/g
+  s/ñ/n/g
+  s/Ñ/n/g
+')
 
 # Detecta se é fix ou feature
 prefix="feature"
