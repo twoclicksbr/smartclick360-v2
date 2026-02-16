@@ -46,14 +46,14 @@ class IdentifyTenant
 
         // Configurar conexão tenant em runtime
         Config::set('database.connections.tenant.database', $tenant->database_name);
-        Config::set('database.connections.tenant.schema', 'production');
+        Config::set('database.connections.tenant.schema', env('TENANT_SCHEMA', 'production'));
 
         // Purgar conexão anterior (para reconectar com novo banco)
         DB::purge('tenant');
         DB::reconnect('tenant');
 
         // Setar search_path para production
-        DB::connection('tenant')->statement("SET search_path TO production");
+        DB::connection('tenant')->statement("SET search_path TO " . env('TENANT_SCHEMA', 'production'));
 
         // Armazenar tenant no request e session
         $request->attributes->set('tenant', $tenant);
