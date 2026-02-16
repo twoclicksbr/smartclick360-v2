@@ -80,6 +80,22 @@ echo ""
 echo -e "${GREEN}✅ PR mergeado com sucesso!${NC}"
 echo ""
 
+# Sincroniza sandbox com main
+echo -e "${PURPLE}🔄 Sincronizando sandbox com main...${NC}"
+echo ""
+
+git pull origin main
+if [ $? -ne 0 ]; then
+    echo -e "${YELLOW}⚠️  Aviso: não foi possível sincronizar sandbox com main. Continue manualmente.${NC}"
+    echo ""
+else
+    git push origin sandbox
+    if [ $? -ne 0 ]; then
+        echo -e "${YELLOW}⚠️  Aviso: não foi possível sincronizar sandbox com main. Continue manualmente.${NC}"
+        echo ""
+    fi
+fi
+
 # Faz deploy em produção via SSH
 echo -e "${PURPLE}🚀 Fazendo deploy em produção...${NC}"
 echo ""
