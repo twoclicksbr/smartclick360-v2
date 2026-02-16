@@ -1422,13 +1422,12 @@ feature/* → PR → sandbox → PR → main
 - Garante o fluxo: `feature/*` → `sandbox` → `main`
 
 **Processo completo de deploy:**
-1. Desenvolver localmente na branch `feature/*`
-2. Push para GitHub
-3. Criar PR `feature/*` → `sandbox`, merge no GitHub
-4. Acessar `https://deploy.smartclick360.com` e clicar **Deploy Sandbox**
+1. `bash deploy/branch.sh` — cria branch a partir de sandbox
+2. Desenvolver e testar no localhost
+3. `bash deploy/push.sh` — commit + push automático
+4. `bash deploy/sandbox.sh` — PR + merge + deploy no sandbox
 5. Testar em `https://sandbox.smartclick360.com`
-6. Se OK → PR `sandbox` → `main`, merge no GitHub
-7. Clicar **Deploy Production** no painel
+6. `bash deploy/production.sh` — PR + merge + deploy em produção
 
 ### 17.3 Servidor VPS
 
@@ -1487,6 +1486,8 @@ Variáveis específicas de deploy (além das padrão do Laravel):
 | APP_DOMAIN | smartclick360.com | sandbox.smartclick360.com | smartclick360-v2.test |
 | TENANT_SCHEMA | production | sandbox | production |
 | SESSION_DRIVER | file | file | database ou file |
+| SESSION_DOMAIN | .smartclick360.com | .sandbox.smartclick360.com | null |
+| SANCTUM_STATEFUL_DOMAINS | smartclick360.com,*.smartclick360.com | sandbox.smartclick360.com,*.sandbox.smartclick360.com | — |
 
 ### 17.7 Comandos Artisan de Deploy
 
