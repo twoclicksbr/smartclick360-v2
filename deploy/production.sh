@@ -47,14 +47,23 @@ echo ""
 # Cria o PR para main
 gh pr create --base main --title "Deploy: sandbox → production" --body ""
 if [ $? -ne 0 ]; then
-    echo ""
-    echo -e "${RED}❌ Erro ao criar o Pull Request${NC}"
-    exit 1
-fi
+    # Verifica se já existe um PR aberto
+    existing_pr=$(gh pr list --base main --head sandbox --state open --json number --jq '.[0].number' 2>/dev/null)
 
-echo ""
-echo -e "${GREEN}✅ PR criado com sucesso!${NC}"
-echo ""
+    if [ -n "$existing_pr" ]; then
+        echo ""
+        echo -e "${YELLOW}⚠️  PR já existe (#$existing_pr). Usando o existente...${NC}"
+        echo ""
+    else
+        echo ""
+        echo -e "${RED}❌ Erro ao criar o Pull Request${NC}"
+        exit 1
+    fi
+else
+    echo ""
+    echo -e "${GREEN}✅ PR criado com sucesso!${NC}"
+    echo ""
+fi
 
 # Faz merge do PR
 echo -e "${PURPLE}🔀 Mergeando PR...${NC}"
