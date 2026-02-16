@@ -1,0 +1,19 @@
+name: Protect Main Branch
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  check-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Block non-sandbox PRs to main
+        run: |
+          if [ "${{ github.head_ref }}" != "sandbox" ]; then
+            echo "❌ Apenas a branch 'sandbox' pode fazer merge na 'main'."
+            echo "   Origem detectada: '${{ github.head_ref }}'"
+            echo "   Fluxo correto: feature/* → sandbox → main"
+            exit 1
+          fi
+          echo "✅ PR vindo de 'sandbox'. Permitido."
