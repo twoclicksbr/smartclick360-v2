@@ -1,6 +1,6 @@
 # SmartClick360 v2 — Contexto do Projeto
 
-**Última atualização:** 16/02/2026 (deploy completo + infraestrutura de produção + cache fix)
+**Última atualização:** 16/02/2026 (deploy completo + infraestrutura de produção)
 
 ---
 
