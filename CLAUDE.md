@@ -1553,6 +1553,13 @@ bash deploy/production.sh       → PR + merge + deploy em produção
 - Exemplo: "bug redirect login" → `fix/redirect-login`
 - Exemplo: "alteração financeiro" → `feature/alteracao-financeiro`
 
+#### deploy/branch.sh
+
+- Lista branches locais `feature/*` e `fix/*`
+- Exibe menu numerado para seleção
+- Faz checkout da branch escolhida
+- Útil para voltar a uma branch após interrupção (ex: bug urgente)
+
 #### deploy/push.sh
 
 - Detecta branch atual automaticamente
