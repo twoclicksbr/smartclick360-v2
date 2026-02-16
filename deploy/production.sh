@@ -40,6 +40,23 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+# Sincroniza sandbox com main
+echo ""
+echo -e "${PURPLE}🔄 Sincronizando sandbox com main...${NC}"
+echo ""
+
+git pull origin main
+if [ $? -ne 0 ]; then
+    echo -e "${YELLOW}⚠️  Aviso: não foi possível sincronizar sandbox com main. Continue manualmente.${NC}"
+    echo ""
+else
+    git push origin sandbox
+    if [ $? -ne 0 ]; then
+        echo -e "${YELLOW}⚠️  Aviso: não foi possível sincronizar sandbox com main. Continue manualmente.${NC}"
+        echo ""
+    fi
+fi
+
 echo ""
 echo -e "${PURPLE}🔀 Criando PR sandbox → main...${NC}"
 echo ""
@@ -69,7 +86,7 @@ fi
 echo -e "${PURPLE}🔀 Mergeando PR...${NC}"
 echo ""
 
-gh pr merge --merge
+gh pr merge --merge --admin
 if [ $? -ne 0 ]; then
     echo ""
     echo -e "${RED}❌ Erro ao fazer merge do Pull Request${NC}"
@@ -79,22 +96,6 @@ fi
 echo ""
 echo -e "${GREEN}✅ PR mergeado com sucesso!${NC}"
 echo ""
-
-# Sincroniza sandbox com main
-echo -e "${PURPLE}🔄 Sincronizando sandbox com main...${NC}"
-echo ""
-
-git pull origin main
-if [ $? -ne 0 ]; then
-    echo -e "${YELLOW}⚠️  Aviso: não foi possível sincronizar sandbox com main. Continue manualmente.${NC}"
-    echo ""
-else
-    git push origin sandbox
-    if [ $? -ne 0 ]; then
-        echo -e "${YELLOW}⚠️  Aviso: não foi possível sincronizar sandbox com main. Continue manualmente.${NC}"
-        echo ""
-    fi
-fi
 
 # Faz deploy em produção via SSH
 echo -e "${PURPLE}🚀 Fazendo deploy em produção...${NC}"
