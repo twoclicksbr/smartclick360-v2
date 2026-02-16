@@ -71,7 +71,11 @@ class RegisterController extends Controller
             $tenantService = new TenantService();
             $tenant = $tenantService->createTenant($validated);
 
-            return redirect("http://{$tenant->slug}.smartclick360-v2.test/login")
+            // Usar domínio do .env para redirect
+            $domain = config('app.domain') ?? env('APP_DOMAIN', 'smartclick360-v2.test');
+            $protocol = app()->environment('production') ? 'https' : 'http';
+
+            return redirect("{$protocol}://{$tenant->slug}.{$domain}/login")
                 ->with('success', 'Conta criada com sucesso! Faça login para continuar.');
 
         } catch (\Exception $e) {
