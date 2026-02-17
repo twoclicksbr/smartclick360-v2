@@ -9,6 +9,8 @@ use App\Http\Controllers\Auth\LandlordLoginController;
 use App\Http\Controllers\Tenant\TenantController;
 use App\Http\Controllers\Landlord\TenantManagementController;
 
+// TESTE
+
 /*
 |--------------------------------------------------------------------------
 | Rotas do Domínio Principal (smartclick360-v2.test)
