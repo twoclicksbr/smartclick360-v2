@@ -5,59 +5,8 @@ GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-# Pergunta o nome da branch
-echo -n "Nome da branch: "
-read branch_input
-
-# Validação: não pode ser vazio
-if [ -z "$branch_input" ]; then
-    echo -e "${RED}❌ Nome da branch não pode ser vazio${NC}"
-    exit 1
-fi
-
-# Converte para minúsculo
-branch_input=$(echo "$branch_input" | tr '[:upper:]' '[:lower:]')
-
-# Remove acentos manualmente
-branch_input=$(echo "$branch_input" | sed '
-  s/[áàâã]/a/g
-  s/[éèê]/e/g
-  s/[íìî]/i/g
-  s/[óòôõ]/o/g
-  s/[úùû]/u/g
-  s/[ÁÀÂÃ]/a/g
-  s/[ÉÈÊË]/e/g
-  s/[ÍÌÎ]/i/g
-  s/[ÓÒÔÕ]/o/g
-  s/[ÚÙÛ]/u/g
-  s/ç/c/g
-  s/Ç/c/g
-  s/ñ/n/g
-  s/Ñ/n/g
-')
-
-# Detecta se é fix ou feature
-prefix="feature"
-if [[ "$branch_input" =~ (bug|fix|erro|correcao|correção) ]]; then
-    prefix="fix"
-    # Remove a palavra-chave do nome
-    branch_input=$(echo "$branch_input" | sed -E 's/(bug|fix|erro|correcao|correção)//g')
-fi
-
-# Remove espaços do início e fim
-branch_input=$(echo "$branch_input" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
-
-# Substitui espaços e underscores por hífens
-branch_input=$(echo "$branch_input" | sed 's/[[:space:]_]/-/g')
-
-# Remove hífens duplicados
-branch_input=$(echo "$branch_input" | sed 's/-\+/-/g')
-
-# Remove hífens do início e fim
-branch_input=$(echo "$branch_input" | sed 's/^-//;s/-$//')
-
-# Nome final da branch
-branch_name="${prefix}/${branch_input}"
+# Gera nome da branch com data/hora atual
+branch_name="feature/padrao-$(date +%Y-%m-%d-%H%M%S)"
 
 # Executa os comandos git
 echo ""

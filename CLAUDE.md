@@ -1673,6 +1673,8 @@ php artisan tenant:migrate-all --schema=sandbox
 php artisan tenant:migrate-all --schema=production
 ```
 
+**Nota:** Os comandos de migration do landlord e tenants são executados automaticamente pelos scripts `sandbox.sh` e `production.sh` após cada deploy. Não é necessário rodar manualmente.
+
 ### 17.8 Deploy Panel
 
 **URL:** `https://deploy.smartclick360.com`
@@ -1698,28 +1700,23 @@ php artisan tenant:migrate-all --schema=production
 ### 18.2 Fluxo de Trabalho
 
 ```
-bash deploy/newBranch.sh          → Cria branch a partir de sandbox
+bash deploy/newBranch.sh          → Cria branch feature/padrao-YYYY-MM-DD-HHMMSS
 ↓ (desenvolver e testar no localhost)
-bash deploy/push.sh             → Commit + push automático
+bash deploy/push.sh             → Detecta nome padrão, pede nome real, renomeia, commit + push
 ↓
-bash deploy/sandbox.sh          → PR + merge + deploy no sandbox
+bash deploy/sandbox.sh          → PR + merge + deploy + migrations + cria nova branch
 ↓ (testar em sandbox.smartclick360.com)
-bash deploy/production.sh       → PR + merge + deploy em produção
+bash deploy/production.sh       → PR + merge + deploy + migrations em produção
 ```
 
 ### 18.3 Scripts
 
 #### deploy/newBranch.sh
 
-- Pergunta o nome da branch
-- Detecta prefixo automaticamente:
-  - Palavras `bug`, `fix`, `erro`, `correção` → `fix/`
-  - Qualquer outra → `feature/`
-- Remove acentos, converte para minúsculo, espaços viram hífens
-- Remove a palavra-chave do nome
-- Executa: `git checkout sandbox` → `git pull origin sandbox` → `git checkout -b {prefixo}/{nome}`
-- Exemplo: "bug redirect login" → `fix/redirect-login`
-- Exemplo: "alteração financeiro" → `feature/alteracao-financeiro`
+- NÃO pergunta nome da branch
+- Gera automaticamente: `feature/padrao-YYYY-MM-DD-HHMMSS`
+- Exemplo: `feature/padrao-2026-02-16-153045`
+- Executa: `git checkout sandbox` → `git pull origin sandbox` → `git checkout -b feature/padrao-{data}`
 
 #### deploy/branch.sh
 
@@ -1731,10 +1728,14 @@ bash deploy/production.sh       → PR + merge + deploy em produção
 #### deploy/push.sh
 
 - Detecta branch atual automaticamente
-- Valida se é `feature/*` ou `fix/*`
-- Gera mensagem de commit a partir do nome da branch:
-  - `feature/alteracao-financeiro` → `feat: alteracao-financeiro`
-  - `fix/redirect-login` → `fix: redirect-login`
+- Valida se é `feature/*` ou `fix/*` (bloqueia sandbox/main)
+- Se a branch começa com `feature/padrao-`:
+  - Pede o nome real da branch ao usuário
+  - Aplica transformações (minúsculo, remove acentos, detecta fix/feature)
+  - Renomeia branch local com `git branch -m`
+  - Exemplo: "Tabelas Auxiliares Produtos" → `feature/tabelas-auxiliares-produtos`
+  - Exemplo: "bug redirect login" → `fix/redirect-login`
+- Gera mensagem de commit a partir do nome da branch
 - Executa: `git add .` → `git commit -m "{mensagem}"` → `git push origin {branch}`
 
 #### deploy/sandbox.sh
@@ -1742,7 +1743,9 @@ bash deploy/production.sh       → PR + merge + deploy em produção
 - Detecta branch atual e valida prefixo
 - Cria PR via GitHub CLI ({branch} → sandbox)
 - Faz merge automático + deleta branch (local e remota)
-- Deploy via SSH: `git fetch` → `git reset --hard` → `artisan config:clear` + `route:clear` + `view:clear`
+- Volta para sandbox local: `git checkout sandbox` + `git pull origin sandbox`
+- Deploy via SSH: `git fetch` → `git reset --hard` → cache clear → migrations landlord → migrations tenants (schema sandbox)
+- Cria automaticamente nova branch para próxima tarefa (`bash deploy/newBranch.sh`)
 
 #### deploy/production.sh
 
@@ -1750,7 +1753,7 @@ bash deploy/production.sh       → PR + merge + deploy em produção
 - Muda para sandbox e atualiza
 - Cria PR via GitHub CLI (sandbox → main) — se já existir, usa o existente
 - Faz merge automático
-- Deploy via SSH em produção
+- Deploy via SSH: `git fetch` → `git reset --hard` → cache clear → migrations landlord → migrations tenants (schema production)
 
 ### 18.4 Requisitos
 

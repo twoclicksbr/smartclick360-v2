@@ -101,7 +101,7 @@ echo ""
 echo -e "${PURPLE}🚀 Fazendo deploy em produção...${NC}"
 echo ""
 
-ssh root@168.231.64.36 "cd /home/smartclick360.com/production && git fetch origin && git reset --hard origin/main && php artisan config:clear && php artisan route:clear && php artisan view:clear"
+ssh root@168.231.64.36 "cd /home/smartclick360.com/production && git fetch origin && git reset --hard origin/main && php artisan config:clear && php artisan route:clear && php artisan view:clear && php artisan migrate --database=landlord --path=database/migrations/landlord --force && php artisan tenant:migrate-all --schema=production"
 if [ $? -ne 0 ]; then
     echo ""
     echo -e "${RED}❌ Erro ao fazer deploy em produção${NC}"
