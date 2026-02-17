@@ -67,11 +67,15 @@ echo ""
 echo -e "${GREEN}✅ PR mergeado com sucesso!${NC}"
 echo ""
 
+# Volta para sandbox local atualizado
+git checkout sandbox
+git pull origin sandbox
+
 # Faz deploy no sandbox via SSH
 echo -e "${PURPLE}🚀 Fazendo deploy no sandbox...${NC}"
 echo ""
 
-ssh root@168.231.64.36 "cd /home/smartclick360.com/sandbox && git fetch origin && git reset --hard origin/sandbox && php artisan config:clear && php artisan route:clear && php artisan view:clear"
+ssh root@168.231.64.36 "cd /home/smartclick360.com/sandbox && git fetch origin && git reset --hard origin/sandbox && php artisan config:clear && php artisan route:clear && php artisan view:clear && php artisan migrate --database=landlord --path=database/migrations/landlord --force && php artisan tenant:migrate-all --schema=sandbox"
 if [ $? -ne 0 ]; then
     echo ""
     echo -e "${RED}❌ Erro ao fazer deploy no sandbox${NC}"
@@ -80,3 +84,7 @@ fi
 
 echo ""
 echo -e "${GREEN}✅ Deploy no sandbox realizado com sucesso!${NC}"
+echo ""
+
+# Cria nova branch para próxima tarefa
+bash deploy/newBranch.sh
