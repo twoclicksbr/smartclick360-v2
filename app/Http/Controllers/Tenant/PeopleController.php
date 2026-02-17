@@ -117,6 +117,22 @@ class PeopleController extends Controller
             'status' => $request->input('status', 1) == 1, // pega do formulário, padrão ativo
         ]);
 
+        // Busca o module_id de 'people'
+        $moduleId = Module::where('slug', 'people')->value('id');
+
+        // Remover avatar se solicitado
+        if ($request->input('remove_avatar') == '1') {
+            $avatarFile = File::where('module_id', $moduleId)
+                ->where('register_id', $person->id)
+                ->where('name', 'avatar')
+                ->first();
+
+            if ($avatarFile) {
+                Storage::disk('public')->delete($avatarFile->path);
+                $avatarFile->forceDelete();
+            }
+        }
+
         // Processa o upload do avatar (se houver)
         if ($request->hasFile('avatar')) {
             $file = $request->file('avatar');
