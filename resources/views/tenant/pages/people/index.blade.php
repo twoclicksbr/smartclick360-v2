@@ -71,6 +71,11 @@
 
     {{-- Modal - Adicionar/Editar Pessoa --}}
     @include('tenant.layouts.modals.modal-module', ['module' => 'people', 'modalSize' => 'mw-800px'])
+
+    {{-- Lightbox Modal --}}
+    <div id="avatarLightbox" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center; cursor:pointer;" onclick="closeLightbox()">
+        <img id="lightboxImage" src="" style="max-width:90%; max-height:90%; border-radius:8px; box-shadow:0 0 20px rgba(0,0,0,0.5);" />
+    </div>
 @endsection
 
 @push('scripts')
@@ -107,8 +112,8 @@
                 const avatar = person.files?.find(f => f.name === 'avatar');
                 const whatsapp = person.contacts?.[0];
                 const avatarHtml = avatar
-                    ? `<img src="/storage/${avatar.path}" alt="${person.first_name} ${person.surname}" />`
-                    : `<div class="symbol-label fs-6 fw-semibold text-success bg-light-success">
+                    ? `<img src="/storage/${avatar.path}" alt="${person.first_name} ${person.surname}" style="cursor: pointer; border-radius: 0.375rem !important; width: 35px; height: 35px; object-fit: cover;" onclick="openLightbox(this.src)" />`
+                    : `<div class="fs-6 fw-semibold text-success bg-light-success" style="width: 35px; height: 35px; border-radius: 0.375rem !important; display: flex; align-items: center; justify-content: center;">
                         ${person.first_name.charAt(0).toUpperCase()}${person.surname.charAt(0).toUpperCase()}
                        </div>`;
 
@@ -146,7 +151,7 @@
                         </td>
                         <td>
                             <div class="d-flex align-items-center">
-                                <div class="symbol symbol-35px symbol-circle me-3">${avatarHtml}</div>
+                                <div class="me-3" style="width: 35px; height: 35px; overflow: hidden; border-radius: 0.375rem;">${avatarHtml}</div>
                                 <div class="d-flex justify-content-start flex-column">
                                     <a href="/people/${encodedId}" class="text-gray-800 text-hover-primary fw-bold mb-1">
                                         ${person.first_name} ${person.surname}
@@ -503,6 +508,24 @@
                 var modal = new bootstrap.Modal(personModal);
                 modal.show();
             };
+        });
+
+        // ==============================================
+        // Lightbox Functions
+        // ==============================================
+        function openLightbox(src) {
+            var lightbox = document.getElementById('avatarLightbox');
+            var img = document.getElementById('lightboxImage');
+            img.src = src;
+            lightbox.style.display = 'flex';
+        }
+
+        function closeLightbox() {
+            document.getElementById('avatarLightbox').style.display = 'none';
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closeLightbox();
         });
     </script>
 @endpush
