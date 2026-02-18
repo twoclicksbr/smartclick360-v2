@@ -60,12 +60,12 @@
                             @endphp
 
                             @if ($avatar)
-                                <div class="symbol symbol-35px symbol-circle me-3">
-                                    <img src="{{ asset('storage/' . $avatar->path) }}" alt="{{ $person->first_name }} {{ $person->surname }}" />
+                                <div class="me-3" style="width: 35px; height: 35px; overflow: hidden; border-radius: 0.375rem;">
+                                    <img src="{{ asset('storage/' . $avatar->path) }}" alt="{{ $person->first_name }} {{ $person->surname }}" style="cursor: pointer; border-radius: 0.375rem !important; width: 35px; height: 35px; object-fit: cover;" onclick="openLightbox(this.src)" />
                                 </div>
                             @else
-                                <div class="symbol symbol-35px symbol-circle me-3">
-                                    <div class="symbol-label fs-6 fw-semibold text-success bg-light-success">
+                                <div class="me-3" style="width: 35px; height: 35px; overflow: hidden; border-radius: 0.375rem;">
+                                    <div class="symbol-label fs-6 fw-semibold text-success bg-light-success" style="border-radius: 0.375rem !important;">
                                         {{ strtoupper(substr($person->first_name, 0, 1)) }}{{ strtoupper(substr($person->surname, 0, 1)) }}
                                     </div>
                                 </div>
@@ -121,3 +121,25 @@
     <x-tenant.pagination-info :paginator="$people" />
 </div>
 <!--end::Pagination-->
+
+<!-- Lightbox Modal -->
+<div id="avatarLightbox" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center; cursor:pointer;" onclick="closeLightbox()">
+    <img id="lightboxImage" src="" style="max-width:90%; max-height:90%; border-radius:8px; box-shadow:0 0 20px rgba(0,0,0,0.5);" />
+</div>
+
+<script>
+function openLightbox(src) {
+    var lightbox = document.getElementById('avatarLightbox');
+    var img = document.getElementById('lightboxImage');
+    img.src = src;
+    lightbox.style.display = 'flex';
+}
+
+function closeLightbox() {
+    document.getElementById('avatarLightbox').style.display = 'none';
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeLightbox();
+});
+</script>

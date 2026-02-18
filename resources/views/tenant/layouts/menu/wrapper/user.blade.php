@@ -68,7 +68,7 @@
         <!--end::Menu separator-->
         <!--begin::Menu item-->
         <div class="menu-item px-5">
-            <a href="{{ url('/people/' . $person->id) }}" class="menu-link px-5">Meu Perfil</a>
+            <a href="{{ url('/people/' . encodeId($person->id)) }}" class="menu-link px-5">Meu Perfil</a>
         </div>
         <!--end::Menu item-->
         <!--begin::Menu separator-->

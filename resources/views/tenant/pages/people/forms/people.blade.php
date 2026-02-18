@@ -15,8 +15,8 @@
                 <label class="btn btn-icon btn-circle btn-active-color-primary w-25px h-25px bg-body shadow" data-kt-image-input-action="change" data-bs-toggle="tooltip" title="Alterar avatar">
                     <i class="ki-outline ki-pencil fs-7"></i>
                     <!--begin::Inputs-->
-                    <input type="file" name="avatar" accept=".png, .jpg, .jpeg" />
-                    <input type="hidden" name="avatar_remove" />
+                    <input type="file" name="avatar" id="avatar_input" accept=".png, .jpg, .jpeg" />
+                    <input type="hidden" name="remove_avatar" id="remove_avatar" value="0" />
                     <!--end::Inputs-->
                 </label>
                 <!--end::Label-->
@@ -91,3 +91,37 @@
     <!--end::Col-->
 </div>
 <!--end::Row-->
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Seleciona os botões de avatar
+    const avatarInput = document.getElementById('avatar_input');
+    const removeAvatarInput = document.getElementById('remove_avatar');
+    const imageInputWrapper = document.querySelector('[data-kt-image-input="true"]');
+
+    if (imageInputWrapper) {
+        // Botão de remover avatar
+        const removeBtn = imageInputWrapper.querySelector('[data-kt-image-input-action="remove"]');
+        if (removeBtn) {
+            removeBtn.addEventListener('click', function() {
+                removeAvatarInput.value = '1';
+            });
+        }
+
+        // Botão de cancelar
+        const cancelBtn = imageInputWrapper.querySelector('[data-kt-image-input-action="cancel"]');
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', function() {
+                removeAvatarInput.value = '0';
+            });
+        }
+    }
+
+    // Quando selecionar novo avatar, reseta o flag de remoção
+    if (avatarInput) {
+        avatarInput.addEventListener('change', function() {
+            removeAvatarInput.value = '0';
+        });
+    }
+});
+</script>
