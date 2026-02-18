@@ -3,6 +3,7 @@
 # Cores para output
 GREEN='\033[0;32m'
 RED='\033[0;31m'
+YELLOW='\033[1;33m'
 PURPLE='\033[0;35m'
 NC='\033[0m' # No Color
 
@@ -26,14 +27,19 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# Roda migrations no localhost
-echo ""
-echo -e "${PURPLE}🔄 Rodando migrations no localhost...${NC}"
-echo ""
+# Roda migrations no localhost (se PHP estiver disponível)
+if command -v php &> /dev/null; then
+    echo ""
+    echo -e "${PURPLE}🔄 Rodando migrations no localhost...${NC}"
+    echo ""
+    php artisan migrate --database=landlord --path=database/migrations/landlord 2>/dev/null
+    php artisan tenant:migrate-all --schema=production 2>/dev/null
+else
+    echo ""
+    echo -e "${YELLOW}⚠️  PHP não encontrado no PATH. Rode 'bash deploy/migrate.sh' manualmente se necessário.${NC}"
+fi
 
-php artisan migrate --database=landlord --path=database/migrations/landlord
-php artisan tenant:migrate-all --schema=production
-
+# Cria a branch
 git checkout -b "$branch_name"
 if [ $? -ne 0 ]; then
     echo -e "${RED}❌ Erro ao criar a branch $branch_name${NC}"
