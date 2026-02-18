@@ -1,5 +1,7 @@
 # SmartClick360 v2 — Contexto do Projeto
 
+
+
 **Última atualização:** 19/02/2026 (auditoria e fix de tabela física + coming-soon)
 
 ---
