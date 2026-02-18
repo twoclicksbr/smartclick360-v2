@@ -110,3 +110,7 @@ fi
 
 echo ""
 echo -e "${GREEN}✅ Deploy em PRODUÇÃO realizado com sucesso!${NC}"
+echo ""
+echo -e "${PURPLE}📌 Escolha a branch para continuar trabalhando...${NC}"
+echo ""
+bash deploy/branch.sh
