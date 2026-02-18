@@ -99,6 +99,14 @@ class DynamicWebController extends Controller
         $fieldsWithUi = $this->getFieldsWithUi($config->id, $connection);
         $service = $this->resolveService($module, $connection);
 
+        // Verificar se a tabela física existe
+        $tableName = $config->slug;
+        $tableExists = \Illuminate\Support\Facades\Schema::connection($connection)->hasTable($tableName);
+
+        if (!$tableExists) {
+            return view('tenant.pages.dynamic.coming-soon', compact('config', 'module'));
+        }
+
         // Filtrar campos visíveis no index
         $indexFields = array_filter($fieldsWithUi, fn ($f) => $f->visible_index);
 
@@ -126,6 +134,17 @@ class DynamicWebController extends Controller
         $config = $this->getModuleConfig($module, $connection);
         $fieldsWithUi = $this->getFieldsWithUi($config->id, $connection);
         $service = $this->resolveService($module, $connection);
+
+        // Verificar se a tabela física existe
+        $tableName = $config->slug;
+        $tableExists = \Illuminate\Support\Facades\Schema::connection($connection)->hasTable($tableName);
+
+        if (!$tableExists) {
+            return redirect()->route('tenant.module.index', [
+                'slug' => session('tenant_slug'),
+                'module' => $module
+            ]);
+        }
 
         $id = decodeId($code);
         $record = $service->find($id);

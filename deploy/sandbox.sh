@@ -43,9 +43,18 @@ echo ""
 
 gh pr create --base sandbox --title "$pr_title" --body ""
 if [ $? -ne 0 ]; then
-    echo ""
-    echo -e "${RED}❌ Erro ao criar o Pull Request${NC}"
-    exit 1
+    # Verifica se já existe um PR aberto
+    existing_pr=$(gh pr list --base sandbox --head "$current_branch" --state open --json number --jq '.[0].number' 2>/dev/null)
+
+    if [ -n "$existing_pr" ]; then
+        echo ""
+        echo -e "${YELLOW}⚠️  PR já existe (#$existing_pr). Usando o existente...${NC}"
+        echo ""
+    else
+        echo ""
+        echo -e "${RED}❌ Erro ao criar o Pull Request${NC}"
+        exit 1
+    fi
 fi
 
 echo ""
