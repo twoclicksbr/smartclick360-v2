@@ -1,6 +1,6 @@
 # SmartClick360 v2 — Contexto do Projeto
 
-**Última atualização:** 18/02/2026 (sistema modular dinâmico completo)
+**Última atualização:** 19/02/2026 (auditoria e fix de tabela física + coming-soon)
 
 ---
 
@@ -840,9 +840,9 @@ Foram criados 10 componentes reutilizáveis para evitar duplicação de código:
 |-----------|------------|----------|
 | Controllers Web | 10 | PageController, Auth (3), Landlord (1), Tenant (3), Controller base |
 | Controllers Tenant Auxiliares | 16 | TypeProducts, Brands, Units, Groups, Families, Warehouses, Origins, Ncms, Cfops, TaxSituations, PriceLists, VariationTypes, VariationOptions, SalesChannels, DiscountTables, Transactions |
-| Controllers API | 9 | Auth (2), Landlord (2), Modules (1), Dashboard, Settings, ModuleController, SubmoduleController |
-| Models Landlord | 30 | Core (14) + Auxiliares (16) |
-| Models Tenant | 27 | Core (11) + Auxiliares (16) |
+| Controllers API | 10 | Auth (2), Landlord (2), Modules (1), Dashboard, Settings, ModuleController, SubmoduleController, DynamicApiController |
+| Models Landlord | 34 | Core (14) + Auxiliares (16) + Sistema Modular (4) |
+| Models Tenant | 31 | Core (11) + Auxiliares (16) + Sistema Modular (4) |
 | Models Customizados | 2 | PersonalAccessToken (Sanctum multi-tenancy), User (base) |
 | Middleware | 1 | IdentifyTenant |
 | Traits | 1 | ApiResponse |
@@ -852,15 +852,15 @@ Foram criados 10 componentes reutilizáveis para evitar duplicação de código:
 | Services Dinâmicos | 1 | DynamicService (CRUD genérico com auto_from, unique, bcrypt) |
 | Requests Dinâmicos | 1 | DynamicRequest (validação dinâmica via module_fields) |
 | Controllers Dinâmicos | 2 | DynamicApiController + DynamicWebController |
-| Views Dinâmicas | 3 | dynamic/index, dynamic/show, dynamic/_modal |
+| Views Dinâmicas | 4 | dynamic/index, dynamic/show, dynamic/_modal, dynamic/coming-soon |
 | Helpers | 1 | helpers.php |
 | Migrations Landlord | 37 | Core (14) + Auxiliares (16) + Sistema Modular (5) + personal_access_tokens + índices |
 | Migrations Tenant Production | 36 | Core (11) + Auxiliares (16) + Sistema Modular (5) + cache + jobs + personal_access_tokens + índices |
 | Migrations Tenant Sandbox | 36 | Idênticos aos de production |
 | Migrations Tenant Log | 1 | audit_logs |
 | Migrations Sistema Modular | 15 | 5 × 3 (landlord + production + sandbox) |
-| Seeders Landlord | 17 | Core (7) + Auxiliares (6) + Sistema Modular (4) |
-| Seeders Sistema Modular | 4 | ModuleSubmoduleSeeder, ModuleFieldSeeder, ModuleFieldUiSeeder + ModuleSeeder atualizado |
+| Seeders Landlord | 16 | Core (7) + Auxiliares (6) + Sistema Modular (3) |
+| Seeders Sistema Modular | 3 | ModuleSubmoduleSeeder, ModuleFieldSeeder, ModuleFieldUiSeeder (ModuleSeeder foi atualizado, não criado) |
 | Seeders Raiz | 6 | Modules, TypeContacts, TypeDocuments, TypeAddresses, TypeProducts, Plans |
 | Seeders Tenant | 1 | PeopleFakeSeeder |
 | Commands Artisan | 2 | TenantReset, TenantSeedFake |
@@ -887,13 +887,14 @@ Foram criados 10 componentes reutilizáveis para evitar duplicação de código:
 - `app/Http/Controllers/Tenant/ModuleController.php` — delegação para controllers específicos de módulos
 - `app/Http/Controllers/Tenant/SubmoduleController.php` — CRUD genérico submódulos web (contacts, documents, addresses, files, notes)
 
-**Controllers API** (9 arquivos em `app/Http/Controllers/Api/V1/`):
+**Controllers API** (10 arquivos em `app/Http/Controllers/Api/V1/`):
 - `Auth/TenantAuthController.php` — autenticação do tenant (login, logout, me)
 - `Auth/LandlordAuthController.php` — autenticação do landlord (login, logout, me)
 - `Landlord/DashboardController.php` — estatísticas do landlord
 - `Landlord/TenantController.php` — gestão de tenants via API (index, show)
 - `Modules/PeopleController.php` — CRUD completo de pessoas com filtros avançados
 - `DashboardController.php` — dashboard do tenant (stub)
+- `DynamicApiController.php` — CRUD genérico para módulos dinâmicos via API
 - `SettingsController.php` — configurações do tenant via API (stub)
 - `ModuleController.php` — delegação para controllers específicos de módulos
 - `SubmoduleController.php` — CRUD genérico para 5 submódulos (contacts, documents, addresses, files, notes)
@@ -918,11 +919,11 @@ Foram criados 10 componentes reutilizáveis para evitar duplicação de código:
   - `encodeId()` — codifica ID para URL-safe (base64 modificado)
   - `decodeId()` — decodifica ID de URL-safe
 
-**Models Landlord** (14 arquivos em `app/Models/Landlord/`):
-- Tenant, Person, User (com HasApiTokens), Contact, Document, Address, File, Note, Subscription, Plan, Module, TypeContact, TypeDocument, TypeAddress
+**Models Landlord** (18 arquivos (14 core + 4 sistema modular) em `app/Models/Landlord/`):
+- Tenant, Person, User (com HasApiTokens), Contact, Document, Address, File, Note, Subscription, Plan, Module, TypeContact, TypeDocument, TypeAddress, ModuleField, ModuleFieldUi, ModuleSeed, ModuleSubmodule
 
-**Models Tenant** (11 arquivos em `app/Models/Tenant/`):
-- Person (sem tenant_id), User (com HasApiTokens), Contact, Document, Address, File, Note, Module, TypeContact, TypeDocument, TypeAddress
+**Models Tenant** (15 arquivos (11 core + 4 sistema modular) em `app/Models/Tenant/`):
+- Person (sem tenant_id), User (com HasApiTokens), Contact, Document, Address, File, Note, Module, TypeContact, TypeDocument, TypeAddress, ModuleField, ModuleFieldUi, ModuleSeed, ModuleSubmodule
 
 **Model Customizado para Sanctum** (1 arquivo):
 - `app/Models/PersonalAccessToken.php` — model customizado que estende Laravel Sanctum para suportar multi-tenancy. Sobrescreve `findToken()` para buscar tokens primeiro no landlord e, se não encontrar, busca no banco do tenant identificado pelo subdomínio. Crucial para autenticação funcionar corretamente.
@@ -935,7 +936,7 @@ Foram criados 10 componentes reutilizáveis para evitar duplicação de código:
 - `database/migrations/tenant/sandbox/` — 15 arquivos (idênticos aos de production)
 - `database/migrations/tenant/log/` — 1 arquivo (audit_logs)
 
-**Seeders** (14 arquivos):
+**Seeders** (16 arquivos):
 - `database/seeders/landlord/` — 7 seeders (LandlordDatabaseSeeder, ModuleSeeder, TypeContactSeeder, TypeDocumentSeeder, TypeAddressSeeder, PlanSeeder, AlexSeeder)
 - `database/seeders/tenant/` — 1 seeder (PeopleFakeSeeder - gera 50 pessoas fake com contatos)
 - `database/seeders/` — 6 seeders (DatabaseSeeder, ModulesSeeder, TypeContactsSeeder, TypeDocumentsSeeder, TypeAddressesSeeder, PlansSeeder)
