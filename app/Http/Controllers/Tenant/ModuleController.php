@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Tenant\DynamicWebController;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class ModuleController extends Controller
@@ -35,7 +37,21 @@ class ModuleController extends Controller
             return $specificController->index($request, $slug, $module);
         }
 
-        // Lógica genérica (ainda não implementada)
+        // Fallback: DynamicWebController
+        $connection = config('database.connections.tenant.database') ? 'tenant' : 'landlord';
+        $moduleExists = DB::connection($connection)
+            ->table('modules')
+            ->where('slug', $module)
+            ->where('type', 'module')
+            ->where('status', true)
+            ->whereNull('deleted_at')
+            ->exists();
+
+        if ($moduleExists) {
+            $dynamicController = app(DynamicWebController::class);
+            return $dynamicController->index($request, $module);
+        }
+
         abort(404, 'Módulo não encontrado');
     }
 
@@ -67,7 +83,21 @@ class ModuleController extends Controller
             return $specificController->store($request, $slug, $module);
         }
 
-        // Lógica genérica (ainda não implementada)
+        // Fallback: DynamicWebController
+        $connection = config('database.connections.tenant.database') ? 'tenant' : 'landlord';
+        $moduleExists = DB::connection($connection)
+            ->table('modules')
+            ->where('slug', $module)
+            ->where('type', 'module')
+            ->where('status', true)
+            ->whereNull('deleted_at')
+            ->exists();
+
+        if ($moduleExists) {
+            $dynamicController = app(DynamicWebController::class);
+            return $dynamicController->store($request, $module);
+        }
+
         abort(404, 'Módulo não encontrado');
     }
 
@@ -83,7 +113,21 @@ class ModuleController extends Controller
             return $specificController->show($slug, $module, $code);
         }
 
-        // Lógica genérica (ainda não implementada)
+        // Fallback: DynamicWebController
+        $connection = config('database.connections.tenant.database') ? 'tenant' : 'landlord';
+        $moduleExists = DB::connection($connection)
+            ->table('modules')
+            ->where('slug', $module)
+            ->where('type', 'module')
+            ->where('status', true)
+            ->whereNull('deleted_at')
+            ->exists();
+
+        if ($moduleExists) {
+            $dynamicController = app(DynamicWebController::class);
+            return $dynamicController->show($module, $code);
+        }
+
         abort(404, 'Módulo não encontrado');
     }
 
@@ -115,7 +159,21 @@ class ModuleController extends Controller
             return $specificController->update($request, $slug, $module, $code);
         }
 
-        // Lógica genérica (ainda não implementada)
+        // Fallback: DynamicWebController
+        $connection = config('database.connections.tenant.database') ? 'tenant' : 'landlord';
+        $moduleExists = DB::connection($connection)
+            ->table('modules')
+            ->where('slug', $module)
+            ->where('type', 'module')
+            ->where('status', true)
+            ->whereNull('deleted_at')
+            ->exists();
+
+        if ($moduleExists) {
+            $dynamicController = app(DynamicWebController::class);
+            return $dynamicController->update($request, $module, $code);
+        }
+
         abort(404, 'Módulo não encontrado');
     }
 
@@ -131,7 +189,21 @@ class ModuleController extends Controller
             return $specificController->destroy($slug, $module, $code);
         }
 
-        // Lógica genérica (ainda não implementada)
+        // Fallback: DynamicWebController
+        $connection = config('database.connections.tenant.database') ? 'tenant' : 'landlord';
+        $moduleExists = DB::connection($connection)
+            ->table('modules')
+            ->where('slug', $module)
+            ->where('type', 'module')
+            ->where('status', true)
+            ->whereNull('deleted_at')
+            ->exists();
+
+        if ($moduleExists) {
+            $dynamicController = app(DynamicWebController::class);
+            return $dynamicController->destroy(request(), $module, $code);
+        }
+
         abort(404, 'Módulo não encontrado');
     }
 
@@ -147,7 +219,21 @@ class ModuleController extends Controller
             return $specificController->restore($slug, $module, $code);
         }
 
-        // Lógica genérica (ainda não implementada)
+        // Fallback: DynamicWebController
+        $connection = config('database.connections.tenant.database') ? 'tenant' : 'landlord';
+        $moduleExists = DB::connection($connection)
+            ->table('modules')
+            ->where('slug', $module)
+            ->where('type', 'module')
+            ->where('status', true)
+            ->whereNull('deleted_at')
+            ->exists();
+
+        if ($moduleExists) {
+            $dynamicController = app(DynamicWebController::class);
+            return $dynamicController->restore(request(), $module, $code);
+        }
+
         abort(404, 'Módulo não encontrado');
     }
 
@@ -163,26 +249,21 @@ class ModuleController extends Controller
             return $specificController->reorder($request, $slug, $module);
         }
 
-        // Lógica genérica: mapeia módulo para model
-        $moduleModelMap = [
-            'people' => \App\Models\Tenant\Person::class,
-            // Adicione outros módulos conforme necessário
-            // 'products' => \App\Models\Tenant\Product::class,
-            // 'sales' => \App\Models\Tenant\Sale::class,
-        ];
+        // Fallback: DynamicWebController
+        $connection = config('database.connections.tenant.database') ? 'tenant' : 'landlord';
+        $moduleExists = DB::connection($connection)
+            ->table('modules')
+            ->where('slug', $module)
+            ->where('type', 'module')
+            ->where('status', true)
+            ->whereNull('deleted_at')
+            ->exists();
 
-        // Verifica se o módulo existe no mapeamento
-        if (!isset($moduleModelMap[$module])) {
-            return response()->json(['success' => false, 'message' => 'Módulo não suporta reordenação'], 404);
+        if ($moduleExists) {
+            $dynamicController = app(DynamicWebController::class);
+            return $dynamicController->reorder($request, $module);
         }
 
-        $modelClass = $moduleModelMap[$module];
-        $order = $request->input('order', []);
-
-        foreach ($order as $item) {
-            $modelClass::where('id', $item['id'])->update(['order' => $item['order']]);
-        }
-
-        return response()->json(['success' => true]);
+        abort(404, 'Módulo não encontrado');
     }
 }

@@ -10,6 +10,9 @@ class LandlordDatabaseSeeder extends Seeder
     {
         $this->call([
             ModuleSeeder::class,
+            ModuleSubmoduleSeeder::class,
+            ModuleFieldSeeder::class,
+            ModuleFieldUiSeeder::class,
             TypeContactSeeder::class,
             TypeDocumentSeeder::class,
             TypeAddressSeeder::class,

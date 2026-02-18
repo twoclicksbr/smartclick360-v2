@@ -1,6 +1,6 @@
 # SmartClick360 v2 — Contexto do Projeto
 
-**Última atualização:** 16/02/2026 (deploy completo + infraestrutura de produção)
+**Última atualização:** 18/02/2026 (sistema modular dinâmico completo)
 
 ---
 
@@ -54,8 +54,9 @@
 | 10 | Componentes reutilizáveis e sistema modular | ✅ Concluída |
 | 11 | API REST completa (52 endpoints com Sanctum) | ✅ Concluída |
 | 12 | Infraestrutura de Deploy (GitHub + VPS + SSL + CI/CD) | ✅ Concluída |
-| 13 | Módulo de Produtos — Tabelas Auxiliares (16 tabelas) | 🔄 Em Andamento |
-| 14+ | Demais módulos do ERP | 🔲 Pendente |
+| 13 | Módulo de Produtos — Tabelas Auxiliares (16 tabelas) + Sistema Modular Dinâmico | ✅ Concluída |
+| 14 | Painel de Gerenciamento de Módulos (CRUD visual de modules/fields/UI/seeds) | 🔲 Pendente |
+| 15+ | Demais módulos do ERP | 🔲 Pendente |
 
 ---
 
@@ -847,12 +848,19 @@ Foram criados 10 componentes reutilizáveis para evitar duplicação de código:
 | Traits | 1 | ApiResponse |
 | Exception Handlers | 1 | ApiExceptionHandler |
 | Services | 1 | TenantService |
+| Models Dinâmicos | 1 | DynamicModel (genérico, configura-se via module_fields) |
+| Services Dinâmicos | 1 | DynamicService (CRUD genérico com auto_from, unique, bcrypt) |
+| Requests Dinâmicos | 1 | DynamicRequest (validação dinâmica via module_fields) |
+| Controllers Dinâmicos | 2 | DynamicApiController + DynamicWebController |
+| Views Dinâmicas | 3 | dynamic/index, dynamic/show, dynamic/_modal |
 | Helpers | 1 | helpers.php |
-| Migrations Landlord | 32 | Core (14) + Auxiliares (16) + personal_access_tokens + índices |
-| Migrations Tenant Production | 31 | Core (11) + Auxiliares (16) + cache + jobs + personal_access_tokens + índices |
-| Migrations Tenant Sandbox | 31 | Idênticos aos de production |
+| Migrations Landlord | 37 | Core (14) + Auxiliares (16) + Sistema Modular (5) + personal_access_tokens + índices |
+| Migrations Tenant Production | 36 | Core (11) + Auxiliares (16) + Sistema Modular (5) + cache + jobs + personal_access_tokens + índices |
+| Migrations Tenant Sandbox | 36 | Idênticos aos de production |
 | Migrations Tenant Log | 1 | audit_logs |
-| Seeders Landlord | 13 | Core (7) + Auxiliares (6) |
+| Migrations Sistema Modular | 15 | 5 × 3 (landlord + production + sandbox) |
+| Seeders Landlord | 17 | Core (7) + Auxiliares (6) + Sistema Modular (4) |
+| Seeders Sistema Modular | 4 | ModuleSubmoduleSeeder, ModuleFieldSeeder, ModuleFieldUiSeeder + ModuleSeeder atualizado |
 | Seeders Raiz | 6 | Modules, TypeContacts, TypeDocuments, TypeAddresses, TypeProducts, Plans |
 | Seeders Tenant | 1 | PeopleFakeSeeder |
 | Commands Artisan | 2 | TenantReset, TenantSeedFake |
@@ -1786,28 +1794,36 @@ git push origin sandbox
 
 ## 19. Próximos Passos
 
-### Fase 13 — Módulo de Produtos (Continuação)
-- [x] 16 tabelas auxiliares implementadas — ✅ **Concluída**
+### Fase 13 — Módulo de Produtos + Sistema Modular Dinâmico
+- [x] 16 tabelas auxiliares implementadas — ✅
+- [x] Sistema modular dinâmico (5 tabelas de configuração) — ✅
+- [x] Camadas genéricas (DynamicModel, Service, Request, Controllers) — ✅
+- [x] Views genéricas (index, show, _modal) — ✅
+- [x] Menu dinâmico filtrado por scope — ✅
 - [ ] Tabela principal: products
 - [ ] CRUD completo de produtos (web + API)
-- [ ] Gestão de estoque básica
-- [ ] Upload de imagens de produtos
-- [ ] Variações de produtos
-- [ ] Relatórios de estoque
 
-### Fase 14 — Módulo de Vendas
+### Fase 14 — Painel de Gerenciamento de Módulos
+- [ ] CRUD de modules (create/edit via interface)
+- [ ] CRUD de fields + UI (dentro do edit)
+- [ ] CRUD de seeds (aba Seeds)
+- [ ] Criação de tabelas físicas via module_fields
+- [ ] Import CSV para seeds
+- [ ] Comando system:cleanup
+
+### Fase 15 — Módulo de Vendas
 - [ ] Tabelas: sales, sale_items
 - [ ] Criação de orçamentos
 - [ ] Conversão de orçamento em venda
 - [ ] Relatório de vendas
 
-### Fase 15 — Módulo Financeiro
+### Fase 16 — Módulo Financeiro
 - [ ] Tabelas: financial_accounts, transactions
 - [ ] Contas a pagar
 - [ ] Contas a receber
 - [ ] Fluxo de caixa
 
-### Fase 16 — Integração Asaas
+### Fase 17 — Integração Asaas
 - [ ] Webhook para atualização de status de pagamento
 - [ ] Criação de assinaturas no Asaas
 - [ ] Gestão de cartão de crédito
@@ -1948,3 +1964,139 @@ Todas as tabelas possuem badge de **status**: "Ativo" (verde) / "Inativo" (verme
 - [ ] Precificação automática por canal de venda (sales_channels + price_lists)
 - [ ] Relatórios de movimentação (transactions)
 - [ ] API para módulo de produtos
+
+---
+
+## 21. Sistema Modular Dinâmico
+
+### 21.1 Visão Geral
+
+O sistema modular dinâmico permite criar e configurar módulos ERP sem escrever código. A configuração de cada módulo (campos, validações, apresentação visual, seeds) é armazenada no banco de dados em 5 tabelas de configuração. Componentes genéricos (Model, Service, Request, Controller, Views) lêem essa configuração e se adaptam automaticamente.
+
+**Benefício principal:** Novos módulos simples (como tabelas auxiliares) podem ser criados inteiramente via banco de dados, sem criar arquivos PHP ou Blade. Módulos complexos (como People) mantêm controllers/models específicos.
+
+### 21.2 Tabelas de Configuração (5 tabelas)
+
+| Tabela | Finalidade | Registros (seed) |
+|--------|-----------|-----------------|
+| modules (refatorada) | Configuração do módulo (scope, model, service, controller, UI flags) | 13 (8 módulos + 5 submódulos) |
+| module_submodules | Pivot: módulo → submódulo (ex: People → Contacts) | 7 |
+| module_fields | Campos do módulo com regras de negócio (type, required, unique, FK, auto_from) | 8 (People) |
+| module_fields_ui | Apresentação visual (component, grid_col, visible_*, searchable, sortable, badges) | 8 (People) |
+| module_seeds | Dados de seed em JSON (eliminam seeders PHP por módulo) | 0 |
+
+As 5 tabelas existem no landlord E nos schemas production/sandbox de cada tenant.
+
+### 21.3 Campo scope (modules)
+
+| scope | Onde a tabela física existe | Menu | Exemplo |
+|-------|---------------------------|------|---------|
+| tenant | Só no banco do tenant | Menu tenant | Vendas, Compras |
+| landlord | Só no banco central | Menu backoffice | Tenants, Planos |
+| both | Nos dois bancos | Ambos os menus | Pessoas, Produtos |
+
+### 21.4 Camadas Genéricas
+
+**DynamicModel** (`app/Models/DynamicModel.php`):
+- Configura $table, $fillable e $casts dinamicamente lendo module_fields
+- Método estático: `DynamicModel::forModule('brands', 'tenant')`
+- Preserva configuração em newInstance() e newFromBuilder()
+
+**DynamicService** (`app/Services/DynamicService.php`):
+- CRUD completo: index, find, create, update, destroy, restore, reorder
+- auto_from: gera slug/uppercase/lowercase automaticamente
+- Validação de unique (ignora campos vazios, ignora próprio registro no update)
+- bcrypt automático em campos com component = password
+- Quick search em campos marcados como searchable (via module_fields_ui)
+
+**DynamicRequest** (`app/Http/Requests/DynamicRequest.php`):
+- Monta rules dinamicamente a partir de module_fields (required, type, min, max, length)
+- Mensagens de erro automáticas via label do campo (attributes())
+
+**DynamicApiController** (`app/Http/Controllers/Api/V1/DynamicApiController.php`):
+- 7 endpoints: index, store, show, update, destroy, restore, reorder
+- Resolve model/service/request: específico ou genérico
+- Usa trait ApiResponse para respostas padronizadas
+
+**DynamicWebController** (`app/Http/Controllers/Tenant/DynamicWebController.php`):
+- 7 métodos: index, show, store, update, destroy, restore, reorder
+- Busca fields com UI (JOIN module_fields + module_fields_ui)
+- Suporta AJAX e redirect
+- Views genéricas: tenant.pages.dynamic.index, show, _modal
+
+### 21.5 Delegação de Controllers (ModuleController)
+
+O ModuleController foi atualizado para delegar ao DynamicWebController como fallback:
+
+```
+Request /{module} → ModuleController
+  → Controller específico existe? (ex: PeopleController) → usa ele
+  → Módulo existe no banco? → DynamicWebController
+  → Senão → abort(404)
+```
+
+### 21.6 Views Genéricas
+
+**index.blade.php** — Grid dinâmica com:
+- Drag handle (show_drag), checkbox (show_checkbox), ações (show_actions)
+- Colunas dinâmicas (visible_index = true)
+- grid_template: combina campos ({first_name} {surname})
+- grid_link: transforma em link ({show}, {edit}, URL externa)
+- Badges via options JSON
+- Ordenação por coluna, paginação, quick search
+- AJAX: delete, restore, reorder
+
+**show.blade.php** — Detalhe com campos visible_show, formatação por tipo, badges
+
+**_modal.blade.php** — Modal create/edit com 12 componentes:
+input, select, select_module, date, datetime, textarea, switch, checkbox, radio, password, upload, default
+- Visibilidade por modo (visible_create vs visible_edit)
+- População automática no edit
+- Validação com feedback visual
+
+### 21.7 Menu Dinâmico
+
+O menu lateral foi substituído (de 2.694 linhas demo → 85 linhas funcionais):
+- Dashboard (fixo)
+- Cadastros (dropdown com módulos dinâmicos filtrados por scope)
+- Configurações (fixo)
+
+Arquivo: `resources/views/tenant/layouts/menu.blade.php`
+
+### 21.8 Componentes UI Suportados (13)
+
+| # | component | Descrição | Usa options? |
+|---|-----------|-----------|-------------|
+| 1 | input | Texto, número, email | não |
+| 2 | select | Dropdown com opções manuais | sim |
+| 3 | select_module | Dropdown com dados de FK | não (usa fk_table) |
+| 4 | date | Seletor de data | não |
+| 5 | datetime | Seletor de data e hora | não |
+| 6 | date_range | Range de datas | não |
+| 7 | datetime_range | Range de data e hora | não |
+| 8 | textarea | Texto longo | não |
+| 9 | switch | Toggle on/off | sim (labels/badges) |
+| 10 | upload | Arquivo/imagem | não |
+| 11 | checkbox | Múltipla escolha | sim |
+| 12 | radio | Escolha única | sim |
+| 13 | password | Senha com KTPasswordMeter | não |
+
+### 21.9 Migrations do Sistema Modular
+
+| Data | Arquivo | Descrição |
+|------|---------|-----------|
+| 2026_02_17_000001 | alter_modules_table | Remove parent_id, adiciona scope + 18 campos |
+| 2026_02_17_000002 | create_module_submodules_table | Pivot módulo ↔ submódulo |
+| 2026_02_17_000003 | create_module_fields_table | Definição de campos (negócio) |
+| 2026_02_17_000004 | create_module_fields_ui_table | Apresentação visual |
+| 2026_02_17_000005 | create_module_seeds_table | Seeds em JSON |
+
+Cada migration existe em 3 locais: landlord, tenant/production, tenant/sandbox
+
+### 21.10 Próximos Passos do Sistema Modular
+
+- [ ] Painel de gerenciamento de módulos (CRUD visual via interface web)
+- [ ] Criação de tabelas físicas via module_fields (CREATE TABLE dinâmico)
+- [ ] Import CSV para module_seeds
+- [ ] Comando system:cleanup (identifica arquivos órfãos)
+- [ ] Migrar 16 tabelas auxiliares de produtos para o sistema dinâmico
