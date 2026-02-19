@@ -249,41 +249,6 @@ class TenantService
     private function getSeedData(): array
     {
         return [
-            // --- Configuração Modular ---
-            'modules' => DB::connection('landlord')->table('modules')
-                ->whereNull('deleted_at')
-                ->orderBy('order')
-                ->get()
-                ->map(fn ($row) => (array) $row)
-                ->toArray(),
-
-            'module_submodules' => DB::connection('landlord')->table('module_submodules')
-                ->whereNull('deleted_at')
-                ->orderBy('order')
-                ->get()
-                ->map(fn ($row) => (array) $row)
-                ->toArray(),
-
-            'module_fields' => DB::connection('landlord')->table('module_fields')
-                ->whereNull('deleted_at')
-                ->orderBy('order')
-                ->get()
-                ->map(fn ($row) => (array) $row)
-                ->toArray(),
-
-            'module_fields_ui' => DB::connection('landlord')->table('module_fields_ui')
-                ->whereNull('deleted_at')
-                ->orderBy('order')
-                ->get()
-                ->map(fn ($row) => (array) $row)
-                ->toArray(),
-
-            'module_seeds' => DB::connection('landlord')->table('module_seeds')
-                ->whereNull('deleted_at')
-                ->orderBy('order')
-                ->get()
-                ->map(fn ($row) => (array) $row)
-                ->toArray(),
             'type_contacts' => [
                 ['name' => 'Email',     'mask' => null,                               'order' => 1, 'status' => true],
                 ['name' => 'WhatsApp',  'mask' => '(00) 00000-0000',                  'order' => 2, 'status' => true],

@@ -35,4 +35,15 @@ class Person extends Model
     {
         return $this->hasOne(User::class);
     }
+
+    public function files()
+    {
+        return $this->hasMany(File::class, 'register_id')
+            ->where('module_id', function($query) {
+                $query->select('id')
+                    ->from('modules')
+                    ->where('slug', 'people')
+                    ->limit(1);
+            });
+    }
 }

@@ -33,6 +33,7 @@ return new class extends Migration
             $table->string('max', 50)->nullable();
             $table->integer('order')->default(0);
             $table->boolean('status')->default(true);
+            $table->string('origin')->default('system');
             $table->timestamps();
             $table->softDeletes();
         });
