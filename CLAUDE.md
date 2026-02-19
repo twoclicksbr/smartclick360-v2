@@ -1,7 +1,6 @@
 # SmartClick360 v2 — Contexto do Projeto
 
-
-**Última atualização:** 19/02/2026 (auditoria e fix de tabela física + coming-soon)
+**Última atualização:** 19/02/2026 (reestruturação modules: unificação migrations + 8 campos novos + seeders vazios)
 
 ---
 
@@ -624,7 +623,9 @@ curl -X POST http://twoclicks.smartclick360-v2.test/api/v1/auth/tenant/logout \
 - id, type_address_id (FK), module_id (FK), register_id (polimórfico), zip_code, street, number, complement, neighborhood, city, state, country, is_main (boolean), order, status, timestamps, softDeletes
 
 #### modules
-- id, name, slug, type (module/submodule), parent_id (nullable, FK→modules), order, status, timestamps, softDeletes
+- id, name, slug (unique), type (default 'module'), scope (obrigatório: tenant/landlord), icon (nullable), model (nullable), service (nullable), controller (nullable), show_drag (true), show_checkbox (true), show_actions (true), default_sort_field ('id'), default_sort_direction ('asc'), per_page (25), view_index (nullable), view_show (nullable), view_modal (nullable), after_store ('index'), after_update ('index'), after_restore ('edit'), default_checked (false), origin ('system'), order (0), status (true), timestamps, softDeletes
+- **Total:** 27 campos
+- **Campo parent_id REMOVIDO:** substituído pela pivot module_submodules
 
 #### type_contacts
 - id, name, mask (nullable), order, status, timestamps, softDeletes
@@ -655,9 +656,9 @@ curl -X POST http://twoclicks.smartclick360-v2.test/api/v1/auth/tenant/logout \
 
 ### 6.4 Dados de Seed
 
-#### Modules (12 registros)
-- Módulos: Pessoas, Tenants, Usuários, Produtos, Vendas, Compras, Financeiro
-- Submódulos: Contatos, Documentos, Endereços, Arquivos, Notas
+#### Modules (0 registros)
+- Seeders esvaziados: ModuleSeeder, ModuleSubmoduleSeeder, ModuleFieldSeeder, ModuleFieldUiSeeder
+- Dados serão criados pela interface do painel de gerenciamento (Fase 14)
 
 #### Type Contacts (4 registros)
 - Email, WhatsApp (mask: (99) 99999-9999), Telefone (mask: (99) 9999-9999), Celular (mask: (99) 99999-9999)
@@ -855,13 +856,13 @@ Foram criados 10 componentes reutilizáveis para evitar duplicação de código:
 | Controllers Dinâmicos | 2 | DynamicApiController + DynamicWebController |
 | Views Dinâmicas | 4 | dynamic/index, dynamic/show, dynamic/_modal, dynamic/coming-soon |
 | Helpers | 1 | helpers.php |
-| Migrations Landlord | 37 | Core (14) + Auxiliares (16) + Sistema Modular (5) + personal_access_tokens + índices |
-| Migrations Tenant Production | 36 | Core (11) + Auxiliares (16) + Sistema Modular (5) + cache + jobs + personal_access_tokens + índices |
-| Migrations Tenant Sandbox | 36 | Idênticos aos de production |
+| Migrations Landlord | 36 | Core (14) + Auxiliares (16) + Sistema Modular (4) + personal_access_tokens + índices |
+| Migrations Tenant Production | 35 | Core (11) + Auxiliares (16) + Sistema Modular (4) + cache + jobs + personal_access_tokens + índices |
+| Migrations Tenant Sandbox | 35 | Idênticos aos de production |
 | Migrations Tenant Log | 1 | audit_logs |
-| Migrations Sistema Modular | 15 | 5 × 3 (landlord + production + sandbox) |
-| Seeders Landlord | 16 | Core (7) + Auxiliares (6) + Sistema Modular (3) |
-| Seeders Sistema Modular | 3 | ModuleSubmoduleSeeder, ModuleFieldSeeder, ModuleFieldUiSeeder (ModuleSeeder foi atualizado, não criado) |
+| Migrations Sistema Modular | 12 | 4 × 3 (landlord + production + sandbox) — alter_modules_table removido |
+| Seeders Landlord | 16 | Core (7) + Auxiliares (6) + Sistema Modular (3 vazios: 0 registros) |
+| Seeders Sistema Modular | 4 | ModuleSeeder, ModuleSubmoduleSeeder, ModuleFieldSeeder, ModuleFieldUiSeeder (todos vazios, run() sem inserções) |
 | Seeders Raiz | 6 | Modules, TypeContacts, TypeDocuments, TypeAddresses, TypeProducts, Plans |
 | Seeders Tenant | 1 | PeopleFakeSeeder |
 | Commands Artisan | 2 | TenantReset, TenantSeedFake |
@@ -1981,10 +1982,10 @@ O sistema modular dinâmico permite criar e configurar módulos ERP sem escrever
 
 | Tabela | Finalidade | Registros (seed) |
 |--------|-----------|-----------------|
-| modules (refatorada) | Configuração do módulo (scope, model, service, controller, UI flags) | 13 (8 módulos + 5 submódulos) |
-| module_submodules | Pivot: módulo → submódulo (ex: People → Contacts) | 7 |
-| module_fields | Campos do módulo com regras de negócio (type, required, unique, FK, auto_from) | 8 (People) |
-| module_fields_ui | Apresentação visual (component, grid_col, visible_*, searchable, sortable, badges) | 8 (People) |
+| modules (refatorada) | Configuração do módulo (scope, model, service, controller, UI flags) | 0 |
+| module_submodules | Pivot: módulo → submódulo (ex: People → Contacts) | 0 |
+| module_fields | Campos do módulo com regras de negócio (type, required, unique, FK, auto_from) | 0 |
+| module_fields_ui | Apresentação visual (component, grid_col, visible_*, searchable, sortable, badges) | 0 |
 | module_seeds | Dados de seed em JSON (eliminam seeders PHP por módulo) | 0 |
 
 As 5 tabelas existem no landlord E nos schemas production/sandbox de cada tenant.
@@ -1993,9 +1994,10 @@ As 5 tabelas existem no landlord E nos schemas production/sandbox de cada tenant
 
 | scope | Onde a tabela física existe | Menu | Exemplo |
 |-------|---------------------------|------|---------|
-| tenant | Só no banco do tenant | Menu tenant | Vendas, Compras |
+| tenant | Só no banco do tenant | Menu tenant | Vendas, Compras, Pessoas, Produtos |
 | landlord | Só no banco central | Menu backoffice | Tenants, Planos |
-| both | Nos dois bancos | Ambos os menus | Pessoas, Produtos |
+
+**Nota:** O scope `both` foi descontinuado. Módulos devem usar `tenant` ou `landlord` exclusivamente.
 
 ### 21.4 Camadas Genéricas
 
@@ -2087,15 +2089,81 @@ Arquivo: `resources/views/tenant/layouts/menu.blade.php`
 
 | Data | Arquivo | Descrição |
 |------|---------|-----------|
-| 2026_02_17_000001 | alter_modules_table | Remove parent_id, adiciona scope + 18 campos |
+| 2026_02_10_000001 | create_modules_table | Criação da tabela modules com 27 campos (unificada) |
 | 2026_02_17_000002 | create_module_submodules_table | Pivot módulo ↔ submódulo |
-| 2026_02_17_000003 | create_module_fields_table | Definição de campos (negócio) |
-| 2026_02_17_000004 | create_module_fields_ui_table | Apresentação visual |
+| 2026_02_17_000003 | create_module_fields_table | Definição de campos (negócio) + origin |
+| 2026_02_17_000004 | create_module_fields_ui_table | Apresentação visual + origin |
 | 2026_02_17_000005 | create_module_seeds_table | Seeds em JSON |
 
 Cada migration existe em 3 locais: landlord, tenant/production, tenant/sandbox
 
-### 21.10 Próximos Passos do Sistema Modular
+**Nota:** A migration `alter_modules_table` foi removida. Todos os campos foram incorporados diretamente na `create_modules_table`.
+
+### 21.10 Reestruturação da Tabela Modules (19/02/2026)
+
+**Objetivo:** Unificar a criação da tabela modules e incorporar todos os campos de configuração diretamente na migration `create_modules_table`, eliminando a necessidade de migration de alteração posterior.
+
+**Campos REMOVIDOS:**
+- `parent_id` (FK→modules) — substituído pela tabela pivot `module_submodules`
+- `request` — não usado
+- `job` — não usado
+- `controller_api` — unificado em `controller`
+- `controller_web` — unificado em `controller`
+- `description_index` — não usado
+- `description_show` — não usado
+- `description_create` — não usado
+- `description_edit` — não usado
+
+**Campos ADICIONADOS (8 novos):**
+- `view_index` (string, nullable) — view customizada de listagem
+- `view_show` (string, nullable) — view customizada de detalhes
+- `view_modal` (string, nullable) — view customizada de modal
+- `after_store` (string, default 'index') — redirect após criar
+- `after_update` (string, default 'index') — redirect após atualizar
+- `after_restore` (string, default 'edit') — redirect após restaurar
+- `default_checked` (boolean, default false) — submódulo pré-marcado
+- `origin` (string, default 'system') — origem do registro (system/custom)
+
+**Campos MODIFICADOS:**
+- `slug` — agora tem constraint `unique()`
+- `type` — tamanho limitado a 20 caracteres, default 'module'
+- `scope` — obrigatório (sem default), valores: 'tenant' ou 'landlord' (scope 'both' descontinuado)
+- `model` — mudou de default 'Genérica' para nullable
+- `controller` — unificado (substitui controller_api + controller_web)
+
+**Estrutura Final (27 campos):**
+```
+id, name, slug (unique), type (default 'module'), scope (obrigatório),
+icon (nullable), model (nullable), service (nullable), controller (nullable),
+show_drag (true), show_checkbox (true), show_actions (true),
+default_sort_field ('id'), default_sort_direction ('asc'), per_page (25),
+view_index (nullable), view_show (nullable), view_modal (nullable),
+after_store ('index'), after_update ('index'), after_restore ('edit'),
+default_checked (false), origin ('system'),
+order (0), status (true), timestamps, softDeletes
+```
+
+**Migrations Afetadas:**
+- ✅ `2026_02_10_000001_create_modules_table.php` — atualizada (landlord, production, sandbox)
+- ❌ `2026_02_17_000001_alter_modules_table.php` — **DELETADA** (landlord, production, sandbox)
+- ✅ `2026_02_17_000003_create_module_fields_table.php` — campo `origin` adicionado
+- ✅ `2026_02_17_000004_create_module_fields_ui_table.php` — campo `origin` adicionado
+
+**Seeders Afetados:**
+- `ModuleSeeder.php` — método `run()` esvaziado (0 registros)
+- `ModuleSubmoduleSeeder.php` — método `run()` esvaziado (0 registros)
+- `ModuleFieldSeeder.php` — método `run()` esvaziado (0 registros)
+- `ModuleFieldUiSeeder.php` — método `run()` esvaziado (0 registros)
+
+**TenantService Atualizado:**
+- `getSeedData()` — removidos arrays: modules, module_submodules, module_fields, module_fields_ui, module_seeds
+
+**Contagem de Migrations:**
+- Landlord: 37 → 36
+- Tenant Production: 36 → 35
+- Tenant Sandbox: 36 → 35
+
+### 21.11 Próximos Passos do Sistema Modular
 
 - [ ] Painel de gerenciamento de módulos (CRUD visual via interface web)
 - [ ] Criação de tabelas físicas via module_fields (CREATE TABLE dinâmico)

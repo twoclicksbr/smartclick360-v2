@@ -36,6 +36,7 @@ class ModuleField extends Model
         'max',
         'order',
         'status',
+        'origin',
     ];
 
     protected $casts = [

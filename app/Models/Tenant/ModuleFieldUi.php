@@ -35,6 +35,7 @@ class ModuleFieldUi extends Model
         'sortable',
         'order',
         'status',
+        'origin',
     ];
 
     protected $casts = [

@@ -120,6 +120,13 @@ class DynamicWebController extends Controller
 
         $records = $service->index($params);
 
+        // AJAX: retorna apenas o tbody (partial)
+        if ($request->ajax()) {
+            return view('tenant.pages.dynamic._tbody', compact(
+                'config', 'indexFields', 'records', 'module'
+            ));
+        }
+
         return view('tenant.pages.dynamic.index', compact(
             'config', 'indexFields', 'fieldsWithUi', 'records', 'module'
         ));

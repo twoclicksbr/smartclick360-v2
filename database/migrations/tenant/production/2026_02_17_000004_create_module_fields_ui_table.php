@@ -31,6 +31,7 @@ return new class extends Migration
             $table->boolean('sortable')->default(false);
             $table->integer('order')->default(0);
             $table->boolean('status')->default(true);
+            $table->string('origin')->default('system');
             $table->timestamps();
             $table->softDeletes();
         });

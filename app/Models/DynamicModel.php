@@ -60,6 +60,7 @@ class DynamicModel extends Model
         // Montar fillable (campos não-main)
         $fillable = $fields->pluck('name')->toArray();
         $fillable[] = 'order';
+        $fillable = array_filter($fillable, fn ($f) => !in_array($f, ['id', 'created_at', 'updated_at', 'deleted_at']));
         $instance->fillable($fillable);
 
         // Montar casts
@@ -114,13 +115,15 @@ class DynamicModel extends Model
      */
     public function newInstance($attributes = [], $exists = false): static
     {
-        $model = parent::newInstance($attributes, $exists);
+        $model = new static();
+        $model->exists = $exists;
         $model->moduleConfig = $this->moduleConfig;
         $model->moduleFields = $this->moduleFields;
         $model->setTable($this->getTable());
         $model->setConnection($this->getConnectionName());
         $model->fillable($this->getFillable());
         $model->mergeCasts($this->getCasts());
+        $model->fill((array) $attributes);
 
         return $model;
     }
