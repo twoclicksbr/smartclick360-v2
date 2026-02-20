@@ -23,7 +23,8 @@ class LandlordDatabaseSeeder extends Seeder
             TaxSituationSeeder::class,
             TransactionSeeder::class,
             PlanSeeder::class,
-            // AlexSeeder::class,
+            ModuleManagerSeeder::class,
+            AlexSeeder::class,
         ]);
     }
 }

@@ -24,6 +24,10 @@ return new class extends Migration
             $table->string('default_sort_field')->default('id');
             $table->string('default_sort_direction', 4)->default('asc');
             $table->integer('per_page')->default(25);
+            $table->string('description_index')->nullable();
+            $table->string('description_show')->nullable();
+            $table->string('description_create')->nullable();
+            $table->string('description_edit')->nullable();
             $table->string('view_index')->nullable();
             $table->string('view_show')->nullable();
             $table->string('view_modal')->nullable();

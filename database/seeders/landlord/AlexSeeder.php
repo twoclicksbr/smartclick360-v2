@@ -2,9 +2,6 @@
 
 namespace Database\Seeders\Landlord;
 
-use App\Models\Landlord\Contact;
-use App\Models\Landlord\Document;
-use App\Models\Landlord\Module;
 use App\Models\Landlord\Person;
 use App\Models\Landlord\Tenant;
 use App\Models\Landlord\User;
@@ -40,37 +37,7 @@ class AlexSeeder extends Seeder
             'order'     => 1,
         ]);
 
-        // 4. Buscar IDs de referência
-        $modulePeople   = Module::where('slug', 'people')->first();
-        $typeWhatsApp   = \App\Models\Landlord\TypeContact::where('name', 'WhatsApp')->first();
-        $typeEmail      = \App\Models\Landlord\TypeContact::where('name', 'Email')->first();
-        $typeCPF        = \App\Models\Landlord\TypeDocument::where('name', 'CPF')->first();
-
-        // 5. Criar contact WhatsApp
-        Contact::create([
-            'type_contact_id' => $typeWhatsApp->id,
-            'module_id'       => $modulePeople->id,
-            'register_id'     => $person->id,
-            'value'           => '12997698040',
-            'order'           => 1,
-        ]);
-
-        // 6. Criar contact Email
-        Contact::create([
-            'type_contact_id' => $typeEmail->id,
-            'module_id'       => $modulePeople->id,
-            'register_id'     => $person->id,
-            'value'           => 'alex@smartclick360.com',
-            'order'           => 2,
-        ]);
-
-        // 7. Criar document CPF
-        Document::create([
-            'type_document_id' => $typeCPF->id,
-            'module_id'        => $modulePeople->id,
-            'register_id'      => $person->id,
-            'value'            => '35564485807',
-            'order'            => 1,
-        ]);
+        // Contacts e documents foram removidos porque dependem do módulo 'people'
+        // que não existe mais no banco (seeders de modules foram esvaziados)
     }
 }

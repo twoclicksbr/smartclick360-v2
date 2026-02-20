@@ -51,6 +51,21 @@ Route::domain(env('APP_DOMAIN', 'smartclick360-v2.test'))->group(function () {
             Route::get('/', [TenantManagementController::class, 'index'])->name('index');
             Route::get('/{code}', [TenantManagementController::class, 'show'])->name('show');
         });
+
+        // Gestão de Módulos (controller específico)
+        Route::prefix('modules')->name('landlord.modules.')->group(function () {
+            Route::get('/{code}', [\App\Http\Controllers\Landlord\ModuleManagementController::class, 'show'])->name('show');
+            Route::put('/{code}', [\App\Http\Controllers\Landlord\ModuleManagementController::class, 'update'])->name('update');
+        });
+
+        // Módulos dinâmicos (landlord)
+        Route::post('{module}/reorder', [\App\Http\Controllers\Landlord\DynamicWebController::class, 'reorder'])->name('landlord.module.reorder');
+        Route::get('{module}', [\App\Http\Controllers\Landlord\DynamicWebController::class, 'index'])->name('landlord.module.index');
+        Route::post('{module}', [\App\Http\Controllers\Landlord\DynamicWebController::class, 'store'])->name('landlord.module.store');
+        Route::get('{module}/{code}', [\App\Http\Controllers\Landlord\DynamicWebController::class, 'show'])->name('landlord.module.show');
+        Route::put('{module}/{code}', [\App\Http\Controllers\Landlord\DynamicWebController::class, 'update'])->name('landlord.module.update');
+        Route::delete('{module}/{code}', [\App\Http\Controllers\Landlord\DynamicWebController::class, 'destroy'])->name('landlord.module.destroy');
+        Route::patch('{module}/{code}/restore', [\App\Http\Controllers\Landlord\DynamicWebController::class, 'restore'])->name('landlord.module.restore');
     });
 });
 
