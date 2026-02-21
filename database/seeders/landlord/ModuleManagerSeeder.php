@@ -31,7 +31,7 @@ class ModuleManagerSeeder extends Seeder
             'description_edit' => 'Edite as configurações do módulo',
             'view_index' => null,
             'view_show' => 'landlord.pages.modules.show',
-            'view_modal' => null,
+            'view_modal' => 'landlord.pages.modules._modal',
             'after_store' => 'index',
             'after_update' => 'index',
             'after_restore' => 'edit',

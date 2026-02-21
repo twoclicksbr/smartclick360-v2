@@ -14,7 +14,7 @@
 
 @section('content')
     {{-- begin::Navbar --}}
-    <div class="card mb-9">
+    <div class="card mb-5">
         <div class="card-body pt-9 pb-0">
             {{-- begin::Details --}}
             <div class="d-flex flex-wrap flex-sm-nowrap mb-0">
@@ -22,24 +22,51 @@
                 <div class="flex-grow-1">
                     {{-- begin::Head --}}
                     <div class="d-flex justify-content-between align-items-start flex-wrap mb-2">
-                        {{-- begin::Details --}}
-                        <div class="d-flex flex-column">
-                            {{-- begin::Status --}}
-                            <div class="d-flex align-items-center mb-1">
-                                <span class="text-gray-800 fs-2 fw-bold me-3">{{ $module->name }}</span>
-                                <span class="badge badge-light-{{ $module->scope === 'tenant' ? 'primary' : 'warning' }} me-2">
-                                    {{ $module->scope === 'tenant' ? 'Tenant' : 'Landlord' }}
-                                </span>
-                                <span class="badge badge-light-{{ $module->status ? 'success' : 'danger' }}">
-                                    {{ $module->status ? 'Ativo' : 'Inativo' }}
-                                </span>
+                        {{-- Lado esquerdo --}}
+                        <div>
+                            <div class="d-flex align-items-center gap-3 mb-2">
+                                @if($module->icon)
+                                    <i class="{{ $module->icon }} fs-2x text-gray-600"></i>
+                                @endif
+                                <h2 class="mb-0 fw-bold">{{ $module->name }}</h2>
+                                @if($module->status)
+                                    <i class="ki-duotone ki-verify fs-2x text-success">
+                                        <span class="path1"></span>
+                                        <span class="path2"></span>
+                                    </i>
+                                @else
+                                    <i class="ki-duotone ki-cross-circle fs-2x text-danger">
+                                        <span class="path1"></span>
+                                        <span class="path2"></span>
+                                    </i>
+                                @endif
                             </div>
-                            {{-- end::Status --}}
-                            {{-- begin::Description --}}
-                            <div class="d-flex flex-wrap fw-semibold mb-0 fs-5 text-gray-500">{{ $module->slug }}</div>
-                            {{-- end::Description --}}
+                            <p class="text-muted mb-0">{{ $module->slug }}</p>
                         </div>
-                        {{-- end::Details --}}
+
+                        {{-- Lado direito --}}
+                        <div class="d-flex align-items-center gap-3">
+                            {{-- Badge Tipo --}}
+                            @php
+                                $typeLabels = ['module' => 'Módulo', 'submodule' => 'Submódulo', 'pivot' => 'Pivot'];
+                            @endphp
+                            <span class="btn btn-sm btn-light-info pe-none">
+                                Tipo: {{ $typeLabels[$module->type] ?? $module->type }}
+                            </span>
+
+                            {{-- Badge Escopo --}}
+                            @php
+                                $scopeLabels = ['landlord' => 'SmartClick360°', 'tenant' => 'Clientes'];
+                            @endphp
+                            <span class="btn btn-sm btn-light-primary pe-none">
+                                Escopo: {{ $scopeLabels[$module->scope] ?? $module->scope }}
+                            </span>
+
+                            {{-- Botão Fechar (volta pro index) --}}
+                            <a href="{{ url('/modules') }}" class="btn btn-sm btn-icon btn-light-danger" data-bs-toggle="tooltip" data-bs-placement="left" title="Fechar">
+                                <i class="ki-outline ki-cross fs-3"></i>
+                            </a>
+                        </div>
                     </div>
                     {{-- end::Head --}}
                 </div>
@@ -79,21 +106,17 @@
     <div class="tab-content">
         {{-- begin::Tab pane Geral --}}
         <div class="tab-pane fade show active" id="tab_geral">
-            {{-- begin::Card --}}
-            <div class="card">
-                {{-- begin::Card header --}}
-                <div class="card-header">
-                    {{-- begin::Card title --}}
-                    <div class="card-title fs-3 fw-bold">Configurações do Módulo</div>
-                    {{-- end::Card title --}}
-                </div>
-                {{-- end::Card header --}}
-                {{-- begin::Form --}}
-                <form method="POST" action="{{ url('modules/' . encodeId($module->id)) }}">
-                    @csrf
-                    <input type="hidden" name="_method" value="PUT">
-                    {{-- begin::Card body --}}
-                    <div class="card-body p-9">
+            {{-- begin::Form --}}
+            <form method="POST" action="{{ url('modules/' . encodeId($module->id)) }}">
+                @csrf
+                <input type="hidden" name="_method" value="PUT">
+
+                {{-- Card 1: Identificação --}}
+                <div class="card mb-5">
+                    <div class="card-header min-h-50px">
+                        <h3 class="card-title">Identificação</h3>
+                    </div>
+                    <div class="card-body py-4">
                         <div class="row">
                             {{-- Nome --}}
                             <div class="col-md-4 mb-7">
@@ -131,25 +154,17 @@
                                 <label class="fs-6 fw-semibold mb-2">Ícone</label>
                                 <x-icon-picker name="icon" value="{{ $module->icon }}" />
                             </div>
+                        </div>
+                    </div>
+                </div>
 
-                            {{-- Model --}}
-                            <div class="col-md-4 mb-7">
-                                <label class="fs-6 fw-semibold mb-2">Model</label>
-                                <input type="text" class="form-control form-control-solid" name="model" value="{{ $module->model }}">
-                            </div>
-
-                            {{-- Service --}}
-                            <div class="col-md-4 mb-7">
-                                <label class="fs-6 fw-semibold mb-2">Service</label>
-                                <input type="text" class="form-control form-control-solid" name="service" value="{{ $module->service }}">
-                            </div>
-
-                            {{-- Controller --}}
-                            <div class="col-md-4 mb-7">
-                                <label class="fs-6 fw-semibold mb-2">Controller</label>
-                                <input type="text" class="form-control form-control-solid" name="controller" value="{{ $module->controller }}">
-                            </div>
-
+                {{-- Card 2: Listagem --}}
+                <div class="card mb-5">
+                    <div class="card-header min-h-50px">
+                        <h3 class="card-title">Listagem</h3>
+                    </div>
+                    <div class="card-body py-4">
+                        <div class="row">
                             {{-- Ordenação Padrão --}}
                             <div class="col-md-2 mb-7">
                                 <label class="fs-6 fw-semibold mb-2">Ordenação Padrão</label>
@@ -213,132 +228,216 @@
                                     </span>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
 
-                            {{-- Descrição Index --}}
-                            <div class="col-md-3 mb-7">
-                                <label class="fs-6 fw-semibold mb-2">Descrição Index</label>
-                                <textarea class="form-control form-control-solid" name="description_index" rows="3">{{ $module->description_index }}</textarea>
+                {{-- Descrições + Configurações Gerais (lado a lado) --}}
+                <div class="row g-5 mb-5">
+                    <div class="col-md-8">
+                        <div class="card h-100">
+                            <div class="card-header min-h-50px">
+                                <h3 class="card-title">Descrições</h3>
                             </div>
-
-                            {{-- Descrição Show --}}
-                            <div class="col-md-3 mb-7">
-                                <label class="fs-6 fw-semibold mb-2">Descrição Show</label>
-                                <textarea class="form-control form-control-solid" name="description_show" rows="3">{{ $module->description_show }}</textarea>
-                            </div>
-
-                            {{-- Descrição Create --}}
-                            <div class="col-md-3 mb-7">
-                                <label class="fs-6 fw-semibold mb-2">Descrição Create</label>
-                                <textarea class="form-control form-control-solid" name="description_create" rows="3">{{ $module->description_create }}</textarea>
-                            </div>
-
-                            {{-- Descrição Edit --}}
-                            <div class="col-md-3 mb-7">
-                                <label class="fs-6 fw-semibold mb-2">Descrição Edit</label>
-                                <textarea class="form-control form-control-solid" name="description_edit" rows="3">{{ $module->description_edit }}</textarea>
-                            </div>
-
-                            {{-- View Index --}}
-                            <div class="col-md-4 mb-7">
-                                <label class="fs-6 fw-semibold mb-2">View Index</label>
-                                <input type="text" class="form-control form-control-solid" name="view_index" value="{{ $module->view_index }}">
-                            </div>
-
-                            {{-- View Show --}}
-                            <div class="col-md-4 mb-7">
-                                <label class="fs-6 fw-semibold mb-2">View Show</label>
-                                <input type="text" class="form-control form-control-solid" name="view_show" value="{{ $module->view_show }}">
-                            </div>
-
-                            {{-- View Modal --}}
-                            <div class="col-md-4 mb-7">
-                                <label class="fs-6 fw-semibold mb-2">View Modal</label>
-                                <input type="text" class="form-control form-control-solid" name="view_modal" value="{{ $module->view_modal }}">
-                            </div>
-
-                            {{-- Após Criar --}}
-                            <div class="col-md-4 mb-7">
-                                <label class="fs-6 fw-semibold mb-2">Após Criar</label>
-                                <select class="form-select form-select-solid" name="after_store">
-                                    <option value="index" {{ $module->after_store === 'index' ? 'selected' : '' }}>Index</option>
-                                    <option value="show" {{ $module->after_store === 'show' ? 'selected' : '' }}>Show</option>
-                                    <option value="edit" {{ $module->after_store === 'edit' ? 'selected' : '' }}>Edit</option>
-                                </select>
-                            </div>
-
-                            {{-- Após Atualizar --}}
-                            <div class="col-md-4 mb-7">
-                                <label class="fs-6 fw-semibold mb-2">Após Atualizar</label>
-                                <select class="form-select form-select-solid" name="after_update">
-                                    <option value="index" {{ $module->after_update === 'index' ? 'selected' : '' }}>Index</option>
-                                    <option value="show" {{ $module->after_update === 'show' ? 'selected' : '' }}>Show</option>
-                                    <option value="edit" {{ $module->after_update === 'edit' ? 'selected' : '' }}>Edit</option>
-                                </select>
-                            </div>
-
-                            {{-- Após Restaurar --}}
-                            <div class="col-md-4 mb-7">
-                                <label class="fs-6 fw-semibold mb-2">Após Restaurar</label>
-                                <select class="form-select form-select-solid" name="after_restore">
-                                    <option value="index" {{ $module->after_restore === 'index' ? 'selected' : '' }}>Index</option>
-                                    <option value="show" {{ $module->after_restore === 'show' ? 'selected' : '' }}>Show</option>
-                                    <option value="edit" {{ $module->after_restore === 'edit' ? 'selected' : '' }}>Edit</option>
-                                </select>
-                            </div>
-
-                            {{-- Pré-marcado --}}
-                            <div class="col-md-2 mb-7">
-                                <label class="fs-6 fw-semibold mb-2">Pré-marcado</label>
-                                <div class="d-flex align-items-center gap-3">
-                                    <div class="form-check form-switch form-check-custom form-check-solid">
-                                        <input class="form-check-input switch-badge" type="checkbox" name="default_checked" value="1" {{ $module->default_checked ? 'checked' : '' }}>
+                            <div class="card-body py-4">
+                                <div class="row">
+                                    {{-- Descrição Index --}}
+                                    <div class="col-md-6 mb-7">
+                                        <label class="fs-6 fw-semibold mb-2">Descrição Index</label>
+                                        <textarea class="form-control form-control-solid" name="description_index" rows="3">{{ $module->description_index }}</textarea>
                                     </div>
-                                    <span class="badge badge-light-{{ $module->default_checked ? 'primary' : 'danger' }}">
-                                        {{ $module->default_checked ? 'Sim' : 'Não' }}
-                                    </span>
-                                </div>
-                            </div>
 
-                            {{-- Origem --}}
-                            <div class="col-md-3 mb-7">
-                                <label class="fs-6 fw-semibold mb-2">Origem</label>
-                                <select class="form-select form-select-solid" name="origin">
-                                    <option value="system" {{ $module->origin === 'system' ? 'selected' : '' }}>System</option>
-                                    <option value="custom" {{ $module->origin === 'custom' ? 'selected' : '' }}>Custom</option>
-                                </select>
-                            </div>
-
-                            {{-- Ordem --}}
-                            <div class="col-md-2 mb-7">
-                                <label class="fs-6 fw-semibold mb-2">Ordem</label>
-                                <input type="number" class="form-control form-control-solid" name="order" value="{{ $module->order }}">
-                            </div>
-
-                            {{-- Status --}}
-                            <div class="col-md-2 mb-7">
-                                <label class="fs-6 fw-semibold mb-2">Status</label>
-                                <div class="d-flex align-items-center gap-3">
-                                    <div class="form-check form-switch form-check-custom form-check-solid">
-                                        <input class="form-check-input switch-badge" type="checkbox" name="status" value="1" {{ $module->status ? 'checked' : '' }}>
+                                    {{-- Descrição Show --}}
+                                    <div class="col-md-6 mb-7">
+                                        <label class="fs-6 fw-semibold mb-2">Descrição Show</label>
+                                        <textarea class="form-control form-control-solid" name="description_show" rows="3">{{ $module->description_show }}</textarea>
                                     </div>
-                                    <span class="badge badge-light-{{ $module->status ? 'primary' : 'danger' }}">
-                                        {{ $module->status ? 'Sim' : 'Não' }}
-                                    </span>
+
+                                    {{-- Descrição Create --}}
+                                    <div class="col-md-6 mb-7">
+                                        <label class="fs-6 fw-semibold mb-2">Descrição Create</label>
+                                        <textarea class="form-control form-control-solid" name="description_create" rows="3">{{ $module->description_create }}</textarea>
+                                    </div>
+
+                                    {{-- Descrição Edit --}}
+                                    <div class="col-md-6 mb-7">
+                                        <label class="fs-6 fw-semibold mb-2">Descrição Edit</label>
+                                        <textarea class="form-control form-control-solid" name="description_edit" rows="3">{{ $module->description_edit }}</textarea>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    {{-- end::Card body --}}
-                    {{-- begin::Card footer --}}
-                    <div class="card-footer d-flex justify-content-end py-6 px-9">
-                        <a href="{{ url('/modules') }}" class="btn btn-light btn-active-light-primary me-2">Cancelar</a>
-                        <button type="submit" class="btn btn-primary">Salvar</button>
+                    <div class="col-md-4">
+                        <div class="card h-100">
+                            <div class="card-header min-h-50px">
+                                <h3 class="card-title">Configurações Gerais</h3>
+                            </div>
+                            <div class="card-body py-4">
+                                <div class="row">
+                                    {{-- Pré-marcado --}}
+                                    <div class="col-md-12 mb-7">
+                                        <label class="fs-6 fw-semibold mb-2">Pré-marcado</label>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="form-check form-switch form-check-custom form-check-solid">
+                                                <input class="form-check-input switch-badge" type="checkbox" name="default_checked" value="1" {{ $module->default_checked ? 'checked' : '' }}>
+                                            </div>
+                                            <span class="badge badge-light-{{ $module->default_checked ? 'primary' : 'danger' }}">
+                                                {{ $module->default_checked ? 'Sim' : 'Não' }}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {{-- Origem --}}
+                                    <div class="col-md-12 mb-7">
+                                        <label class="fs-6 fw-semibold mb-2">Origem</label>
+                                        <select class="form-select form-select-solid" name="origin">
+                                            <option value="system" {{ $module->origin === 'system' ? 'selected' : '' }}>System</option>
+                                            <option value="custom" {{ $module->origin === 'custom' ? 'selected' : '' }}>Custom</option>
+                                        </select>
+                                    </div>
+
+                                    {{-- Ordem --}}
+                                    <div class="col-md-12 mb-7">
+                                        <label class="fs-6 fw-semibold mb-2">Ordem</label>
+                                        <input type="number" class="form-control form-control-solid" name="order" value="{{ $module->order }}">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    {{-- end::Card footer --}}
-                </form>
-                {{-- end::Form --}}
-            </div>
-            {{-- end::Card --}}
+                </div>
+
+                {{-- Configurações Avançadas (colapsável) --}}
+                <div class="mb-5">
+                    <div class="d-flex align-items-center cursor-pointer ms-5" data-bs-toggle="collapse" data-bs-target="#advancedSettings" aria-expanded="false">
+                        <h5 class="fw-semibold text-muted mb-0">Configurações Avançadas</h5>
+                        <i class="ki-outline ki-down fs-4 ms-2 text-muted rotation" id="advancedArrow"></i>
+                    </div>
+                    <div class="collapse mt-5" id="advancedSettings">
+                        <div class="row g-5">
+                            <div class="col-md-4">
+                                <div class="card h-100">
+                                    <div class="card-header min-h-50px">
+                                        <h3 class="card-title">Classes PHP</h3>
+                                    </div>
+                                    <div class="card-body py-4">
+                                        <div class="row">
+                                            {{-- Model --}}
+                                            <div class="col-md-12 mb-7">
+                                                <label class="fs-6 fw-semibold mb-2">Model</label>
+                                                <input type="text" class="form-control form-control-solid" name="model" value="{{ $module->model }}">
+                                            </div>
+
+                                            {{-- Service --}}
+                                            <div class="col-md-12 mb-7">
+                                                <label class="fs-6 fw-semibold mb-2">Service</label>
+                                                <input type="text" class="form-control form-control-solid" name="service" value="{{ $module->service }}">
+                                            </div>
+
+                                            {{-- Controller --}}
+                                            <div class="col-md-12 mb-7">
+                                                <label class="fs-6 fw-semibold mb-2">Controller</label>
+                                                <input type="text" class="form-control form-control-solid" name="controller" value="{{ $module->controller }}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card h-100">
+                                    <div class="card-header min-h-50px">
+                                        <h3 class="card-title">Views Customizadas</h3>
+                                    </div>
+                                    <div class="card-body py-4">
+                                        <div class="row">
+                                            {{-- View Index --}}
+                                            <div class="col-md-12 mb-7">
+                                                <label class="fs-6 fw-semibold mb-2">View Index</label>
+                                                <input type="text" class="form-control form-control-solid" name="view_index" value="{{ $module->view_index }}">
+                                            </div>
+
+                                            {{-- View Show --}}
+                                            <div class="col-md-12 mb-7">
+                                                <label class="fs-6 fw-semibold mb-2">View Show</label>
+                                                <input type="text" class="form-control form-control-solid" name="view_show" value="{{ $module->view_show }}">
+                                            </div>
+
+                                            {{-- View Modal --}}
+                                            <div class="col-md-12 mb-7">
+                                                <label class="fs-6 fw-semibold mb-2">View Modal</label>
+                                                <input type="text" class="form-control form-control-solid" name="view_modal" value="{{ $module->view_modal }}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="card h-100">
+                                    <div class="card-header min-h-50px">
+                                        <h3 class="card-title">Comportamento</h3>
+                                    </div>
+                                    <div class="card-body py-4">
+                                        <div class="row">
+                                            {{-- Após Criar --}}
+                                            <div class="col-md-12 mb-7">
+                                                <label class="fs-6 fw-semibold mb-2">Após Criar</label>
+                                                <select class="form-select form-select-solid" name="after_store">
+                                                    <option value="index" {{ $module->after_store === 'index' ? 'selected' : '' }}>Index</option>
+                                                    <option value="show" {{ $module->after_store === 'show' ? 'selected' : '' }}>Show</option>
+                                                    <option value="edit" {{ $module->after_store === 'edit' ? 'selected' : '' }}>Edit</option>
+                                                </select>
+                                            </div>
+
+                                            {{-- Após Atualizar --}}
+                                            <div class="col-md-12 mb-7">
+                                                <label class="fs-6 fw-semibold mb-2">Após Atualizar</label>
+                                                <select class="form-select form-select-solid" name="after_update">
+                                                    <option value="index" {{ $module->after_update === 'index' ? 'selected' : '' }}>Index</option>
+                                                    <option value="show" {{ $module->after_update === 'show' ? 'selected' : '' }}>Show</option>
+                                                    <option value="edit" {{ $module->after_update === 'edit' ? 'selected' : '' }}>Edit</option>
+                                                </select>
+                                            </div>
+
+                                            {{-- Após Restaurar --}}
+                                            <div class="col-md-12 mb-7">
+                                                <label class="fs-6 fw-semibold mb-2">Após Restaurar</label>
+                                                <select class="form-select form-select-solid" name="after_restore">
+                                                    <option value="index" {{ $module->after_restore === 'index' ? 'selected' : '' }}>Index</option>
+                                                    <option value="show" {{ $module->after_restore === 'show' ? 'selected' : '' }}>Show</option>
+                                                    <option value="edit" {{ $module->after_restore === 'edit' ? 'selected' : '' }}>Edit</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Status e Botões --}}
+                <div class="d-flex justify-content-between align-items-center mt-5">
+                    {{-- Status à esquerda --}}
+                    <div class="d-flex align-items-center gap-3 ms-5">
+                        <label class="fs-6 fw-semibold">Status</label>
+                        <div class="form-check form-switch form-check-custom form-check-solid">
+                            <input class="form-check-input switch-badge" type="checkbox" name="status" value="1" {{ $module->status ? 'checked' : '' }}>
+                        </div>
+                        <span class="badge badge-light-{{ $module->status ? 'primary' : 'danger' }}">
+                            {{ $module->status ? 'Ativo' : 'Inativo' }}
+                        </span>
+                    </div>
+                    {{-- Botões à direita --}}
+                    <div class="d-flex gap-3">
+                        <a href="{{ url('/modules') }}" class="btn btn-light">Cancelar</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="ki-outline ki-check fs-4"></i> Salvar
+                        </button>
+                    </div>
+                </div>
+            </form>
+            {{-- end::Form --}}
         </div>
         {{-- end::Tab pane Geral --}}
 
@@ -441,5 +540,36 @@ document.querySelectorAll('.switch-badge').forEach(function(input) {
         }
     });
 });
+
+// Rotacionar seta do accordion de Configurações Avançadas
+const advancedCollapse = document.getElementById('advancedSettings');
+const advancedArrow = document.getElementById('advancedArrow');
+if (advancedCollapse && advancedArrow) {
+    advancedCollapse.addEventListener('show.bs.collapse', function() {
+        advancedArrow.classList.add('active');
+    });
+    advancedCollapse.addEventListener('hide.bs.collapse', function() {
+        advancedArrow.classList.remove('active');
+    });
+}
 </script>
+
+<style>
+.btn-light-info.pe-none:hover {
+    background-color: var(--bs-info) !important;
+    color: #fff !important;
+}
+
+.btn-light-primary.pe-none:hover {
+    background-color: var(--bs-primary) !important;
+    color: #fff !important;
+}
+
+.rotation {
+    transition: transform 0.3s ease;
+}
+.rotation.active {
+    transform: rotate(180deg);
+}
+</style>
 @endpush

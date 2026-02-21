@@ -110,7 +110,7 @@
     <!--end::Card-->
 
     {{-- Modal Create/Edit --}}
-    @include('landlord.pages.dynamic._modal', ['fieldsWithUi' => $fieldsWithUi, 'module' => $module, 'config' => $config])
+    @include($modalView, ['fieldsWithUi' => $fieldsWithUi, 'module' => $module, 'config' => $config])
 @endsection
 
 @push('scripts')

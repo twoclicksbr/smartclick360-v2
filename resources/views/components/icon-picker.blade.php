@@ -21,7 +21,7 @@
         <i class="ki-outline ki-cross fs-4"></i>
     </button>
     @endif
-    <button type="button" class="btn btn-icon btn-light-primary" data-bs-toggle="modal" data-bs-target="#iconPickerModal_{{ $name }}" title="Selecionar ícone">
+    <button type="button" class="btn btn-icon btn-light-primary" id="{{ $name }}_open_modal" title="Selecionar ícone">
         <i class="ki-outline ki-magnifier fs-4"></i>
     </button>
 </div>
@@ -61,6 +61,15 @@
 
 @push('styles')
 <style>
+/* Fix: z-index para modais aninhados */
+[id^="iconPickerModal_"] {
+    z-index: 1065;
+}
+[id^="iconPickerModal_"] + .modal-backdrop,
+.modal-backdrop ~ .modal-backdrop {
+    z-index: 1060;
+}
+
 .icon-picker-item {
     padding: 0.75rem;
     text-align: center;
@@ -122,6 +131,43 @@
 <script>
 (function() {
     "use strict";
+
+    // Fix: modais aninhados no Bootstrap 5
+    document.addEventListener('show.bs.modal', function(event) {
+        // Se o modal sendo aberto é um icon picker
+        if (event.target.id && event.target.id.startsWith('iconPickerModal_')) {
+            // Encontra o modal pai que está aberto
+            const parentModal = document.querySelector('.modal.show');
+            if (parentModal && parentModal.id !== event.target.id) {
+                // Salva referência ao modal pai
+                event.target.dataset.parentModal = parentModal.id;
+                // Impede que o Bootstrap feche o modal pai
+                parentModal.style.overflow = 'hidden';
+            }
+        }
+    });
+
+    document.addEventListener('hidden.bs.modal', function(event) {
+        // Quando um icon picker fecha
+        if (event.target.id && event.target.id.startsWith('iconPickerModal_')) {
+            const parentModalId = event.target.dataset.parentModal;
+            if (parentModalId) {
+                const parentModal = document.getElementById(parentModalId);
+                if (parentModal) {
+                    // Reabre o modal pai e restaura o scroll
+                    parentModal.style.overflow = '';
+                    // Garante que o body mantenha a classe modal-open
+                    document.body.classList.add('modal-open');
+                    // Restaura o backdrop se necessário
+                    if (!document.querySelector('.modal-backdrop')) {
+                        const backdrop = document.createElement('div');
+                        backdrop.className = 'modal-backdrop fade show';
+                        document.body.appendChild(backdrop);
+                    }
+                }
+            }
+        }
+    });
 
     // Ícones KTIcons organizados por categoria (573 ícones)
     const iconCategories = [
@@ -240,6 +286,18 @@
     const hiddenInput = document.getElementById('{{ $name }}_hidden');
     const preview = document.getElementById('{{ $name }}_preview');
     const clearBtn = document.getElementById('{{ $name }}_clear');
+    const openModalBtn = document.getElementById('{{ $name }}_open_modal');
+
+    // Abrir modal via JavaScript (sem backdrop se houver modal pai)
+    if (openModalBtn) {
+        openModalBtn.addEventListener('click', function() {
+            const parentModal = document.querySelector('.modal.show');
+            const iconPickerModal = new bootstrap.Modal(modal, {
+                backdrop: parentModal ? false : true
+            });
+            iconPickerModal.show();
+        });
+    }
 
     // Initialize preview for duotone icons on page load
     function initializePreview() {
@@ -401,7 +459,7 @@
             });
 
             // Inserir o botão de limpar antes do botão de selecionar
-            const selectBtn = inputGroup.querySelector('[data-bs-toggle="modal"]');
+            const selectBtn = document.getElementById('{{ $name }}_open_modal');
             inputGroup.insertBefore(newClearBtn, selectBtn);
         }
 

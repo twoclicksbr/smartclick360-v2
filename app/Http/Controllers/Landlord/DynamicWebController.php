@@ -127,8 +127,12 @@ class DynamicWebController extends Controller
             ));
         }
 
-        return view('landlord.pages.dynamic.index', compact(
-            'config', 'indexFields', 'fieldsWithUi', 'records', 'module'
+        // Determinar views customizadas
+        $indexView = $config->view_index ?: 'landlord.pages.dynamic.index';
+        $modalView = $config->view_modal ?: 'landlord.pages.dynamic._modal';
+
+        return view($indexView, compact(
+            'config', 'indexFields', 'fieldsWithUi', 'records', 'module', 'modalView'
         ));
     }
 
