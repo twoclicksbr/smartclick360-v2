@@ -27,7 +27,7 @@
                         {{-- Tipo --}}
                         <div class="col-md-2 mb-7">
                             <label class="fs-6 fw-semibold mb-2 required">Tipo</label>
-                            <select class="form-select form-select-solid" name="type" required>
+                            <select class="form-select form-select-solid" name="type" data-control="select2" data-dropdown-parent="#modal_dynamic_create" data-placeholder="Selecione..." required>
                                 <option value="">Selecione...</option>
                                 <option value="module">Módulo</option>
                                 <option value="submodule">Submódulo</option>
@@ -38,7 +38,7 @@
                         {{-- Escopo --}}
                         <div class="col-md-2 mb-7">
                             <label class="fs-6 fw-semibold mb-2 required">Escopo</label>
-                            <select class="form-select form-select-solid" name="scope" required>
+                            <select class="form-select form-select-solid" name="scope" data-control="select2" data-dropdown-parent="#modal_dynamic_create" data-placeholder="Selecione..." required>
                                 <option value="">Selecione...</option>
                                 <option value="landlord">SmartClick360°</option>
                                 <option value="tenant">Clientes</option>

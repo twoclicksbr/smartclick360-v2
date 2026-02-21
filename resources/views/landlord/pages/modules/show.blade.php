@@ -444,11 +444,132 @@
         {{-- begin::Tab pane Campos --}}
         <div class="tab-pane fade" id="tab_campos">
             <div class="card">
-                <div class="card-body d-flex flex-column align-items-center justify-content-center py-20">
-                    <i class="ki-outline ki-information-4 fs-5x text-gray-400 mb-5"></i>
-                    <h3 class="text-gray-800 fw-bold mb-2">Em breve...</h3>
-                    <p class="text-gray-500 fs-6 mb-0">Gestão de campos do módulo</p>
+                {{-- begin::Header --}}
+                <div class="card-header border-0 pt-5">
+                    <h3 class="card-title align-items-start flex-column">
+                        <span class="card-label fw-bold fs-3 mb-1">Campos do Módulo</span>
+                        <span class="text-muted mt-1 fw-semibold fs-7" id="fields_count">{{ $fields->where('deleted_at', null)->count() }} campos configurados</span>
+                    </h3>
+                    <div class="card-toolbar">
+                        <button type="button" class="btn btn-sm btn-primary" id="btn_save_fields" disabled>
+                            <i class="ki-outline ki-check fs-4"></i> Salvar Alterações
+                        </button>
+                    </div>
                 </div>
+                {{-- end::Header --}}
+                {{-- begin::Body --}}
+                <div class="card-body py-3">
+                    <div class="table-responsive">
+                        <table class="table table-row-dashed table-row-gray-300 align-middle gs-0 gy-4" id="fields_table">
+                            <thead>
+                                <tr class="fw-bold text-muted">
+                                    <th class="w-25px ps-4"></th>
+                                    <th class="min-w-200px">Nome</th>
+                                    <th class="min-w-150px">Tipo</th>
+                                    <th class="w-100px">Tamanho</th>
+                                    <th class="w-50px text-center">Req</th>
+                                    <th class="w-50px text-center">Null</th>
+                                    <th class="w-50px text-center">Uniq</th>
+                                    <th class="w-50px text-center">Idx</th>
+                                    <th class="min-w-120px">Default</th>
+                                    <th class="w-100px text-end pe-4">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fields_tbody">
+                                @foreach($fields as $field)
+                                    @if(!$field->trashed())
+                                    <tr data-id="{{ encodeId($field->id) }}" class="field-row" data-origin="{{ $field->origin }}">
+                                        {{-- Drag --}}
+                                        <td class="ps-4">
+                                            @if($field->origin === 'custom')
+                                                <i class="ki-solid ki-abstract-16 fs-4 text-gray-500 cursor-grab sortable-handle"></i>
+                                            @else
+                                                <i class="ki-outline ki-lock fs-5 text-gray-400"></i>
+                                            @endif
+                                        </td>
+                                        {{-- Name --}}
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="d-flex justify-content-start flex-column">
+                                                    <input type="text" class="form-control form-control-sm form-control-solid fw-bold field-input {{ $field->origin === 'system' ? 'bg-transparent text-gray-500' : '' }}" name="name" value="{{ $field->name }}" data-original="{{ $field->name }}" placeholder="nome_coluna" {{ $field->origin === 'system' ? 'disabled' : '' }}>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        {{-- Type --}}
+                                        <td>
+                                            <select class="form-select form-select-sm form-select-solid field-input {{ $field->origin === 'system' ? 'bg-transparent text-gray-500' : '' }}" name="type" data-original="{{ $field->type }}" style="min-width: 130px;" {{ $field->origin === 'system' ? 'disabled' : '' }}>
+                                                <option value="string" {{ $field->type === 'string' ? 'selected' : '' }}>STRING</option>
+                                                <option value="text" {{ $field->type === 'text' ? 'selected' : '' }}>TEXT</option>
+                                                <option value="integer" {{ $field->type === 'integer' ? 'selected' : '' }}>INTEGER</option>
+                                                <option value="bigInteger" {{ $field->type === 'bigInteger' ? 'selected' : '' }}>BIGINT</option>
+                                                <option value="decimal" {{ $field->type === 'decimal' ? 'selected' : '' }}>DECIMAL</option>
+                                                <option value="boolean" {{ $field->type === 'boolean' ? 'selected' : '' }}>BOOLEAN</option>
+                                                <option value="date" {{ $field->type === 'date' ? 'selected' : '' }}>DATE</option>
+                                                <option value="datetime" {{ $field->type === 'datetime' ? 'selected' : '' }}>DATETIME</option>
+                                                <option value="timestamp" {{ $field->type === 'timestamp' ? 'selected' : '' }}>TIMESTAMP</option>
+                                                <option value="json" {{ $field->type === 'json' ? 'selected' : '' }}>JSON</option>
+                                                <option value="foreignId" {{ $field->type === 'foreignId' ? 'selected' : '' }}>FK (foreignId)</option>
+                                            </select>
+                                        </td>
+                                        {{-- Length --}}
+                                        <td>
+                                            <input type="text" class="form-control form-control-sm form-control-solid text-center field-input {{ $field->origin === 'system' ? 'bg-transparent text-gray-500' : '' }}" name="length" value="{{ $field->precision ? $field->length . ',' . $field->precision : $field->length }}" data-original="{{ $field->precision ? $field->length . ',' . $field->precision : $field->length }}" placeholder="—" style="max-width: 80px;" {{ $field->origin === 'system' ? 'disabled' : '' }}>
+                                        </td>
+                                        {{-- Required --}}
+                                        <td class="text-center">
+                                            <div class="form-check form-check-custom form-check-solid form-check-sm d-flex justify-content-center">
+                                                <input class="form-check-input field-input" type="checkbox" name="required" value="1" {{ $field->required ? 'checked' : '' }} data-original="{{ $field->required ? '1' : '0' }}" {{ $field->origin === 'system' ? 'disabled' : '' }}>
+                                            </div>
+                                        </td>
+                                        {{-- Nullable --}}
+                                        <td class="text-center">
+                                            <div class="form-check form-check-custom form-check-solid form-check-sm d-flex justify-content-center">
+                                                <input class="form-check-input field-input" type="checkbox" name="nullable" value="1" {{ $field->nullable ? 'checked' : '' }} data-original="{{ $field->nullable ? '1' : '0' }}" {{ $field->origin === 'system' ? 'disabled' : '' }}>
+                                            </div>
+                                        </td>
+                                        {{-- Unique --}}
+                                        <td class="text-center">
+                                            <div class="form-check form-check-custom form-check-solid form-check-sm d-flex justify-content-center">
+                                                <input class="form-check-input field-input" type="checkbox" name="unique" value="1" {{ $field->unique ? 'checked' : '' }} data-original="{{ $field->unique ? '1' : '0' }}" {{ $field->origin === 'system' ? 'disabled' : '' }}>
+                                            </div>
+                                        </td>
+                                        {{-- Index --}}
+                                        <td class="text-center">
+                                            <div class="form-check form-check-custom form-check-solid form-check-sm d-flex justify-content-center">
+                                                <input class="form-check-input field-input" type="checkbox" name="index" value="1" {{ $field->index ? 'checked' : '' }} data-original="{{ $field->index ? '1' : '0' }}" {{ $field->origin === 'system' ? 'disabled' : '' }}>
+                                            </div>
+                                        </td>
+                                        {{-- Default --}}
+                                        <td>
+                                            <input type="text" class="form-control form-control-sm form-control-solid field-input {{ $field->origin === 'system' ? 'bg-transparent text-gray-500' : '' }}" name="default" value="{{ $field->default }}" data-original="{{ $field->default }}" placeholder="NULL" {{ $field->origin === 'system' ? 'disabled' : '' }}>
+                                        </td>
+                                        {{-- Actions --}}
+                                        <td class="text-end pe-4">
+                                            <div class="d-flex justify-content-end flex-shrink-0">
+                                                @if($field->origin === 'custom')
+                                                    <button type="button" class="btn btn-icon btn-bg-light btn-active-color-danger btn-sm btn-delete-field" data-code="{{ encodeId($field->id) }}" data-bs-toggle="tooltip" title="Excluir">
+                                                        <i class="ki-outline ki-trash fs-5"></i>
+                                                    </button>
+                                                @else
+                                                    <span class="badge badge-light-secondary fs-8">system</span>
+                                                @endif
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    @endif
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    {{-- begin::Add button --}}
+                    <div class="d-flex justify-content-center py-6 border-top border-gray-200">
+                        <button type="button" class="btn btn-light-primary btn-sm" id="btn_add_field">
+                            <i class="ki-outline ki-plus fs-5"></i> Adicionar Campo
+                        </button>
+                    </div>
+                    {{-- end::Add button --}}
+                </div>
+                {{-- end::Body --}}
             </div>
         </div>
         {{-- end::Tab pane Campos --}}
@@ -552,6 +673,373 @@ if (advancedCollapse && advancedArrow) {
         advancedArrow.classList.remove('active');
     });
 }
+
+// ============================================
+// ABA CAMPOS — GRID INLINE BD
+// ============================================
+
+const moduleCode = '{{ encodeId($module->id) }}';
+const fieldsBaseUrl = '/modules/' + moduleCode + '/fields';
+const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+const btnSaveFields = document.getElementById('btn_save_fields');
+
+// --- Detectar mudanças (habilitar botão salvar) ---
+function markDirty() {
+    if (isDragging) return;
+    btnSaveFields.disabled = false;
+    btnSaveFields.classList.remove('btn-light-primary');
+    btnSaveFields.classList.add('btn-primary');
+}
+
+document.getElementById('fields_tbody').addEventListener('input', markDirty);
+document.getElementById('fields_tbody').addEventListener('change', markDirty);
+
+// --- Adicionar Campo (nova row vazia) ---
+document.getElementById('btn_add_field').addEventListener('click', function() {
+    const tbody = document.getElementById('fields_tbody');
+    const tempId = 'new_' + Date.now();
+
+    const tr = document.createElement('tr');
+    tr.dataset.id = tempId;
+    tr.classList.add('field-row', 'table-active');
+    tr.innerHTML = `
+        <td class="ps-4">
+            <i class="ki-solid ki-abstract-16 fs-5 text-gray-400 cursor-grab sortable-handle"></i>
+        </td>
+        <td>
+            <input type="text" class="form-control form-control-sm form-control-solid fw-bold field-input" name="name" value="" placeholder="nome_coluna" data-original="">
+        </td>
+        <td>
+            <select class="form-select form-select-sm form-select-solid field-input" name="type" data-original="">
+                <option value="string" selected>STRING</option>
+                <option value="text">TEXT</option>
+                <option value="integer">INTEGER</option>
+                <option value="bigInteger">BIGINT</option>
+                <option value="decimal">DECIMAL</option>
+                <option value="boolean">BOOLEAN</option>
+                <option value="date">DATE</option>
+                <option value="datetime">DATETIME</option>
+                <option value="timestamp">TIMESTAMP</option>
+                <option value="json">JSON</option>
+                <option value="foreignId">FK (foreignId)</option>
+            </select>
+        </td>
+        <td>
+            <input type="text" class="form-control form-control-sm form-control-solid text-center field-input" name="length" value="255" placeholder="—" data-original="">
+        </td>
+        <td class="text-center">
+            <div class="form-check form-check-solid form-check-sm d-flex justify-content-center">
+                <input class="form-check-input field-input" type="checkbox" name="required" value="1" data-original="0">
+            </div>
+        </td>
+        <td class="text-center">
+            <div class="form-check form-check-solid form-check-sm d-flex justify-content-center">
+                <input class="form-check-input field-input" type="checkbox" name="nullable" value="1" data-original="0">
+            </div>
+        </td>
+        <td class="text-center">
+            <div class="form-check form-check-solid form-check-sm d-flex justify-content-center">
+                <input class="form-check-input field-input" type="checkbox" name="unique" value="1" data-original="0">
+            </div>
+        </td>
+        <td class="text-center">
+            <div class="form-check form-check-solid form-check-sm d-flex justify-content-center">
+                <input class="form-check-input field-input" type="checkbox" name="index" value="1" data-original="0">
+            </div>
+        </td>
+        <td>
+            <input type="text" class="form-control form-control-sm form-control-solid field-input" name="default" value="" placeholder="NULL" data-original="">
+        </td>
+        <td class="text-center pe-4">
+            <button type="button" class="btn btn-icon btn-sm btn-bg-light btn-active-color-danger btn-delete-field" data-code="${tempId}" data-bs-toggle="tooltip" title="Excluir">
+                <i class="ki-outline ki-trash fs-5"></i>
+            </button>
+        </td>
+    `;
+    tbody.appendChild(tr);
+    tr.querySelector('input[name="name"]').focus();
+    markDirty();
+
+    // Bind delete no novo botão
+    tr.querySelector('.btn-delete-field').addEventListener('click', handleDelete);
+});
+
+// --- Salvar tudo (create novos + update existentes) ---
+document.getElementById('btn_save_fields').addEventListener('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('🔵 Botão Salvar clicado');
+
+    const btn = this;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Salvando...';
+    btn.disabled = true;
+
+    const rows = document.querySelectorAll('#fields_tbody tr.field-row');
+    console.log('🔵 Total rows:', rows.length);
+
+    let promises = [];
+
+    rows.forEach(function(row, index) {
+        if (row.dataset.origin === 'system') {
+            console.log('⏭️ Pulando system:', row.querySelector('input[name="name"]')?.value);
+            return;
+        }
+
+        const id = row.dataset.id;
+        const nameVal = row.querySelector('input[name="name"]')?.value;
+        const typeVal = row.querySelector('select[name="type"]')?.value;
+        const lengthVal = row.querySelector('input[name="length"]')?.value;
+        const reqVal = row.querySelector('input[name="required"]')?.checked;
+        const nullVal = row.querySelector('input[name="nullable"]')?.checked;
+        const uniqVal = row.querySelector('input[name="unique"]')?.checked;
+        const idxVal = row.querySelector('input[name="index"]')?.checked;
+        const defVal = row.querySelector('input[name="default"]')?.value;
+
+        console.log('🔵 Campo:', id, '| name:', nameVal, '| type:', typeVal, '| length:', lengthVal);
+
+        const data = {
+            name: nameVal,
+            type: typeVal,
+            length: lengthVal || null,
+            required: reqVal ? 1 : 0,
+            nullable: nullVal ? 1 : 0,
+            unique: uniqVal ? 1 : 0,
+            index: idxVal ? 1 : 0,
+            default: defVal || null,
+        };
+
+        let url, method;
+        if (id.startsWith('new_')) {
+            url = fieldsBaseUrl;
+            method = 'POST';
+        } else {
+            url = fieldsBaseUrl + '/' + id;
+            method = 'PUT';
+        }
+
+        console.log('🔵 URL:', url, '| Method:', method);
+        console.log('🔵 Data:', JSON.stringify(data));
+        console.log('🔵 Body:', JSON.stringify(method === 'PUT' ? {...data, _method: 'PUT'} : data));
+
+        const fetchOptions = {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(method === 'PUT' ? {...data, _method: 'PUT'} : data)
+        };
+
+        console.log('🔵 CSRF Token:', document.querySelector('meta[name="csrf-token"]')?.content?.substring(0, 10) + '...');
+
+        promises.push(
+            fetch(url, fetchOptions)
+                .then(function(r) {
+                    console.log('🟢 Response status:', r.status, 'for', url);
+                    return r.json();
+                })
+                .then(function(json) {
+                    console.log('🟢 Response JSON:', JSON.stringify(json));
+                    return json;
+                })
+                .catch(function(err) {
+                    console.error('🔴 Fetch error for', url, ':', err.message);
+                    return {success: false, message: err.message};
+                })
+        );
+    });
+
+    console.log('🔵 Total promises:', promises.length);
+
+    if (promises.length === 0) {
+        console.log('⚠️ Nenhum campo para salvar');
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        return;
+    }
+
+    Promise.all(promises).then(function(results) {
+        console.log('🔵 All results:', JSON.stringify(results));
+        const errors = results.filter(r => !r.success);
+        if (errors.length > 0) {
+            console.log('🔴 Errors:', JSON.stringify(errors));
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+            Swal.fire('Erro', errors[0].message || 'Erro ao salvar campos', 'error');
+        } else {
+            console.log('✅ Tudo salvo com sucesso');
+            var hadNewFields = results.some(function(r) { return r && r.data && r.data.id; });
+
+            btn.innerHTML = originalText;
+            btn.disabled = true;
+            btn.classList.remove('btn-primary');
+            btn.classList.add('btn-light-primary');
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Salvo!',
+                text: 'Campos atualizados com sucesso',
+                timer: 1500,
+                showConfirmButton: false
+            }).then(function() {
+                if (hadNewFields) {
+                    window.location.href = window.location.pathname + '#tab_campos';
+                    window.location.reload();
+                }
+            });
+        }
+    }).catch(function(err) {
+        console.error('🔴 Promise.all error:', err.message);
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+        Swal.fire('Erro', 'Erro de conexão', 'error');
+    });
+});
+
+// --- Delete (soft delete ou remover row nova) ---
+function handleDelete() {
+    const code = this.dataset.code;
+    const row = this.closest('tr');
+
+    if (code.startsWith('new_')) {
+        row.remove();
+        return;
+    }
+
+    Swal.fire({
+        title: 'Excluir campo?',
+        text: 'O campo será removido (soft delete).',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sim, excluir',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#d33',
+    }).then(function(result) {
+        if (result.isConfirmed) {
+            fetch(fieldsBaseUrl + '/' + code, {
+                method: 'DELETE',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                },
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    row.remove();
+                    Swal.fire({ icon: 'success', title: 'Excluído!', timer: 1000, showConfirmButton: false });
+                } else {
+                    Swal.fire('Erro', data.message, 'error');
+                }
+            });
+        }
+    });
+}
+
+document.querySelectorAll('.btn-delete-field').forEach(function(btn) {
+    btn.addEventListener('click', handleDelete);
+});
+
+let sortableInstance = null;
+let isDragging = false;
+
+function initSortableFields() {
+    if (sortableInstance) {
+        return;
+    }
+
+    const fieldsTbody = document.getElementById('fields_tbody');
+    if (!fieldsTbody) {
+        return;
+    }
+
+    if (typeof Sortable === 'undefined') {
+        return;
+    }
+
+    sortableInstance = Sortable.create(fieldsTbody, {
+        handle: '.sortable-handle',
+        animation: 150,
+        filter: '[data-origin="system"]',
+        onMove: function(evt) {
+            if (evt.related && evt.related.dataset && evt.related.dataset.origin === 'system') {
+                return false;
+            }
+            return true;
+        },
+        onStart: function() {
+            isDragging = true;
+        },
+        onEnd: function(evt) {
+            isDragging = false;
+            let ids = [];
+            document.querySelectorAll('#fields_tbody tr.field-row[data-origin="custom"]').forEach(function(row) {
+                if (!row.dataset.id.startsWith('new_')) {
+                    ids.push(row.dataset.id);
+                }
+            });
+            if (ids.length > 0) {
+                fetch(`{{ route('landlord.modules.fields.reorder', encodeId($module->id)) }}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content},
+                    body: JSON.stringify({ids: ids})
+                }).then(function(response) {
+                    if (response.ok) {
+                        const tbody = document.getElementById('fields_tbody');
+                        const allRows = Array.from(tbody.querySelectorAll('tr.field-row'));
+
+                        const idRow = allRows.find(r => r.dataset.origin === 'system' && r.querySelector('input[name="name"]')?.value === 'id');
+                        const customRows = allRows.filter(r => r.dataset.origin === 'custom');
+                        const systemRest = allRows.filter(r => r.dataset.origin === 'system' && r.querySelector('input[name="name"]')?.value !== 'id');
+
+                        if (idRow) tbody.appendChild(idRow);
+                        customRows.forEach(r => tbody.appendChild(r));
+                        systemRest.forEach(r => tbody.appendChild(r));
+                    }
+                });
+            }
+        }
+    });
+}
+
+// Inicializar em múltiplos momentos
+// 1. Imediatamente (caso aba já esteja visível)
+initSortableFields();
+
+// 2. Via evento de aba
+document.querySelectorAll('[data-bs-toggle="tab"]').forEach(function(tab) {
+    tab.addEventListener('shown.bs.tab', function(e) {
+        initSortableFields();
+    });
+});
+
+// 3. Fallback com delay
+setTimeout(function() {
+    initSortableFields();
+}, 1000);
+
+// 4. Fallback mais agressivo
+setTimeout(function() {
+    initSortableFields();
+}, 2000);
+
+// --- Manter aba ativa após reload ---
+const urlHash = window.location.hash;
+if (urlHash) {
+    const tabTrigger = document.querySelector('a[href="' + urlHash + '"]');
+    if (tabTrigger) {
+        const tab = new bootstrap.Tab(tabTrigger);
+        tab.show();
+    }
+}
+document.querySelectorAll('a[data-bs-toggle="tab"]').forEach(function(tabEl) {
+    tabEl.addEventListener('shown.bs.tab', function(event) {
+        history.replaceState(null, null, event.target.getAttribute('href'));
+    });
+});
 </script>
 
 <style>

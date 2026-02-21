@@ -54,8 +54,17 @@ Route::domain(env('APP_DOMAIN', 'smartclick360-v2.test'))->group(function () {
 
         // Gestão de Módulos (controller específico)
         Route::prefix('modules')->name('landlord.modules.')->group(function () {
+            Route::post('/', [\App\Http\Controllers\Landlord\ModuleManagementController::class, 'store'])->name('store');
             Route::get('/{code}', [\App\Http\Controllers\Landlord\ModuleManagementController::class, 'show'])->name('show');
             Route::put('/{code}', [\App\Http\Controllers\Landlord\ModuleManagementController::class, 'update'])->name('update');
+
+            // Fields do módulo
+            Route::post('/{code}/fields', [\App\Http\Controllers\Landlord\ModuleManagementController::class, 'storeField'])->name('fields.store');
+            Route::post('/{code}/fields/reorder', [\App\Http\Controllers\Landlord\ModuleManagementController::class, 'reorderFields'])->name('fields.reorder');
+            Route::get('/{code}/fields/{fcode}', [\App\Http\Controllers\Landlord\ModuleManagementController::class, 'showField'])->name('fields.show');
+            Route::put('/{code}/fields/{fcode}', [\App\Http\Controllers\Landlord\ModuleManagementController::class, 'updateField'])->name('fields.update');
+            Route::delete('/{code}/fields/{fcode}', [\App\Http\Controllers\Landlord\ModuleManagementController::class, 'destroyField'])->name('fields.destroy');
+            Route::patch('/{code}/fields/{fcode}/restore', [\App\Http\Controllers\Landlord\ModuleManagementController::class, 'restoreField'])->name('fields.restore');
         });
 
         // Módulos dinâmicos (landlord)

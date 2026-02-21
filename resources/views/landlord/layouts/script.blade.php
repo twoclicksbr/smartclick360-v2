@@ -8,6 +8,7 @@
 <!--end::Global Javascript Bundle-->
 <!--begin::Vendors Javascript(used for this page only)-->
 <script src="{{ asset('assets/plugins/custom/fullcalendar/fullcalendar.bundle.js') }}"></script>
+<script src="{{ asset('assets/plugins/custom/draggable/draggable.bundle.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
 <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
@@ -31,6 +32,9 @@
 <script src="{{ asset('assets/js/custom/utilities/modals/create-app.js') }}"></script>
 <script src="{{ asset('assets/js/custom/utilities/modals/users-search.js') }}"></script>
 <!--end::Custom Javascript-->
+<!--begin::Sortable.js (for drag and drop)-->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<!--end::Sortable.js-->
 <!--end::Javascript-->
 
 @stack('scripts')
