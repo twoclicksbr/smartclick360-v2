@@ -27,6 +27,8 @@ class ModuleField extends Model
         'required',
         'unique',
         'index',
+        'unique_table',
+        'unique_column',
         'fk_table',
         'fk_column',
         'fk_label',

@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Landlord;
 
 use App\Http\Controllers\Controller;
 use App\Models\Landlord\Module;
+use App\Models\Landlord\ModuleField;
+use App\Models\Landlord\ModuleFieldUi;
+use App\Models\Landlord\ModuleSeed;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -96,7 +99,25 @@ class ModuleManagementController extends Controller
         $submodulesCount = DB::connection('landlord')->table('module_submodules')->where('module_id', $module->id)->count();
         $seedsCount = DB::connection('landlord')->table('module_seeds')->where('module_id', $module->id)->count();
 
-        return view('landlord.pages.modules.show', compact('module', 'fields', 'fieldsCount', 'submodulesCount', 'seedsCount'));
+        // Buscar submódulos disponíveis e vinculados
+        $allSubmodules = \App\Models\Landlord\Module::where('type', 'submodule')
+            ->where('status', true)
+            ->orderBy('name')
+            ->get();
+
+        $linkedSubmodules = \App\Models\Landlord\ModuleSubmodule::where('module_id', $module->id)
+            ->pluck('submodule_id')
+            ->toArray();
+
+        // Gerar dados fake para preview da grid
+        $fakeData = $this->generateFakeData($fields);
+
+        // Buscar seeds do módulo
+        $seeds = \App\Models\Landlord\ModuleSeed::where('module_id', $module->id)
+            ->orderBy('order')
+            ->get();
+
+        return view('landlord.pages.modules.show', compact('module', 'fields', 'fieldsCount', 'submodulesCount', 'seedsCount', 'allSubmodules', 'linkedSubmodules', 'fakeData', 'seeds'));
     }
 
     /**
@@ -219,6 +240,36 @@ class ModuleManagementController extends Controller
             'origin'    => 'custom',
             'order'     => 2, // temporário, será recalculado
             'status'    => true,
+        ]);
+
+        // Auto-criar registro em module_fields_ui com defaults
+        $componentMap = [
+            'STRING'    => 'input',
+            'TEXT'      => 'textarea',
+            'INTEGER'   => 'input',
+            'BIGINT'    => $field->fk_table ? 'select_module' : 'input',
+            'DECIMAL'   => 'input',
+            'BOOLEAN'   => 'switch',
+            'DATE'      => 'date',
+            'TIMESTAMP' => 'input',
+        ];
+
+        $isSystem = !$field->is_custom;
+        $component = $componentMap[$field->type] ?? 'input';
+
+        \App\Models\Landlord\ModuleFieldUi::create([
+            'module_field_id'  => $field->id,
+            'component'        => $component,
+            'grid_col'         => 'col-md-12',
+            'visible_index'    => $field->is_custom,
+            'visible_show'     => $field->is_custom,
+            'visible_create'   => $field->is_custom,
+            'visible_edit'     => $field->is_custom,
+            'searchable'       => false,
+            'sortable'         => false,
+            'order'            => $field->order,
+            'status'           => true,
+            'origin'           => $field->origin,
         ]);
 
         // Reordenar: id(1) → customs(2,3,4...) → system restantes(N+1,N+2...)
@@ -419,6 +470,281 @@ class ModuleManagementController extends Controller
     }
 
     /**
+     * GET /modules/{code}/fields-list — Lista campos do módulo (JSON)
+     */
+    public function getFieldsList($code)
+    {
+        $moduleId = decodeId($code);
+        $module = \App\Models\Landlord\Module::findOrFail($moduleId);
+
+        $fields = \App\Models\Landlord\ModuleField::where('module_id', $module->id)
+            ->select('id', 'name', 'label')
+            ->orderBy('order')
+            ->get();
+
+        return response()->json($fields);
+    }
+
+    /**
+     * PUT /modules/{code}/fields/{fieldCode}/grid — Atualizar configuração de grid do campo
+     */
+    public function updateFieldGrid(Request $request, $code, $fieldCode)
+    {
+        $moduleId = decodeId($code);
+        $fieldId = decodeId($fieldCode);
+
+        $module = \App\Models\Landlord\Module::findOrFail($moduleId);
+        $field = \App\Models\Landlord\ModuleField::where('id', $fieldId)
+            ->where('module_id', $module->id)
+            ->firstOrFail();
+
+        $ui = \App\Models\Landlord\ModuleFieldUi::firstOrCreate(
+            ['module_field_id' => $field->id],
+            [
+                'component'          => 'input',
+                'grid_col'           => 'col-md-12',
+                'visible_index'      => true,
+                'visible_create'     => true,
+                'visible_edit'       => true,
+                'visible_show'       => true,
+                'searchable'         => true,
+                'sortable'           => true,
+                'order'              => $field->order,
+                'status'             => true,
+            ]
+        );
+
+        // Atualiza module_fields_ui (só campos enviados)
+        $uiData = [];
+
+        // Campos do thead
+        if ($request->has('grid_label'))    $uiData['grid_label'] = $request->input('grid_label') ?: null;
+        if ($request->has('visible_index')) $uiData['visible_index'] = $request->boolean('visible_index');
+        if ($request->has('searchable'))    $uiData['searchable'] = $request->boolean('searchable');
+        if ($request->has('sortable'))      $uiData['sortable'] = $request->boolean('sortable');
+        if ($request->has('width_index'))   $uiData['width_index'] = $request->input('width_index') ?: null;
+
+        // Campos do tbody
+        if ($request->has('grid_template')) $uiData['grid_template'] = $request->input('grid_template') ?: null;
+        if ($request->has('grid_link'))     $uiData['grid_link'] = $request->input('grid_link') ?: null;
+        if ($request->has('grid_actions'))  $uiData['grid_actions'] = $request->input('grid_actions') ? json_decode($request->input('grid_actions'), true) : null;
+        if ($request->has('options'))       $uiData['options'] = $request->input('options') ? json_decode($request->input('options'), true) : null;
+
+        $ui->update($uiData);
+
+        // Se searchable = true, auto-seta index na module_fields
+        if ($request->boolean('searchable') && !$field->index) {
+            $field->update(['index' => true]);
+        }
+
+        // Se default_sort marcado, atualiza na tabela modules
+        if ($request->boolean('default_sort')) {
+            $module->update([
+                'default_sort_field'     => $field->name,
+                'default_sort_direction' => $request->input('sort_direction', 'asc'),
+            ]);
+        } elseif ($module->default_sort_field === $field->name) {
+            // Se desmarcou o default_sort deste campo, volta para 'order'
+            $module->update([
+                'default_sort_field'     => 'order',
+                'default_sort_direction' => 'asc',
+            ]);
+        }
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Configuração da coluna salva com sucesso',
+                'data'    => [
+                    'field_name'           => $field->name,
+                    'visible_index'        => $ui->visible_index,
+                    'searchable'           => $ui->searchable,
+                    'sortable'             => $ui->sortable,
+                    'width_index'          => $ui->width_index,
+                    'default_sort_field'   => $module->default_sort_field,
+                    'default_sort_direction'=> $module->default_sort_direction,
+                ],
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Configuração salva');
+    }
+
+    /**
+     * Aba Form — Atualiza configuração visual de um campo
+     */
+    public function updateFieldForm(Request $request, string $code, string $fieldCode)
+    {
+        $moduleId = decodeId($code);
+        $fieldId = decodeId($fieldCode);
+
+        $module = Module::findOrFail($moduleId);
+        $field = ModuleField::where('id', $fieldId)->where('module_id', $module->id)->firstOrFail();
+        $ui = ModuleFieldUi::firstOrCreate(
+            ['module_field_id' => $field->id],
+            [
+                'component'          => 'input',
+                'grid_col'           => 'col-md-12',
+                'visible_index'      => true,
+                'visible_create'     => true,
+                'visible_edit'       => true,
+                'visible_show'       => true,
+                'searchable'         => true,
+                'sortable'           => true,
+                'order'              => $field->order,
+                'status'             => true,
+            ]
+        );
+
+        // Atualizar module_fields_ui (campos de apresentação)
+        $uiData = [];
+        if ($request->has('component'))         $uiData['component'] = $request->input('component');
+        if ($request->has('grid_col'))           $uiData['grid_col'] = $request->input('grid_col');
+        if ($request->has('icon'))               $uiData['icon'] = $request->input('icon') ?: null;
+        if ($request->has('placeholder'))        $uiData['placeholder'] = $request->input('placeholder') ?: null;
+        if ($request->has('mask'))               $uiData['mask'] = $request->input('mask') ?: null;
+        if ($request->has('tooltip'))            $uiData['tooltip'] = $request->input('tooltip') ?: null;
+        if ($request->has('tooltip_direction'))  $uiData['tooltip_direction'] = $request->input('tooltip_direction') ?: 'top';
+        if ($request->has('visible_create'))     $uiData['visible_create'] = $request->boolean('visible_create');
+        if ($request->has('visible_edit'))       $uiData['visible_edit'] = $request->boolean('visible_edit');
+        if ($request->has('visible_show'))       $uiData['visible_show'] = $request->boolean('visible_show');
+
+        // Options: recebe string JSON, decodifica para salvar como JSON no banco
+        if ($request->has('options')) {
+            $optionsRaw = $request->input('options');
+            if ($optionsRaw && is_string($optionsRaw)) {
+                $decoded = json_decode($optionsRaw, true);
+                $uiData['options'] = $decoded ?: null;
+            } else {
+                $uiData['options'] = null;
+            }
+        }
+
+        if (!empty($uiData)) {
+            $ui->update($uiData);
+        }
+
+        // Atualizar module_fields (dados de negócio condicionais)
+        $fieldData = [];
+
+        // FK: se component = select_module, salvar fk_table, fk_column, fk_label
+        $component = $request->input('component', $ui->component);
+        if ($component === 'select_module') {
+            if ($request->has('fk_table'))  $fieldData['fk_table'] = $request->input('fk_table') ?: null;
+            if ($request->has('fk_column')) $fieldData['fk_column'] = $request->input('fk_column') ?: null;
+            if ($request->has('fk_label'))  $fieldData['fk_label'] = $request->input('fk_label') ?: null;
+        }
+
+        // Unique: se campo tem unique=true, salvar unique_table e unique_column
+        if ($field->unique) {
+            if ($request->has('unique_table'))  $fieldData['unique_table'] = $request->input('unique_table') ?: null;
+            if ($request->has('unique_column')) $fieldData['unique_column'] = $request->input('unique_column') ?: null;
+        }
+
+        if (!empty($fieldData)) {
+            $field->update($fieldData);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Configuração do campo atualizada com sucesso.',
+            'data' => [
+                'ui' => $ui->fresh(),
+                'field' => $field->fresh(),
+            ]
+        ]);
+    }
+
+    /**
+     * Aba Seeds — Lista seeds do módulo
+     */
+    public function indexSeeds(string $code)
+    {
+        $moduleId = decodeId($code);
+        $module = Module::findOrFail($moduleId);
+
+        $seeds = \App\Models\Landlord\ModuleSeed::where('module_id', $module->id)
+            ->orderBy('order')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $seeds
+        ]);
+    }
+
+    /**
+     * Aba Seeds — Cria novo seed
+     */
+    public function storeSeed(Request $request, string $code)
+    {
+        $moduleId = decodeId($code);
+        $module = Module::findOrFail($moduleId);
+
+        // Obter o maior order atual
+        $maxOrder = \App\Models\Landlord\ModuleSeed::where('module_id', $module->id)->max('order') ?? 0;
+
+        $seed = \App\Models\Landlord\ModuleSeed::create([
+            'module_id' => $module->id,
+            'data'      => $request->input('data', []),
+            'order'     => $maxOrder + 1,
+            'status'    => true,
+            'origin'    => 'custom',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Seed criado com sucesso.',
+            'data'    => array_merge($seed->toArray(), ['encoded_id' => encodeId($seed->id)])
+        ], 201);
+    }
+
+    /**
+     * Aba Seeds — Atualiza seed existente
+     */
+    public function updateSeed(Request $request, string $code, string $seedCode)
+    {
+        $moduleId = decodeId($code);
+        $seedId = decodeId($seedCode);
+
+        $module = Module::findOrFail($moduleId);
+        $seed = \App\Models\Landlord\ModuleSeed::where('id', $seedId)
+            ->where('module_id', $module->id)
+            ->firstOrFail();
+
+        $seed->update([
+            'data' => $request->input('data', []),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Seed atualizado com sucesso.',
+            'data'    => array_merge($seed->fresh()->toArray(), ['encoded_id' => encodeId($seed->id)])
+        ]);
+    }
+
+    /**
+     * Aba Seeds — Remove seed
+     */
+    public function destroySeed(string $code, string $seedCode)
+    {
+        $moduleId = decodeId($code);
+        $seedId = decodeId($seedCode);
+
+        $module = Module::findOrFail($moduleId);
+        $seed = \App\Models\Landlord\ModuleSeed::where('id', $seedId)
+            ->where('module_id', $module->id)
+            ->firstOrFail();
+
+        $seed->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Seed removido com sucesso.'
+        ]);
+    }
+
+    /**
      * Reordena campos: id(1) → customs(2,3,4...) → system restantes(N+1,N+2...)
      */
     private function reorderModuleFields(int $moduleId): void
@@ -455,6 +781,72 @@ class ModuleManagementController extends Controller
         // 3. system restantes no final
         foreach ($systemRest as $field) {
             $field->update(['order' => $order++]);
+        }
+    }
+
+    /**
+     * Gera dados fake para preview da grid
+     */
+    private function generateFakeData($fields): array
+    {
+        $fakeData = [];
+
+        foreach ($fields as $field) {
+            $fakeData[$field->name] = match($field->type) {
+                'STRING' => match(true) {
+                    str_contains($field->name, 'email') => ['joao@email.com', 'maria@email.com', 'pedro@email.com'],
+                    str_contains($field->name, 'name') || str_contains($field->name, 'nome') => ['João Silva', 'Maria Santos', 'Pedro Lima'],
+                    str_contains($field->name, 'slug') => ['joao-silva', 'maria-santos', 'pedro-lima'],
+                    str_contains($field->name, 'phone') || str_contains($field->name, 'telefone') => ['11999990001', '11999990002', '11999990003'],
+                    default => ['Texto exemplo 1', 'Texto exemplo 2', 'Texto exemplo 3'],
+                },
+                'TEXT' => ['Lorem ipsum dolor sit amet...', 'Consectetur adipiscing elit...', 'Sed do eiusmod tempor...'],
+                'INTEGER' => match(true) {
+                    $field->name === 'order' => [1, 2, 3],
+                    default => [10, 25, 42],
+                },
+                'BIGINT' => match(true) {
+                    $field->name === 'id' => [1, 2, 3],
+                    $field->fk_table !== null => $this->getFkFakeLabels($field, 3),
+                    default => [100, 200, 300],
+                },
+                'DECIMAL' => ['149,90', '299,00', '59,50'],
+                'BOOLEAN' => [true, false, true],
+                'DATE' => ['15/01/2026', '03/02/2026', '20/03/2026'],
+                'TIMESTAMP' => match(true) {
+                    str_contains($field->name, 'deleted') => [null, null, '10/03/2026 08:00'],
+                    default => ['15/01/2026 14:30', '03/02/2026 09:15', '20/03/2026 17:45'],
+                },
+                default => ['—', '—', '—'],
+            };
+        }
+
+        return $fakeData;
+    }
+
+    /**
+     * Busca labels de FK para dados fake
+     */
+    private function getFkFakeLabels($field, int $count): array
+    {
+        try {
+            $labels = \Illuminate\Support\Facades\DB::connection('landlord')
+                ->table($field->fk_table)
+                ->whereNull('deleted_at')
+                ->where('status', true)
+                ->orderBy('id')
+                ->limit($count)
+                ->pluck($field->fk_label ?? 'name')
+                ->toArray();
+
+            // Se não encontrou registros suficientes, completa com placeholders
+            while (count($labels) < $count) {
+                $labels[] = '(sem registro)';
+            }
+
+            return $labels;
+        } catch (\Exception $e) {
+            return array_fill(0, $count, '(FK: ' . $field->fk_table . ')');
         }
     }
 }

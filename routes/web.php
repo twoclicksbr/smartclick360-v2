@@ -61,10 +61,23 @@ Route::domain(env('APP_DOMAIN', 'smartclick360-v2.test'))->group(function () {
             // Fields do módulo
             Route::post('/{code}/fields', [\App\Http\Controllers\Landlord\ModuleManagementController::class, 'storeField'])->name('fields.store');
             Route::post('/{code}/fields/reorder', [\App\Http\Controllers\Landlord\ModuleManagementController::class, 'reorderFields'])->name('fields.reorder');
+            Route::get('/{code}/fields-list', [\App\Http\Controllers\Landlord\ModuleManagementController::class, 'getFieldsList'])->name('fieldsList');
             Route::get('/{code}/fields/{fcode}', [\App\Http\Controllers\Landlord\ModuleManagementController::class, 'showField'])->name('fields.show');
             Route::put('/{code}/fields/{fcode}', [\App\Http\Controllers\Landlord\ModuleManagementController::class, 'updateField'])->name('fields.update');
             Route::delete('/{code}/fields/{fcode}', [\App\Http\Controllers\Landlord\ModuleManagementController::class, 'destroyField'])->name('fields.destroy');
             Route::patch('/{code}/fields/{fcode}/restore', [\App\Http\Controllers\Landlord\ModuleManagementController::class, 'restoreField'])->name('fields.restore');
+
+            // Grid (configuração de coluna)
+            Route::put('/{code}/fields/{fieldCode}/grid', [\App\Http\Controllers\Landlord\ModuleManagementController::class, 'updateFieldGrid'])->name('updateFieldGrid');
+
+            // Form (configuração de componente)
+            Route::put('/{code}/fields/{fieldCode}/form', [\App\Http\Controllers\Landlord\ModuleManagementController::class, 'updateFieldForm'])->name('updateFieldForm');
+
+            // Seeds
+            Route::get('/{code}/seeds', [\App\Http\Controllers\Landlord\ModuleManagementController::class, 'indexSeeds'])->name('indexSeeds');
+            Route::post('/{code}/seeds', [\App\Http\Controllers\Landlord\ModuleManagementController::class, 'storeSeed'])->name('storeSeed');
+            Route::put('/{code}/seeds/{seedCode}', [\App\Http\Controllers\Landlord\ModuleManagementController::class, 'updateSeed'])->name('updateSeed');
+            Route::delete('/{code}/seeds/{seedCode}', [\App\Http\Controllers\Landlord\ModuleManagementController::class, 'destroySeed'])->name('destroySeed');
         });
 
         // Módulos dinâmicos (landlord)
